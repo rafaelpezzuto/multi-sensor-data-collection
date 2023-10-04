@@ -8,7 +8,10 @@
    version="1.1"
    id="svg6523"
    inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
-   sodipodi:docname="app-ui.svg"
+   sodipodi:docname="user interface.svg"
+   inkscape:export-filename="user interface.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -24,9 +27,9 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
      showgrid="false"
-     inkscape:zoom="1.0973349"
-     inkscape:cx="27.338965"
-     inkscape:cy="97.508975"
+     inkscape:zoom="2.1946698"
+     inkscape:cx="223.72386"
+     inkscape:cy="112.5454"
      inkscape:window-width="2560"
      inkscape:window-height="1013"
      inkscape:window-x="0"
@@ -166,28 +169,24 @@
          x="11.195414"
          y="80.967812"
          id="tspan6858">    service, credentials</tspan></text>
-    <g
-       id="g7578"
-       transform="translate(-2.7914236,-6.7917364)">
-      <rect
-         style="fill:#f9f9f9;stroke:#000000;stroke-width:0.25;stroke-miterlimit:1;stroke-dasharray:none"
-         id="rect7039"
-         width="22.413706"
-         height="5.3808708"
-         x="90.954422"
-         y="43.513351" />
-      <text
-         xml:space="preserve"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:3.52778px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:0.264583"
-         x="91.689056"
-         y="47.46497"
-         id="text7043"><tspan
-           sodipodi:role="line"
-           id="tspan7041"
-           style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:3.52778px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#ff0000;stroke-width:0.264583"
-           x="91.689056"
-           y="47.46497">START/STOP</tspan></text>
-    </g>
+    <rect
+       style="fill:#f9f9f9;stroke:#000000;stroke-width:0.25;stroke-miterlimit:1;stroke-dasharray:none"
+       id="rect7039"
+       width="22.413706"
+       height="5.3808708"
+       x="88.163002"
+       y="36.721615" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:3.175px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="89.470459"
+       y="40.530586"
+       id="text7043"><tspan
+         sodipodi:role="line"
+         id="tspan7041"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:3.175px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#ff0000;stroke-width:0.264583"
+         x="89.470459"
+         y="40.530586">START/STOP</tspan></text>
     <rect
        style="fill:#f9f9f9;stroke:#000000;stroke-width:0.25;stroke-miterlimit:1;stroke-dasharray:none"
        id="rect7039-3"
