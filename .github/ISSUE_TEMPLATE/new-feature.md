@@ -1,7 +1,7 @@
 ---
 name: New feature
 about: Description of new features
-title: "[FEAT] "
+title: My new feature
 labels: enhancement
 assignees: ''
 
