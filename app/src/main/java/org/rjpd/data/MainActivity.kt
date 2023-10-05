@@ -5,9 +5,11 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.widget.Button
 import android.widget.ToggleButton
 import androidx.activity.ComponentActivity
 import androidx.annotation.RequiresApi
+import androidx.preference.PreferenceManager
 
 
 const val REQUEST_COLLECTING_DATA = 999
@@ -32,34 +34,42 @@ class MainActivity : ComponentActivity() {
 
         requestPermissions(permissions, REQUEST_COLLECTING_DATA)
 
-        val startSensorsButton = findViewById<ToggleButton>(R.id.start_sensors_button)
-        val startGPSButton = findViewById<ToggleButton>(R.id.start_gps_button)
-        val startCameraRecordingButton = findViewById<ToggleButton>(R.id.start_camera_recording_button)
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
 
-        startSensorsButton.setOnCheckedChangeListener {_, isChecked ->
+        val startStopButton = findViewById<ToggleButton>(R.id.start_stop_button)
+        val exportButton = findViewById<Button>(R.id.export_button)
+        val settingsButton = findViewById<Button>(R.id.settings_button)
+
+        startStopButton.setOnCheckedChangeListener {_, isChecked ->
             val intentSensorsService = Intent(this@MainActivity, SensorsService::class.java)
+            val intentLocationTrackingService = Intent(this@MainActivity, LocationTrackingService::class.java)
+
             if (isChecked) {
                 startService(intentSensorsService)
+
+                if (sharedPreferences.getBoolean("gps", false)) {
+                    startService(intentLocationTrackingService)
+                }
+
             } else {
                 stopService(intentSensorsService)
+
+                if (sharedPreferences.getBoolean("gps", false)) {
+                    stopService(intentLocationTrackingService)
+                }
             }
+
+            exportButton.isEnabled = !exportButton.isEnabled
+            settingsButton.isEnabled = !settingsButton.isEnabled
         }
 
-        startGPSButton.setOnCheckedChangeListener {_, isChecked ->
-            val intentLocationTrackingService = Intent(this@MainActivity, LocationTrackingService::class.java)
-            if (isChecked) {
-                startService(intentLocationTrackingService)
-            } else {
-                stopService(intentLocationTrackingService)
-            }
+        exportButton.setOnClickListener {
+            // ToDo: implement export module
         }
 
-        startCameraRecordingButton.setOnCheckedChangeListener {buttonView, isChecked ->
-            if (isChecked){
-                // ToDo
-            } else {
-                // ToDo
-            }
+        settingsButton.setOnClickListener {
+            val intentSettings = Intent(this@MainActivity, SettingsActivity::class.java)
+            startActivity(intentSettings)
         }
     }
 
@@ -72,7 +82,9 @@ class MainActivity : ComponentActivity() {
 
         if (requestCode == REQUEST_COLLECTING_DATA) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // ToDo: research about it
             } else {
+                // ToDo: research about it
             }
         }
     }

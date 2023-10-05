@@ -1,0 +1,64 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory app:title="@string/sensors_preference_category">
+        <SwitchPreferenceCompat
+            app:key="accelerometer"
+            app:summaryOff="@string/accelerometer_off"
+            app:summaryOn="@string/accelerometer_on"
+            app:title="@string/accelerometer_title" />
+
+        <SwitchPreferenceCompat
+            app:key="gravity"
+            app:summaryOff="@string/gravity_off"
+            app:summaryOn="@string/gravity_on"
+            app:title="@string/gravity_title" />
+
+        <SwitchPreferenceCompat
+            app:key="gyroscope"
+            app:summaryOff="@string/gyroscope_off"
+            app:summaryOn="@string/gyroscope_on"
+            app:title="@string/gyroscope_title" />
+
+        <SwitchPreferenceCompat
+            app:key="magnetometer"
+            app:summaryOff="@string/magnetometer_off"
+            app:summaryOn="@string/magnetometer_on"
+            app:title="@string/magnetometer_title" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/geolocation_preference_category">
+        <SwitchPreferenceCompat
+            app:key="gps"
+            app:summaryOff="@string/gps_off"
+            app:summaryOn="@string/gps_on"
+            app:title="@string/gps_title" />
+
+        <androidx.preference.SeekBarPreference
+            app:dependency="gps"
+            app:key="gps_interval"
+            app:title="@string/gps_interval_title"
+            app:min="1"
+            app:seekBarIncrement="10"
+            android:max="180"
+            app:adjustable="true"
+            app:showSeekBarValue="true"
+            app:defaultValue="30" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/audio_video_preference_category">
+        <SwitchPreferenceCompat
+            app:key="audio"
+            app:summaryOff="@string/audio_off"
+            app:summaryOn="@string/audio_on"
+            app:title="@string/audio_title" />
+
+        <SwitchPreferenceCompat
+            app:key="video"
+            app:summaryOff="@string/video_off"
+            app:summaryOn="@string/video_on"
+            app:title="@string/video_title" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

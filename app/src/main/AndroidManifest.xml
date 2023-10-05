@@ -21,13 +21,23 @@
         android:theme="@style/Theme.MultiSensorDataCollector"
         tools:targetApi="31">
 
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:label="@string/title_activity_settings"
+            android:theme="@style/Theme.AppCompat">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".LocationTrackingService"
-            android:exported="false"/>
+            android:exported="false" />
 
         <service
             android:name=".SensorsService"
-            android:exported="false"/>
+            android:exported="false" />
 
         <activity
             android:name=".MainActivity"

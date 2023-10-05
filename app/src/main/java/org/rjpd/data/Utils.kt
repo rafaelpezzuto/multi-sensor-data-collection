@@ -10,10 +10,10 @@ import java.util.Date
 import java.util.Locale
 
 
-fun writeGeolocationData(context: Context, latitude: Double, longitude: Double) {
+fun writeGeolocationData(context: Context, gpsInterval: String, accuracy: String, latitude: String, longitude: String) {
     val localeDate = SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(Date())
 
-    val line = "$localeDate,$latitude,$longitude\n"
+    val line = "$localeDate,$gpsInterval,$accuracy,$latitude,$longitude\n"
 
     try {
         val file = File(context.getExternalFilesDir(null), "geo_data.txt")
