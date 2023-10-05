@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">MultiSensor Data Collector</string>
+    <string name="start_sensors">Start sensors</string>
+    <string name="stop_sensors">Stop sensors</string>
+    <string name="start_gps">Start GPS</string>
+    <string name="stop_gps">Stop GPS</string>
+    <string name="start_camera">Start camera</string>
+    <string name="stop_camera">Stop camera</string>
+</resources>

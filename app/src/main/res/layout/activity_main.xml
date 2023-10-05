@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    tools:context=".MainActivity">
+
+    <ToggleButton
+        android:id="@+id/start_sensors_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textOff="@string/start_sensors"
+        android:textOn="@string/stop_sensors"
+        />
+
+    <ToggleButton
+        android:id="@+id/start_gps_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textOff="@string/start_gps"
+        android:textOn="@string/stop_gps"
+        />
+
+    <ToggleButton
+        android:id="@+id/start_camera_recording_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textOff="@string/start_camera"
+        android:textOn="@string/stop_camera"
+        />
+
+</LinearLayout>
