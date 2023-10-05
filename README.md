@@ -16,8 +16,20 @@ MultiSensor Data Collection is a mobile app that seamlessly gathers data from va
     <img src="prototype/data%20flow.png" alt="Applications' data flow" width="486.5" height="220.5">
 </figure>
 
-## Wireframe
+## Screenshots
 
 <figure>
-    <img src="prototype/user%20interface.png" alt="Applications' data flow">
+    <img src="screenshots/main screen.png" alt="Main screen">
+</figure>
+
+<figure>
+    <img src="screenshots/main screen recording.png" alt="Main screen recording">
+</figure>
+
+<figure>
+    <img src="screenshots/settings screen part 1.png" alt="Settings screen part 1">
+</figure>
+
+<figure>
+    <img src="screenshots/settings screen part 2.png" alt="Settings screen part 2">
 </figure>
