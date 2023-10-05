@@ -4,31 +4,27 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:gravity="center"
     android:padding="16dp"
     tools:context=".MainActivity">
 
     <ToggleButton
-        android:id="@+id/start_sensors_button"
+        android:id="@+id/start_stop_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textOff="@string/start_sensors"
-        android:textOn="@string/stop_sensors"
-        />
+        android:textOff="@string/start"
+        android:textOn="@string/stop" />
 
-    <ToggleButton
-        android:id="@+id/start_gps_button"
+    <Button
+        android:id="@+id/export_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textOff="@string/start_gps"
-        android:textOn="@string/stop_gps"
-        />
+        android:text="@string/export" />
 
-    <ToggleButton
-        android:id="@+id/start_camera_recording_button"
+    <Button
+        android:id="@+id/settings_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textOff="@string/start_camera"
-        android:textOn="@string/stop_camera"
-        />
+        android:text="@string/settings" />
 
 </LinearLayout>
