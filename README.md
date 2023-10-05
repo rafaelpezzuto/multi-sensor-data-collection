@@ -13,8 +13,9 @@ MultiSensor Data Collection is a mobile app that seamlessly gathers data from va
 ## Data Flow
 
 <figure>
-    <img src="prototype/data%20flow.png" alt="Applications' data flow" width="486.5" height="220.5">
+    <img src="prototype/data flow.png" alt="Applications' data flow" width="486.5" height="220.5">
 </figure>
+
 
 ## Screenshots
 
