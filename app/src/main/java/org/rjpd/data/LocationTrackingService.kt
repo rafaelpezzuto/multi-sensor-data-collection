@@ -15,6 +15,7 @@ import android.os.PowerManager.WakeLock
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
+import androidx.preference.PreferenceManager
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -86,9 +87,9 @@ class LocationTrackingService : Service() {
     }
 
     private fun startLocationUpdates() {
-        val locationRequest: LocationRequest = LocationRequest.create()
-            .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-            .setInterval(1000)
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        val gpsInterval = sharedPreferences.getInt("gps_interval", 30).toLong()
+        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, gpsInterval * 1000).build()
 
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
@@ -96,17 +97,12 @@ class LocationTrackingService : Service() {
                     return
                 }
                 for (location in locationResult.locations) {
-                    val latitude = location.latitude
-                    val latitudeString = java.lang.Double.toString(latitude)
+                    val latitude = location.latitude.toString()
+                    val longitude = location.longitude.toString()
+                    val accuracy = location.accuracy.toString()
 
-                    val longitude = location.longitude
-                    val longitudeString = java.lang.Double.toString(longitude)
-
-                    writeGeolocationData(this@LocationTrackingService, latitude, longitude)
-
-                    val txt = "$latitudeString,$longitudeString"
-
-                    Log.d("LocationTrackingService", txt)
+                    writeGeolocationData(this@LocationTrackingService, gpsInterval.toString(), accuracy, latitude, longitude)
+                    Log.d("LocationTrackingService", "$gpsInterval,$accuracy,$latitude,$longitude")
                 }
             }
         }
@@ -121,6 +117,7 @@ class LocationTrackingService : Service() {
         ) {
             return
         }
+
         fusedLocationClient.requestLocationUpdates(
             locationRequest,
             locationCallback,

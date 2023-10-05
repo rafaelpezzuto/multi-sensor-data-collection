@@ -9,17 +9,13 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.IBinder
 import android.util.Log
+import androidx.preference.PreferenceManager
 
 
 class SensorsService : Service(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
 
-    private val supportedSensors = arrayOf(
-        Sensor.TYPE_ACCELEROMETER,
-        Sensor.TYPE_GRAVITY,
-        Sensor.TYPE_GYROSCOPE,
-        Sensor.TYPE_MAGNETIC_FIELD,
-    )
+    private val supportedSensors = mutableListOf<Int>()
 
     override fun onCreate() {
         super.onCreate()
@@ -32,6 +28,24 @@ class SensorsService : Service(), SensorEventListener {
     }
 
     private fun startSensors() {
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+
+        if (sharedPreferences.getBoolean("accelerometer", false)) {
+            supportedSensors.add(Sensor.TYPE_ACCELEROMETER)
+        }
+
+        if (sharedPreferences.getBoolean("gravity", false)){
+            supportedSensors.add(Sensor.TYPE_GRAVITY)
+        }
+
+        if (sharedPreferences.getBoolean("gyroscope", false)){
+            supportedSensors.add(Sensor.TYPE_GYROSCOPE)
+        }
+
+        if (sharedPreferences.getBoolean("magnetometer", false)){
+            supportedSensors.add(Sensor.TYPE_MAGNETIC_FIELD)
+        }
+
         for (sensor in sensorManager.getSensorList(Sensor.TYPE_ALL)) {
             if (sensor.type in supportedSensors) {
                 sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL)
