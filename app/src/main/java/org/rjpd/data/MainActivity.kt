@@ -2,9 +2,9 @@ package org.rjpd.data
 
 import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.view.TextureView
 import android.widget.Button
 import android.widget.ToggleButton
 import androidx.activity.ComponentActivity
@@ -16,6 +16,9 @@ const val REQUEST_COLLECTING_DATA = 999
 
 
 class MainActivity : ComponentActivity() {
+    private lateinit var textureView: TextureView
+    private lateinit var cameraManager: CameraService
+
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +42,7 @@ class MainActivity : ComponentActivity() {
         val startStopButton = findViewById<ToggleButton>(R.id.start_stop_button)
         val exportButton = findViewById<Button>(R.id.export_button)
         val settingsButton = findViewById<Button>(R.id.settings_button)
+        val openCloseCameraButton = findViewById<ToggleButton>(R.id.open_close_camera_button)
 
         startStopButton.setOnCheckedChangeListener {_, isChecked ->
             val intentSensorsService = Intent(this@MainActivity, SensorsService::class.java)
@@ -67,25 +71,35 @@ class MainActivity : ComponentActivity() {
             // ToDo: implement export module
         }
 
+        textureView = findViewById(R.id.camera_texture_view)
+        cameraManager = CameraService(this, textureView)
+
         settingsButton.setOnClickListener {
             val intentSettings = Intent(this@MainActivity, SettingsActivity::class.java)
             startActivity(intentSettings)
         }
-    }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-        if (requestCode == REQUEST_COLLECTING_DATA) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // ToDo: research about it
+        openCloseCameraButton.setOnCheckedChangeListener {_, isChecked ->
+            if (isChecked) {
+                cameraManager.startCamera()
             } else {
-                // ToDo: research about it
+                cameraManager.closeCamera()
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        cameraManager.startBackgroundThread()
+    }
+
+    override fun onPause() {
+        try {
+            cameraManager.closeCamera()
+            cameraManager.stopBackgroundThread()
+        } catch (e: UninitializedPropertyAccessException) {
+            e.printStackTrace()
+        }
+        super.onPause()
     }
 }
