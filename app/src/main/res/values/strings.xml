@@ -42,4 +42,6 @@
     <string name="video_title">Video</string>
     <string name="video_off">The camera\'s image recording is disabled</string>
     <string name="video_on">The camera\'s image recording is enabled</string>
+    <string name="camera_on">Camera</string>
+    <string name="camera_off">Camera</string>
 </resources>
