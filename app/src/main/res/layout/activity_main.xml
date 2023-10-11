@@ -27,4 +27,16 @@
         android:layout_height="wrap_content"
         android:text="@string/settings" />
 
+    <ToggleButton
+        android:id="@+id/open_close_camera_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textOff="@string/camera_on"
+        android:textOn="@string/camera_off"/>
+
+    <TextureView
+        android:id="@+id/camera_texture_view"
+        android:layout_width="320dp"
+        android:layout_height="426dp" />
+
 </LinearLayout>
