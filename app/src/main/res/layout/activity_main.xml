@@ -1,42 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:gravity="center"
-    android:padding="16dp"
     tools:context=".MainActivity">
+
+    <androidx.camera.view.PreviewView
+        android:id="@+id/view_finder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
     <ToggleButton
         android:id="@+id/start_stop_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="90dp"
+        android:layout_height="50dp"
+        android:layout_marginBottom="25dp"
+        android:layout_marginStart="-45dp"
+        android:elevation="2dp"
         android:textOff="@string/start"
-        android:textOn="@string/stop" />
+        android:textOn="@string/stop"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/vertical_centerline" />
 
     <Button
         android:id="@+id/export_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/export" />
+        android:layout_width="90dp"
+        android:layout_height="50dp"
+        android:layout_marginBottom="25dp"
+        android:layout_marginEnd="25dp"
+        android:elevation="2dp"
+        android:text="@string/export"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/start_stop_button" />
 
     <Button
         android:id="@+id/settings_button"
+        android:layout_width="90dp"
+        android:layout_height="50dp"
+        android:layout_marginBottom="25dp"
+        android:layout_marginStart="25dp"
+        android:elevation="2dp"
+        android:text="@string/settings"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/start_stop_button"/>
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/vertical_centerline"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/settings" />
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent=".50" />
 
-    <ToggleButton
-        android:id="@+id/open_close_camera_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textOff="@string/camera_on"
-        android:textOn="@string/camera_off"/>
-
-    <TextureView
-        android:id="@+id/camera_texture_view"
-        android:layout_width="320dp"
-        android:layout_height="426dp" />
-
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
