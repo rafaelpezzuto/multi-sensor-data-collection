@@ -44,4 +44,7 @@
     <string name="video_on">The camera\'s image recording is enabled</string>
     <string name="camera_on">Camera</string>
     <string name="camera_off">Camera</string>
+    <string name="sensors">Sensors</string>
+    <string name="track_movement">Track movement</string>
+    <string name="camera_resolution">Camera resolution</string>
 </resources>
