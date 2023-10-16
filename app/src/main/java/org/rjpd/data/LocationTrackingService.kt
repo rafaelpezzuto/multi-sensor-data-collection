@@ -47,7 +47,7 @@ class LocationTrackingService : Service() {
         }
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        startLocationUpdates()
+        startLocationUpdates(intent)
 
         createNotificationChannel()
         val notification: Notification = Notification.Builder(this, CHANNEL_ID)
@@ -86,8 +86,11 @@ class LocationTrackingService : Service() {
         }
     }
 
-    private fun startLocationUpdates() {
+    private fun startLocationUpdates(intent: Intent?) {
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        val outputDir = intent?.extras!!.getString("outputDirectory", "")
+        val filename = intent?.extras!!.getString("filename", "")
+
         val gpsInterval = sharedPreferences.getInt("gps_interval", 30).toLong()
         val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, gpsInterval * 1000).build()
 
@@ -101,7 +104,14 @@ class LocationTrackingService : Service() {
                     val longitude = location.longitude.toString()
                     val accuracy = location.accuracy.toString()
 
-                    writeGeolocationData(this@LocationTrackingService, gpsInterval.toString(), accuracy, latitude, longitude)
+                    writeGeolocationData(
+                        gpsInterval.toString(),
+                        accuracy,
+                        latitude,
+                        longitude,
+                        outputDir,
+                        filename
+                    )
                     Log.d("LocationTrackingService", "$gpsInterval,$accuracy,$latitude,$longitude")
                 }
             }
