@@ -17,18 +17,24 @@ class SensorsService : Service(), SensorEventListener {
 
     private val supportedSensors = mutableListOf<Int>()
 
+    private var filename = ""
+    private var outputDir = ""
+
     override fun onCreate() {
         super.onCreate()
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        startSensors()
+        startSensors(intent)
         return super.onStartCommand(intent, flags, startId)
     }
 
-    private fun startSensors() {
+    private fun startSensors(intent: Intent?) {
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+
+        outputDir = intent?.extras!!.getString("outputDirectory", "")
+        filename = intent?.extras!!.getString("filename", "")
 
         if (sharedPreferences.getBoolean("accelerometer", false)) {
             supportedSensors.add(Sensor.TYPE_ACCELEROMETER)
@@ -69,7 +75,7 @@ class SensorsService : Service(), SensorEventListener {
             val accuracy = event?.accuracy
             val timestamp = event?.timestamp
 
-            writeSensorData(this@SensorsService, name, axisData, accuracy, timestamp)
+            writeSensorData(name, axisData, accuracy, timestamp, outputDir, filename)
             Log.d("SensorsService", "$name,$axisData,$accuracy,$timestamp")
         }
     }
