@@ -287,9 +287,9 @@ class MainActivity : AppCompatActivity() {
 
                 generateMetadata()
 
-                val zipTargetFile = getZipTargetFile(downloadOutputDirCollecting)
+                val zipTargetFilename = getZipTargetFilename(downloadOutputDirCollecting)
                 withContext(Dispatchers.IO) {
-                    zipData(downloadOutputDirCollecting, zipTargetFile)
+                    zipData(downloadOutputDirCollecting, zipTargetFilename)
                 }
             }
         }
@@ -300,9 +300,9 @@ class MainActivity : AppCompatActivity() {
         // ToDo: generate metadata.csv
     }
 
-    private fun zipData (sourceFolder: File, targetZipFile: File) {
+    private fun zipData (sourceFolder: File, targetZipFilename: String) {
         Log.d(TAG, "Compacting data...")
-        zipFolder(sourceFolder, targetZipFile)
+        zipEverything(sourceFolder, targetZipFilename)
     }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {

@@ -3,14 +3,11 @@ package org.rjpd.data
 import android.util.Log
 import java.io.BufferedWriter
 import java.io.File
-import java.io.FileOutputStream
 import java.io.FileWriter
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
 
 
 fun createSubDirectory(rootDirectory: String, subDirectory: String): File {
@@ -53,42 +50,17 @@ fun moveContent(sourceDirOrFile: File, destDir: File): Boolean {
     return true
 }
 
-fun zipFolder(sourceFolder: File, destinationZipFile: File) {
-    val fos = FileOutputStream(destinationZipFile)
-    val zos = ZipOutputStream(fos)
-    zos.setMethod(ZipOutputStream.DEFLATED)
-
-    zipDirectory(sourceFolder, sourceFolder, zos)
-
-    zos.close()
-    fos.close()
-}
-
-fun zipDirectory(baseDir: File, sourceFolder: File, zos: ZipOutputStream) {
-    val files = sourceFolder.listFiles() ?: return
-
-    for (file in files) {
-        if (file.isDirectory) {
-            zipDirectory(baseDir, File(sourceFolder, file.name), zos)
-        } else {
-            val entry = ZipEntry(baseDir.toURI().relativize(file.toURI()).path)
-            zos.putNextEntry(entry)
-
-            val fileInputStream = file.inputStream()
-            fileInputStream.copyTo(zos)
-            fileInputStream.close()
-            zos.closeEntry()
-        }
-    }
-}
-
-fun getZipTargetFile(currentOutputDir: File): File {
+fun getZipTargetFilename(currentOutputDir: File): String {
     val s = currentOutputDir.parent
     val f = currentOutputDir.name
 
     val destinationZipFile = File(s, "${f}.zip")
 
-    return destinationZipFile
+    return destinationZipFile.absolutePath
+}
+
+fun zipEverything(sourceDir: File, targetZipFilename: String) {
+    // ToDo:
 }
 
 fun writeGeolocationData(
