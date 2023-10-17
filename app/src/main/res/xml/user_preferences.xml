@@ -55,7 +55,7 @@
             app:title="@string/gps_interval_title"
             app:min="1"
             android:max="60"
-            app:seekBarIncrement="5"
+            app:seekBarIncrement="1"
             app:showSeekBarValue="true"
             app:defaultValue="15" />
     </PreferenceCategory>
