@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -30,13 +31,16 @@ import androidx.core.content.PermissionChecker
 import androidx.preference.PreferenceManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.rjpd.data.databinding.ActivityMainBinding
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 
 class MainActivity : AppCompatActivity() {
@@ -49,6 +53,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var intentLocationTrackingService: Intent
     private lateinit var intentSensorsService: Intent
+    private lateinit var intentSettings: Intent
 
     private lateinit var systemDataDirectory: File
     private lateinit var systemDataDirectoryCollecting: File
@@ -61,6 +66,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
         systemDataDirectory = getExternalFilesDir("MultiSensorDC")!!
         downloadOutputDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).resolve("MultiSensorDC")
         mediaDataDirectoryCollecting = Environment.getExternalStorageDirectory().resolve("Movies/MultiSensorDC/")
@@ -72,6 +79,7 @@ class MainActivity : AppCompatActivity() {
 
         intentSensorsService = Intent(this@MainActivity, SensorsService::class.java)
         intentLocationTrackingService = Intent(this@MainActivity, LocationTrackingService::class.java)
+        intentSettings = Intent(this@MainActivity, SettingsActivity::class.java)
 
         if (allPermissionsGranted()){
             startCamera()
@@ -85,73 +93,23 @@ class MainActivity : AppCompatActivity() {
 
         viewBinding.startStopButton.setOnCheckedChangeListener {_, isChecked ->
             if (isChecked) {
-                filename = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
-                    .format(System.currentTimeMillis())
-
-                systemDataDirectoryCollecting = createSubDirectory(systemDataDirectory.absolutePath, filename)
-                downloadOutputDirCollecting = createSubDirectory(downloadOutputDir.absolutePath, filename)
-
-                intentSensorsService.putExtra("outputDirectory", systemDataDirectoryCollecting.absolutePath)
-                intentSensorsService.putExtra("filename", filename)
-                intentLocationTrackingService.putExtra("outputDirectory", systemDataDirectoryCollecting.absolutePath)
-                intentLocationTrackingService.putExtra("filename", filename)
-
-                if (sharedPreferences.getBoolean("sensors", false)) {
-                    startService(intentSensorsService)
-                }
-
-                if (sharedPreferences.getBoolean("gps", false)) {
-                    startService(intentLocationTrackingService)
-                }
-
-                captureVideo(filename)
-                updateButtonsState()
+                viewBinding.settingsButton.isEnabled = false
+                viewBinding.exportButton.isEnabled = false
+                startDataCollecting()
             } else {
-                if (sharedPreferences.getBoolean("sensors", false)) {
-                    stopService(intentSensorsService)
-                }
-
-                if (sharedPreferences.getBoolean("gps", false)) {
-                    stopService(intentLocationTrackingService)
-                }
-
-                recording?.stop()
-
-                Toast.makeText(
-                    this,
-                    "Preparing data for exporting...",
-                    Toast.LENGTH_SHORT
-                ).show()
-
-                CoroutineScope(Dispatchers.Main).launch {
-                    viewBinding.startStopButton.isEnabled = false
-                    while (!mediaDataDirectoryCollecting.resolve("${filename}.mp4").exists()) {
-                        delay(500)
-                    }
-                    moveContent(systemDataDirectoryCollecting, downloadOutputDirCollecting)
-                    moveContent(
-                        mediaDataDirectoryCollecting.resolve("${filename}.mp4"),
-                        downloadOutputDirCollecting
-                    )
-                    updateButtonsState()
-                    viewBinding.startStopButton.isEnabled = true
-
-                    Toast.makeText(
-                        this@MainActivity,
-                        "Done",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
+                stopDataCollecting()
             }
         }
 
         viewBinding.settingsButton.setOnClickListener {
-            startActivity(Intent(this@MainActivity, SettingsActivity::class.java))
+            startActivity(intentSettings)
         }
 
         viewBinding.exportButton.setOnClickListener {
-            // ToDo: compactar diretorio downloadOutputDirCollecting
+            // ToDo: create exporting function
         }
+
+        cameraExecutor = Executors.newSingleThreadExecutor()
     }
 
     override fun onDestroy() {
@@ -159,6 +117,20 @@ class MainActivity : AppCompatActivity() {
         cameraExecutor.shutdown()
         stopService(intentLocationTrackingService)
         stopService(intentSensorsService)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Log.d(TAG, "A pause has been detected")
+
+        if (recording != null) {
+            viewBinding.exportButton.isEnabled = true
+        }
+
+        viewBinding.startStopButton.isEnabled = true
+        viewBinding.startStopButton.text = getText(R.string.start)
+        viewBinding.startStopButton.isChecked = false
+        viewBinding.settingsButton.isEnabled = true
     }
 
     private fun startCamera() {
@@ -172,14 +144,12 @@ class MainActivity : AppCompatActivity() {
                 .also {
                     it.setSurfaceProvider(viewBinding.viewFinder.surfaceProvider)
                 }
-
             val recorder = Recorder.Builder()
                 .setQualitySelector(
                     QualitySelector.from(
-                        Quality.FHD,
+                        Quality.HD,
                         FallbackStrategy.higherQualityOrLowerThan(Quality.SD))
-                )
-                .build()
+                ).build()
             videoCapture = VideoCapture.withOutput(recorder)
 
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
@@ -199,14 +169,13 @@ class MainActivity : AppCompatActivity() {
         }, ContextCompat.getMainExecutor(this))
     }
 
-    private fun captureVideo(filename: String) {
+    private fun startVideoRecording(filename: String) {
         val videoCapture = this.videoCapture ?: return
 
         val curRecording = recording
         if (curRecording != null) {
             curRecording.stop()
             recording = null
-            return
         }
 
         val contentValues = ContentValues().apply {
@@ -233,16 +202,12 @@ class MainActivity : AppCompatActivity() {
             .start(ContextCompat.getMainExecutor(this)) { recordEvent ->
                 when(recordEvent) {
                     is VideoRecordEvent.Start -> {
-                        viewBinding.startStopButton.apply {
-                            text = getString(R.string.stop)
-                            isEnabled = true
-                        }
+                        Log.d(TAG, "The video camera recording has been initialized")
                     }
                     is VideoRecordEvent.Finalize -> {
                         if (!recordEvent.hasError()) {
                             val msg = "Data capture succeeded: " +
                                     "${recordEvent.outputResults.outputUri}"
-                            Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
                             Log.d(TAG, msg)
                         } else {
                             recording?.close()
@@ -250,19 +215,94 @@ class MainActivity : AppCompatActivity() {
                             Log.e(TAG, "Video capture ends with error: " +
                                     "${recordEvent.error}")
                         }
-
-                        viewBinding.startStopButton.apply {
-                            text = getString(R.string.start)
-                            isEnabled = true
-                        }
+                        viewBinding.startStopButton.isEnabled = false
                     }
                 }
             }
     }
 
-    private fun updateButtonsState() {
-        viewBinding.exportButton.isEnabled = !viewBinding.exportButton.isEnabled
-        viewBinding.settingsButton.isEnabled = !viewBinding.settingsButton.isEnabled
+    private fun startDataCollecting() {
+        filename = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
+            .format(System.currentTimeMillis())
+
+        systemDataDirectoryCollecting = createSubDirectory(systemDataDirectory.absolutePath, filename)
+        downloadOutputDirCollecting = createSubDirectory(downloadOutputDir.absolutePath, filename)
+
+        intentSensorsService.putExtra("outputDirectory", systemDataDirectoryCollecting.absolutePath)
+        intentSensorsService.putExtra("filename", filename)
+        intentLocationTrackingService.putExtra("outputDirectory", systemDataDirectoryCollecting.absolutePath)
+        intentLocationTrackingService.putExtra("filename", filename)
+
+        if (sharedPreferences.getBoolean("sensors", false)) {
+            startService(intentSensorsService)
+        }
+
+        if (sharedPreferences.getBoolean("gps", false)) {
+            startService(intentLocationTrackingService)
+        }
+
+        startVideoRecording(filename)
+    }
+
+    private fun stopDataCollecting() {
+        if (sharedPreferences.getBoolean("sensors", true)) {
+            stopService(intentSensorsService)
+        }
+
+        if (sharedPreferences.getBoolean("gps", true)) {
+            stopService(intentLocationTrackingService)
+        }
+
+        recording?.stop()
+        recording = null
+
+        Toast.makeText(
+            this,
+            "Organizing data...",
+            Toast.LENGTH_SHORT
+        ).show()
+
+        CoroutineScope(Dispatchers.Main).launch {
+            while (!mediaDataDirectoryCollecting.resolve("${filename}.mp4").exists()) {
+                delay(500)
+            }
+
+            val moveJob = async(Dispatchers.IO) {
+                moveContent(systemDataDirectoryCollecting, downloadOutputDirCollecting)
+                moveContent(mediaDataDirectoryCollecting.resolve("${filename}.mp4"), downloadOutputDirCollecting)
+            }
+
+            val moveJobResult = moveJob.await()
+
+            if (moveJobResult) {
+                Toast.makeText(
+                    this@MainActivity,
+                    "Done",
+                    Toast.LENGTH_SHORT
+                ).show()
+
+                viewBinding.startStopButton.isEnabled = true
+                viewBinding.exportButton.isEnabled = true
+                viewBinding.settingsButton.isEnabled = true
+
+                generateMetadata()
+
+                val zipTargetFilename = getZipTargetFilename(downloadOutputDirCollecting)
+                withContext(Dispatchers.IO) {
+                    zipData(downloadOutputDirCollecting, zipTargetFilename)
+                }
+            }
+        }
+    }
+
+    private fun generateMetadata() {
+        Log.d(TAG, "Generating metadata...")
+        // ToDo: generate metadata.csv
+    }
+
+    private fun zipData (sourceFolder: File, targetZipFilename: String) {
+        Log.d(TAG, "Compacting data...")
+        zipEverything(sourceFolder, targetZipFilename)
     }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {

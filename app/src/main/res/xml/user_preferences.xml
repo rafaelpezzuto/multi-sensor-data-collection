@@ -39,7 +39,6 @@
             app:summaryOff="@string/magnetometer_off"
             app:summaryOn="@string/magnetometer_on"
             app:title="@string/magnetometer_title" />
-
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/geolocation_preference_category">
@@ -50,15 +49,43 @@
             app:summaryOn="@string/gps_on"
             app:title="@string/gps_title" />
 
-        <androidx.preference.SeekBarPreference
+        <SeekBarPreference
             app:dependency="gps"
             app:key="gps_interval"
             app:title="@string/gps_interval_title"
             app:min="1"
             android:max="60"
-            app:seekBarIncrement="5"
+            app:seekBarIncrement="1"
             app:showSeekBarValue="true"
             app:defaultValue="15" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="Camera settings" app:isPreferenceVisible="false">
+        <ListPreference
+            app:key="camera"
+            app:title="Choose a camera configuration"
+            app:summary="%s">
+        </ListPreference>
+
+        <Preference
+            android:key="camera_id"
+            android:title="Camera ID"
+            app:isPreferenceVisible="false" />
+
+        <Preference
+            android:key="camera_resolution"
+            android:title="Camera resolution"
+            app:isPreferenceVisible="false" />
+
+        <Preference
+            android:key="camera_fps"
+            android:title="Camera FPS"
+            app:isPreferenceVisible="false" />
+
+        <Preference
+            android:key="camera_lens_facing"
+            android:title="Camera Lens Facing"
+            app:isPreferenceVisible="false" />
 
     </PreferenceCategory>
 

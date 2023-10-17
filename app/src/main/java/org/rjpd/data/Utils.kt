@@ -1,5 +1,6 @@
 package org.rjpd.data
 
+import android.util.Log
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
@@ -20,9 +21,10 @@ fun createSubDirectory(rootDirectory: String, subDirectory: String): File {
     return directory
 }
 
-fun moveContent(sourceDirOrFile: File, destDir: File) {
+fun moveContent(sourceDirOrFile: File, destDir: File): Boolean {
     if (!sourceDirOrFile.exists()) {
-        return
+        Log.d("MultiSensorDataCollector", "$sourceDirOrFile does not exist")
+        return false
     }
 
     if (!destDir.exists()) {
@@ -32,6 +34,7 @@ fun moveContent(sourceDirOrFile: File, destDir: File) {
     if (sourceDirOrFile.isDirectory) {
         val files = sourceDirOrFile.listFiles()
         for (file in files) {
+            Log.d("MultiSensorDataCollector", "Moving file ${file.absolutePath}")
             val destFile = File(destDir, file.name)
             if (file.isDirectory) {
                 moveContent(file, destFile)
@@ -43,6 +46,21 @@ fun moveContent(sourceDirOrFile: File, destDir: File) {
         val destFile = File(destDir, sourceDirOrFile.name)
         sourceDirOrFile.renameTo(destFile)
     }
+
+    return true
+}
+
+fun getZipTargetFilename(currentOutputDir: File): String {
+    val s = currentOutputDir.parent
+    val f = currentOutputDir.name
+
+    val destinationZipFile = File(s, "${f}.zip")
+
+    return destinationZipFile.absolutePath
+}
+
+fun zipEverything(sourceDir: File, targetZipFilename: String) {
+    // ToDo: method responsible for compressing everything inside the directory sourceDir
 }
 
 fun writeGeolocationData(
