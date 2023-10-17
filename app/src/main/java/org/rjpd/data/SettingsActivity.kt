@@ -32,8 +32,8 @@ class SettingsActivity : AppCompatActivity() {
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             setPreferencesFromResource(R.xml.user_preferences, rootKey)
 
-//            val cameraManager = requireContext().getSystemService(Context.CAMERA_SERVICE) as CameraManager
-//            setCameras(cameraManager)
+            val cameraManager = requireContext().getSystemService(Context.CAMERA_SERVICE) as CameraManager
+            setCameras(cameraManager)
         }
 
         private fun setCameras(cameraManager: CameraManager) {
