@@ -60,7 +60,7 @@ fun getZipTargetFilename(currentOutputDir: File): String {
 }
 
 fun zipEverything(sourceDir: File, targetZipFilename: String) {
-    // ToDo:
+    // ToDo: method responsible for compressing everything inside the directory sourceDir
 }
 
 fun writeGeolocationData(
