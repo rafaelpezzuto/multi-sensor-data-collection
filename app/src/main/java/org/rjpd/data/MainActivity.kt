@@ -2,9 +2,11 @@ package org.rjpd.data
 
 import android.Manifest
 import android.content.ContentValues
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.hardware.SensorManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -35,6 +37,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import org.rjpd.data.databinding.ActivityMainBinding
 import java.io.File
 import java.text.SimpleDateFormat
@@ -267,6 +270,8 @@ class MainActivity : AppCompatActivity() {
                 delay(500)
             }
 
+            generateMetadata()
+
             val moveJob = async(Dispatchers.IO) {
                 moveContent(systemDataDirectoryCollecting, downloadOutputDirCollecting)
                 moveContent(mediaDataDirectoryCollecting.resolve("${filename}.mp4"), downloadOutputDirCollecting)
@@ -285,8 +290,6 @@ class MainActivity : AppCompatActivity() {
                 viewBinding.exportButton.isEnabled = true
                 viewBinding.settingsButton.isEnabled = true
 
-                generateMetadata()
-
                 val zipTargetFilename = getZipTargetFilename(downloadOutputDirCollecting)
                 withContext(Dispatchers.IO) {
                     zipData(downloadOutputDirCollecting, zipTargetFilename)
@@ -296,8 +299,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun generateMetadata() {
+        val sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         Log.d(TAG, "Generating metadata...")
-        // ToDo: generate metadata.csv
+        val deviceInfo = getDeviceInfo()
+        val sensorInfo = getSensorInfo(sensorManager)
+        val metadataContent = JSONObject()
+        metadataContent.put("DeviceInfo", deviceInfo)
+        metadataContent.put("SensorInfo", sensorInfo)
+
+        Log.d(TAG, "Metadata $systemDataDirectoryCollecting.absolutePath $metadataContent")
+        saveInfoToJson(File(systemDataDirectoryCollecting.absolutePath).toString(), metadataContent)
+        Toast.makeText(this, "Data export done", Toast.LENGTH_SHORT).show()
     }
 
     private fun zipData (sourceFolder: File, targetZipFilename: String) {

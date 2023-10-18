@@ -10,12 +10,15 @@ import android.hardware.SensorManager
 import android.os.IBinder
 import android.util.Log
 import androidx.preference.PreferenceManager
+import org.json.JSONArray
+import java.io.File
 
 
 class SensorsService : Service(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
 
     private val supportedSensors = mutableListOf<Int>()
+    private val sensorDataPath: MutableMap<Int, File> = mutableMapOf()
 
     private var filename = ""
     private var outputDir = ""
@@ -38,18 +41,22 @@ class SensorsService : Service(), SensorEventListener {
 
         if (sharedPreferences.getBoolean("accelerometer", false)) {
             supportedSensors.add(Sensor.TYPE_ACCELEROMETER)
+            sensorDataPath[Sensor.TYPE_ACCELEROMETER] = File(outputDir, "${filename}.accelerometer.csv")
         }
 
         if (sharedPreferences.getBoolean("gravity", false)){
             supportedSensors.add(Sensor.TYPE_GRAVITY)
+            sensorDataPath[Sensor.TYPE_GRAVITY] = File(outputDir, "${filename}.gravity.csv")
         }
 
         if (sharedPreferences.getBoolean("gyroscope", false)){
             supportedSensors.add(Sensor.TYPE_GYROSCOPE)
+            sensorDataPath[Sensor.TYPE_GYROSCOPE] = File(outputDir, "${filename}.gyroscope.csv")
         }
 
         if (sharedPreferences.getBoolean("magnetometer", false)){
             supportedSensors.add(Sensor.TYPE_MAGNETIC_FIELD)
+            sensorDataPath[Sensor.TYPE_MAGNETIC_FIELD] = File(outputDir, "${filename}.magnetic_field.csv")
         }
 
         for (sensor in sensorManager.getSensorList(Sensor.TYPE_ALL)) {
@@ -75,8 +82,11 @@ class SensorsService : Service(), SensorEventListener {
             val accuracy = event?.accuracy
             val timestamp = event?.timestamp
 
-            writeSensorData(name, axisData, accuracy, timestamp, outputDir, filename)
-            Log.d("SensorsService", "$name,$axisData,$accuracy,$timestamp")
+            if (event?.sensor?.type in sensorDataPath.keys) {
+                Log.d("SensorsService", "$sensorDataPath, $event?.sensor?.type")
+                writeSensorData(name, axisData, accuracy, timestamp, sensorDataPath[event?.sensor?.type].toString())
+            }
+            Log.d("SensorsService", "$name,$axisData,$accuracy,$timestamp, $sensorDataPath")
         }
     }
 

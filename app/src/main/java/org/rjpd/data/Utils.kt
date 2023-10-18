@@ -1,6 +1,11 @@
 package org.rjpd.data
 
+import android.hardware.Sensor
+import android.hardware.SensorManager
+import android.os.Build
 import android.util.Log
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
@@ -90,18 +95,54 @@ fun writeSensorData(
     axisData: String?,
     accuracy: Int?,
     timestamp: Long?,
-    outputDir: String,
-    filename: String,
+    filename: String?,
 ) {
     val fmtDate = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS", Locale.getDefault()).format(Date())
 
     val line = "$fmtDate,$name,$axisData,$accuracy,$timestamp\n"
 
     try {
-        val file = File(outputDir, "${filename}.sensors.csv")
-        val writer = BufferedWriter(FileWriter(file, true))
+        val writer = BufferedWriter(FileWriter(filename, true))
         writer.append(line)
         writer.close()
+    } catch (e: IOException) {
+        e.printStackTrace()
+    }
+}
+
+fun getDeviceInfo(): JSONObject {
+    val deviceInfo = JSONObject()
+    deviceInfo.put("DeviceModel", Build.MODEL)
+    deviceInfo.put("FirmwareVersion", Build.VERSION.RELEASE)
+    deviceInfo.put("SoftwareVersion", Build.VERSION.SDK_INT)
+    deviceInfo.put("AndroidVersion", Build.VERSION.RELEASE)
+    Log.d("SensorsService", "$deviceInfo")
+    return deviceInfo
+}
+
+fun getSensorInfo(sensorManager: SensorManager): JSONArray {
+    val sensorArray = JSONArray()
+    for (sensor in sensorManager.getSensorList(Sensor.TYPE_ALL)) {
+        val sensorObj = JSONObject()
+        sensorObj.put("Sensor Name", sensor.name)
+        sensorObj.put("Type", sensor.type)
+        sensorObj.put("Device Manufacturer", sensor.vendor)
+        sensorObj.put("Version", sensor.version)
+        sensorObj.put("Resolution", sensor.resolution)
+        sensorObj.put("Power", sensor.power)
+
+        sensorArray.put(sensorObj)
+        Log.d("SensorsService", "$sensorObj")
+    }
+    return sensorArray
+}
+
+fun saveInfoToJson(file: String, info: JSONObject) {
+    try {
+        val file = File(file, "metadata.json")
+        val fileWriter = FileWriter(file)
+        fileWriter.write(info.toString())
+        fileWriter.close()
     } catch (e: IOException) {
         e.printStackTrace()
     }
