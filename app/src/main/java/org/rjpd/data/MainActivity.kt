@@ -46,6 +46,7 @@ import java.util.concurrent.Executors
 class MainActivity : AppCompatActivity() {
     private lateinit var viewBinding: ActivityMainBinding
     private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var infoUtils: InfoUtils
 
     private lateinit var cameraExecutor: ExecutorService
     private var videoCapture: VideoCapture<Recorder>? = null
@@ -76,6 +77,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(viewBinding.root)
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        infoUtils = InfoUtils(this)
 
         intentSensorsService = Intent(this@MainActivity, SensorsService::class.java)
         intentLocationTrackingService = Intent(this@MainActivity, LocationTrackingService::class.java)
@@ -330,7 +332,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        private const val TAG = "MultiSensorDataCollector"
+        private const val TAG = "MultiSensorDataCollection"
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS =
