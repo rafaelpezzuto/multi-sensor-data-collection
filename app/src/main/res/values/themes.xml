@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.MultiSensorDataCollector" parent="android:Theme.Material.NoActionBar.Fullscreen" />
+    <style name="Theme.MultiSensorDataCollection" parent="android:Theme.Material.NoActionBar.Fullscreen" />
 </resources>

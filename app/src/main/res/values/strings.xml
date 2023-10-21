@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">MultiSensor Data Collector</string>
+    <string name="app_name">MultiSensor Data Collection</string>
 
     <string name="start">Start</string>
     <string name="stop">Stop</string>
