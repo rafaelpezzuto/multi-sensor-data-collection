@@ -54,7 +54,9 @@ class SensorsService : Service(), SensorEventListener {
 
         for (sensor in sensorManager.getSensorList(Sensor.TYPE_ALL)) {
             if (sensor.type in supportedSensors) {
-                sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL)
+                val sensorDelay = sharedPreferences.getString("sensors_sr", SensorManager.SENSOR_DELAY_NORMAL.toString())!!.toInt()
+                Log.d("SensorsService", "Added sensor ${sensor.name} with sampling rate $sensorDelay (microseconds)")
+                sensorManager.registerListener(this, sensor, sensorDelay)
             }
         }
     }

@@ -8,6 +8,15 @@
             app:title="@string/sensors_preference_category"
             app:summary="@string/track_movement" />
 
+        <ListPreference
+            android:dependency="sensors"
+            app:key="sensors_sr"
+            app:title="@string/sensors_sampling_rate"
+            android:entries="@array/sensors_sr"
+            android:entryValues="@array/sensors_sr_values"
+            android:defaultValue="3"
+            app:summary="%s" />
+
         <SwitchPreferenceCompat
             android:dependency="sensors"
             app:defaultValue="true"
