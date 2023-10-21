@@ -72,13 +72,13 @@ class SensorsService : Service(), SensorEventListener {
 
     override fun onSensorChanged(event: SensorEvent?) {
         if (event?.sensor?.type in supportedSensors) {
-            val axisData = event?.values?.joinToString(",") { "${it}" }
             val name = event?.sensor?.name
-            val accuracy = event?.accuracy
+            val axisData = event?.values?.joinToString(",") { "${it}" }
             val timestamp = event?.timestamp
+            val accuracy = event?.accuracy
 
-            writeSensorData(name, axisData, accuracy, timestamp, outputDir, filename)
-            Log.d("SensorsService", "$name,$axisData,$accuracy,$timestamp")
+            writeSensorData(name, axisData, timestamp, accuracy, outputDir, filename)
+            Log.d("SensorsService", "$name,$axisData,$timestamp,$accuracy")
         }
     }
 

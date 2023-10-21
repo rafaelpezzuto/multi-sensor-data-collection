@@ -62,6 +62,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var downloadOutputDirCollecting: File
     private lateinit var mediaDataDirectoryCollecting: File
     private lateinit var filename: String
+    private lateinit var stopDatetime: String
 
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -258,6 +259,9 @@ class MainActivity : AppCompatActivity() {
         recording?.stop()
         recording = null
 
+        stopDatetime = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
+            .format(System.currentTimeMillis())
+
         Toast.makeText(
             this,
             "Organizing data...",
@@ -287,6 +291,7 @@ class MainActivity : AppCompatActivity() {
                 viewBinding.exportButton.isEnabled = true
                 viewBinding.settingsButton.isEnabled = true
 
+                Log.d(TAG, "Generating metadata...")
                 generateMetadata()
 
                 val zipTargetFilename = getZipTargetFilename(downloadOutputDirCollecting)
@@ -299,7 +304,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun generateMetadata() {
         Log.d(TAG, "Generating metadata...")
-        // ToDo: generate metadata.csv
+        writeMetadataFile(
+            sharedPreferences.all,
+            resources.displayMetrics,
+            infoUtils.getAvailableSensors(),
+            infoUtils.getAvailableCameraConfigurations(),
+            filename,
+            stopDatetime,
+            downloadOutputDirCollecting,
+            filename,
+        )
     }
 
     private fun zipData (sourceFolder: File, targetZipFilename: String) {
