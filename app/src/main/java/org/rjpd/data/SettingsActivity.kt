@@ -1,11 +1,9 @@
 package org.rjpd.data
 
 import android.content.Context
-import android.graphics.SurfaceTexture
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.os.Bundle
-import android.util.Log
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.ListPreference
@@ -32,44 +30,13 @@ class SettingsActivity : AppCompatActivity() {
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             setPreferencesFromResource(R.xml.user_preferences, rootKey)
 
+            val infoUtils = InfoUtils(requireContext())
             val cameraManager = requireContext().getSystemService(Context.CAMERA_SERVICE) as CameraManager
-            setCameras(cameraManager)
+            setCameras(cameraManager, infoUtils)
         }
 
-        private fun setCameras(cameraManager: CameraManager) {
-            val cameraConfigurations = ArrayList<CameraConfiguration>()
-
-            for (cameraId in cameraManager.cameraIdList) {
-                val characteristics = cameraManager.getCameraCharacteristics(cameraId)
-                val sizes = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)?.getOutputSizes(
-                    SurfaceTexture::class.java)
-                val fpsRanges = characteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
-                val lensFacing = characteristics.get(CameraCharacteristics.LENS_FACING)
-
-                for (i in sizes!!.indices) {
-                    val size = sizes[i]
-                    val width = size.width
-                    val height = size.height
-
-                    try {
-                        val fpsRange = fpsRanges?.get(i)
-                        val averageFps = (fpsRange!!.lower + fpsRange.upper) / 2
-
-                        val cc = CameraConfiguration(
-                            cameraId = cameraId,
-                            resolutionWidth = width,
-                            resolutionHeight = height,
-                            averageFps = averageFps,
-                            lensFacing = lensFacing!!)
-
-                        cameraConfigurations.add(cc)
-                        Log.d("MultiSensorDataCollector", cc.getLabel())
-
-                    } catch (exc: ArrayIndexOutOfBoundsException) {
-                        //
-                    }
-                }
-            }
+        private fun setCameras(cameraManager: CameraManager, infoUtils: InfoUtils) {
+            val cameraConfigurations = infoUtils.getAvailableCameraConfigurations()
 
             val cameraPreference = findPreference<ListPreference>("camera")
             cameraPreference?.entries = cameraConfigurations.map { it.getLabel() }.toTypedArray()

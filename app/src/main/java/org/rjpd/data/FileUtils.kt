@@ -1,5 +1,7 @@
 package org.rjpd.data
 
+import android.os.Build
+import android.util.DisplayMetrics
 import android.util.Log
 import java.io.BufferedWriter
 import java.io.File
@@ -8,6 +10,7 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import org.json.JSONObject
 
 
 fun createSubDirectory(rootDirectory: String, subDirectory: String): File {
@@ -23,7 +26,7 @@ fun createSubDirectory(rootDirectory: String, subDirectory: String): File {
 
 fun moveContent(sourceDirOrFile: File, destDir: File): Boolean {
     if (!sourceDirOrFile.exists()) {
-        Log.d("MultiSensorDataCollector", "$sourceDirOrFile does not exist")
+        Log.d("FileUtils", "$sourceDirOrFile does not exist")
         return false
     }
 
@@ -34,7 +37,7 @@ fun moveContent(sourceDirOrFile: File, destDir: File): Boolean {
     if (sourceDirOrFile.isDirectory) {
         val files = sourceDirOrFile.listFiles()
         for (file in files) {
-            Log.d("MultiSensorDataCollector", "Moving file ${file.absolutePath}")
+            Log.d("FileUtils", "Moving file ${file.absolutePath}")
             val destFile = File(destDir, file.name)
             if (file.isDirectory) {
                 moveContent(file, destFile)
@@ -88,19 +91,62 @@ fun writeGeolocationData(
 fun writeSensorData(
     name: String?,
     axisData: String?,
-    accuracy: Int?,
     timestamp: Long?,
+    accuracy: Int?,
     outputDir: String,
     filename: String,
 ) {
     val fmtDate = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS", Locale.getDefault()).format(Date())
 
-    val line = "$fmtDate,$name,$axisData,$accuracy,$timestamp\n"
+    val line = "$fmtDate,$name,$axisData,$timestamp,$accuracy\n"
 
     try {
         val file = File(outputDir, "${filename}.sensors.csv")
         val writer = BufferedWriter(FileWriter(file, true))
         writer.append(line)
+        writer.close()
+    } catch (e: IOException) {
+        e.printStackTrace()
+    }
+}
+
+fun writeMetadataFile(
+    preferencesData: MutableMap<String, *>,
+    displayMetrics: DisplayMetrics,
+    sensorsData: Map<String, Any>,
+    cameraConfigurationsData: ArrayList<CameraConfiguration>,
+    startDatetime: String,
+    stopDatetime: String,
+    outputDir: File,
+    filename: String,
+) {
+    val metadata = mutableMapOf<String, Any>()
+    metadata["preferences"] = preferencesData.toMutableMap()
+
+    metadata["start_time"] = startDatetime
+    metadata["stop_time"] = stopDatetime
+
+    metadata["device"] = mutableMapOf(
+        "model" to Build.MODEL,
+        "manufacturer" to Build.MANUFACTURER,
+        "android_version" to Build.VERSION.SDK_INT,
+        "screen" to mutableMapOf(
+            "screenWidthPixels" to displayMetrics.widthPixels,
+            "screenHeightPixels" to displayMetrics.heightPixels,
+            "screenDensity" to displayMetrics.density,
+            "screenDpi" to displayMetrics.densityDpi,
+        ),
+        "sensors" to sensorsData.toMutableMap(),
+        "cameras" to cameraConfigurationsData.map { it.toString() },
+    )
+
+    val metadataString = JSONObject(metadata as Map<*, *>?).toString()
+    Log.d("FileUtils", metadataString)
+
+    try {
+        val file = File(outputDir, "${filename}.metadata.json")
+        val writer = BufferedWriter(FileWriter(file, false))
+        writer.write(metadataString)
         writer.close()
     } catch (e: IOException) {
         e.printStackTrace()

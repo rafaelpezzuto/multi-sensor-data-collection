@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">MultiSensor Data Collector</string>
+    <string name="app_name">MultiSensor Data Collection</string>
 
     <string name="start">Start</string>
     <string name="stop">Stop</string>
@@ -7,9 +7,12 @@
     <string name="camera">Camera</string>
     <string name="export">Export</string>
 
+    <string name="data_label">Select a label that represents the data to be captured</string>
+
     <string name="title_activity_settings">Settings</string>
 
     <string name="sensors_preference_category">Movement sensors</string>
+    <string name="sensors_sampling_rate">Choose a sensor sampling rate configuration</string>
 
     <string name="accelerometer_title">Accelerometer sensor</string>
     <string name="accelerometer_off">The accelerometer is disabled</string>

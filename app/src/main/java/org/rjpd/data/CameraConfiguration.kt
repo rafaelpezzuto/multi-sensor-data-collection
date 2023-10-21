@@ -21,4 +21,8 @@ class CameraConfiguration(
     fun getUniqueId(): String {
         return "${cameraId}_${lensFacing}_${resolutionWidth}x${resolutionHeight}@${averageFps}"
     }
+
+    override fun toString(): String {
+        return getLabel()
+    }
 }

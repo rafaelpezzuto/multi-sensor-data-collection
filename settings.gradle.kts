@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "MultiSensor Data Collector"
+rootProject.name = "MultiSensor Data Collection"
 include(":app")
