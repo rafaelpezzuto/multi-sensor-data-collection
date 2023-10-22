@@ -50,4 +50,5 @@
     <string name="sensors">Sensors</string>
     <string name="track_movement">Track movement</string>
     <string name="camera_resolution">Camera resolution</string>
+    <string name="timer_zero">00:00:00</string>
 </resources>
