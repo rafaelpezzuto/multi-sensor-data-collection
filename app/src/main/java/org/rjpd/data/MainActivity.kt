@@ -127,7 +127,8 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "A pause has been detected")
 
         if (recording != null) {
-            viewBinding.exportButton.isEnabled = true
+            // ToDo: create and activate the exporting method
+            //  viewBinding.exportButton.isEnabled = true
         }
 
         viewBinding.startStopButton.isEnabled = true
@@ -288,7 +289,9 @@ class MainActivity : AppCompatActivity() {
                 ).show()
 
                 viewBinding.startStopButton.isEnabled = true
-                viewBinding.exportButton.isEnabled = true
+                // ToDo: create and activate the exporting method
+                //  viewBinding.exportButton.isEnabled = true
+
                 viewBinding.settingsButton.isEnabled = true
 
                 Log.d(TAG, "Generating metadata...")
