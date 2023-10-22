@@ -47,6 +47,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewBinding: ActivityMainBinding
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var infoUtils: InfoUtils
+    private lateinit var timeUtils: TimeUtils
 
     private lateinit var cameraExecutor: ExecutorService
     private var videoCapture: VideoCapture<Recorder>? = null
@@ -79,6 +80,7 @@ class MainActivity : AppCompatActivity() {
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         infoUtils = InfoUtils(this)
+        timeUtils = TimeUtils(viewBinding.clockTextview)
 
         intentSensorsService = Intent(this@MainActivity, SensorsService::class.java)
         intentLocationTrackingService = Intent(this@MainActivity, LocationTrackingService::class.java)
@@ -226,6 +228,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startDataCollecting() {
+        timeUtils.startTimer()
+
         filename = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
             .format(System.currentTimeMillis())
 
@@ -249,6 +253,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun stopDataCollecting() {
+        timeUtils.stopTimer()
+
         if (sharedPreferences.getBoolean("sensors", true)) {
             stopService(intentSensorsService)
         }
