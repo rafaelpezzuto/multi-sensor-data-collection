@@ -1,4 +1,4 @@
-package org.rjpd.data
+package org.rjpd.msdc
 
 import android.content.Context
 import android.content.Intent

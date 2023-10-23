@@ -1,4 +1,4 @@
-package org.rjpd.data
+package org.rjpd.msdc
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

@@ -1,4 +1,4 @@
-package org.rjpd.data.ui.theme
+package org.rjpd.msdc.ui.theme
 
 import android.app.Activity
 import android.os.Build

@@ -1,4 +1,4 @@
-package org.rjpd.data
+package org.rjpd.msdc
 
 import android.os.Handler
 import android.widget.TextView

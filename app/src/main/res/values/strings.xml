@@ -54,6 +54,6 @@
     <string name="timer_zero">00:00:00</string>
     <string name="preference_about_us">About us</string>
     <string name="preference_about_information_summary">Application information</string>
-    <string name="about_app_description">MultiSensor Data Collection is a mobile app that seamlessly gathers data from various sensors, including GPS, camera, and audio, allowing you to create a comprehensive dataset locally and effortlessly transmit it to the cloud for further analysis and storage.\n\nAuthor: rafael.damaceno@ime.usp.br\n\nVersion number: 0.1.0\n\nSite: https://github.com/rafaelpezzuto/multi-sensor-data-collection</string>
+    <string name="about_app_description">MultiSensor Data Collection is a mobile app that seamlessly gathers data from various sensors, including GPS, camera, and audio, allowing you to create a comprehensive dataset locally and effortlessly transmit it to the cloud for further analysis and storage.\n\nAuthor: rafael.damaceno@ime.usp.br\n\nVersion number: 0.1.0\n\nPrivacy policy: https://github.com/rafaelpezzuto/multi-sensor-data-collection/blob/main/privacy-policy.md\n\nSource code: https://github.com/rafaelpezzuto/multi-sensor-data-collection</string>
     <string name="about_app_close">Close</string>
 </resources>
