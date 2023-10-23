@@ -52,6 +52,10 @@
             android:name=".SensorsService"
             android:exported="false" />
 
+        <service
+            android:name=".ConsumptionService"
+            android:exported="false" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
