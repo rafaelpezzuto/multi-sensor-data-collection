@@ -115,6 +115,7 @@ fun writeMetadataFile(
     displayMetrics: DisplayMetrics,
     sensorsData: Map<String, Any>,
     cameraConfigurationsData: ArrayList<CameraConfiguration>,
+    category: String,
     startDatetime: String,
     stopDatetime: String,
     outputDir: File,
@@ -125,6 +126,7 @@ fun writeMetadataFile(
 
     metadata["start_time"] = startDatetime
     metadata["stop_time"] = stopDatetime
+    metadata["category"] = category
 
     metadata["device"] = mutableMapOf(
         "model" to Build.MODEL,

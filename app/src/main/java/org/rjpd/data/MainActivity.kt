@@ -8,9 +8,14 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import android.util.Log
+import android.view.View
 import android.view.WindowManager
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -81,7 +86,7 @@ class MainActivity : AppCompatActivity() {
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         infoUtils = InfoUtils(this)
-        timeUtils = TimeUtils(viewBinding.clockTextview)
+        timeUtils = TimeUtils(Handler(Looper.getMainLooper()), viewBinding.clockTextview)
 
         intentSensorsService = Intent(this@MainActivity, SensorsService::class.java)
         intentLocationTrackingService = Intent(this@MainActivity, LocationTrackingService::class.java)
