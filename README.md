@@ -18,7 +18,10 @@ MultiSensor Data Collection is a mobile app that seamlessly gathers data from va
 
 
 ## Screenshots
+| ![main screen with categories](https://github.com/rafaelpezzuto/multi-sensor-data-collection/assets/2096125/5e528f6d-036e-4ee6-bee9-95d09b9d4f54) | ![main screen recording](https://github.com/rafaelpezzuto/multi-sensor-data-collection/assets/2096125/6dc2029b-e2cc-4c84-9e53-61beb13296b6) | ![image](https://github.com/rafaelpezzuto/multi-sensor-data-collection/assets/2096125/a05bd337-9c4e-4b9a-b080-e484046b5bd6) |
+|:--:|:--:|:--:|
+| Main screen: Category selection | Main screen: Recording in progress | Files screen |
 
-| <img src="screenshots/main screen.png" alt="Main screen 1"> | <img src="screenshots/main screen recording.png" alt="Main screen 2"> | <img src="screenshots/settings screen.png" alt="Settings screen"> | <img src="screenshots/files root.png" alt="Files screen 1"> | <img src="screenshots/files subdirs.png" alt="Files screen 2"> |
-|:--:|:--:|:--:|:--:|:--:|
-| Main screen 1 | Main screen 2 | Settings screen | Files screen 1 | Files screen 2 |
+| ![settings screen 1](https://github.com/rafaelpezzuto/multi-sensor-data-collection/assets/2096125/48321511-4944-4b7a-adbe-9dd551ce9030) | ![settings screen 2](https://github.com/rafaelpezzuto/multi-sensor-data-collection/assets/2096125/a6b19b92-8c3d-47e6-bdf6-8e89958bd4a7) | ![about](https://github.com/rafaelpezzuto/multi-sensor-data-collection/assets/2096125/c7a7b80d-65b0-4372-a758-c9af8e6f11f0)
+|:--:|:--:|:--:|
+| Settings screen: Part 1 | Settings screen: Part 2 | About screen |
