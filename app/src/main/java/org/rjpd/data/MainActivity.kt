@@ -8,9 +8,14 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import android.util.Log
+import android.view.View
 import android.view.WindowManager
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -77,10 +82,11 @@ class MainActivity : AppCompatActivity() {
 
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)
+        setSpinner()
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         infoUtils = InfoUtils(this)
-        timeUtils = TimeUtils(viewBinding.clockTextview)
+        timeUtils = TimeUtils(Handler(Looper.getMainLooper()), viewBinding.clockTextview)
 
         intentSensorsService = Intent(this@MainActivity, SensorsService::class.java)
         intentLocationTrackingService = Intent(this@MainActivity, LocationTrackingService::class.java)
@@ -318,11 +324,22 @@ class MainActivity : AppCompatActivity() {
             resources.displayMetrics,
             infoUtils.getAvailableSensors(),
             infoUtils.getAvailableCameraConfigurations(),
+            viewBinding.categorySpinner.selectedItem.toString(),
             filename,
             stopDatetime,
             downloadOutputDirCollecting,
             filename,
         )
+    }
+
+    private fun setSpinner() {
+        val items = resources.getStringArray(R.array.categories)
+
+        val adapter = ArrayAdapter(this, R.layout.custom_spinner_item, items)
+        adapter.setDropDownViewResource(R.layout.custom_spinner_item)
+
+        val spinner = viewBinding.categorySpinner
+        spinner.adapter = adapter
     }
 
     private fun zipData (sourceFolder: File, targetZipFilename: String) {

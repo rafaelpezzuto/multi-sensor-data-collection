@@ -1,6 +1,7 @@
 package org.rjpd.data
 
 import android.content.Context
+import android.content.Intent
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.os.Bundle
@@ -33,6 +34,13 @@ class SettingsActivity : AppCompatActivity() {
             val infoUtils = InfoUtils(requireContext())
             val cameraManager = requireContext().getSystemService(Context.CAMERA_SERVICE) as CameraManager
             setCameras(cameraManager, infoUtils)
+
+            val aboutPreference = findPreference<Preference>("about")
+            aboutPreference?.onPreferenceClickListener = Preference.OnPreferenceClickListener {
+                val intent = Intent(activity, AboutActivity::class.java)
+                startActivity(intent)
+                true
+            }
         }
 
         private fun setCameras(cameraManager: CameraManager, infoUtils: InfoUtils) {

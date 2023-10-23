@@ -7,7 +7,8 @@
     <string name="camera">Camera</string>
     <string name="export">Export</string>
 
-    <string name="data_label">Select a label that represents the data to be captured</string>
+    <string name="categories">Select a category</string>
+    <string name="categories_summary">A label that represents the type of data to be captured</string>
 
     <string name="title_activity_settings">Settings</string>
 
@@ -51,4 +52,8 @@
     <string name="track_movement">Track movement</string>
     <string name="camera_resolution">Camera resolution</string>
     <string name="timer_zero">00:00:00</string>
+    <string name="preference_about_us">About us</string>
+    <string name="preference_about_information_summary">Application information</string>
+    <string name="about_app_description">MultiSensor Data Collection is a mobile app that seamlessly gathers data from various sensors, including GPS, camera, and audio, allowing you to create a comprehensive dataset locally and effortlessly transmit it to the cloud for further analysis and storage.\n\nAuthor: rafael.damaceno@ime.usp.br\n\nVersion number: 0.1.0\n\nSite: https://github.com/rafaelpezzuto/multi-sensor-data-collection</string>
+    <string name="about_app_close">Close</string>
 </resources>

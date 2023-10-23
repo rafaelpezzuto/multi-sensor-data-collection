@@ -1,11 +1,12 @@
 package org.rjpd.data
 
+import android.os.Handler
 import android.widget.TextView
 import java.util.Locale
 import java.util.Timer
 import java.util.TimerTask
 
-class TimeUtils(private val clockView: TextView) {
+class TimeUtils(private val mainHandler: Handler, private val clockView: TextView) {
 
     private var startTime: Long = 0
     private var isRunning = false
@@ -19,7 +20,7 @@ class TimeUtils(private val clockView: TextView) {
             isRunning = true
 
             timer.scheduleAtFixedRate(object: TimerTask() {
-                override fun run() {updateTimer() }
+                override fun run() { updateTimer() }
             }, 0, 1000)
         }
     }
@@ -40,12 +41,15 @@ class TimeUtils(private val clockView: TextView) {
             val minutes = seconds / 60
             val hours = minutes / 60
 
-            clockView.text = String.format(
-                Locale.getDefault(), "%02d:%02d:%02d",
-                hours,
-                minutes,
-                seconds
-            )
+            mainHandler.post {
+                val formattedSeconds = seconds % 60
+                clockView.text = String.format(
+                    Locale.getDefault(), "%02d:%02d:%02d",
+                    hours,
+                    minutes,
+                    formattedSeconds,
+                )
+            }
         }
     }
 }

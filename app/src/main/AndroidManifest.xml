@@ -34,6 +34,16 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".AboutActivity"
+            android:exported="false"
+            android:label="About"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.SHOW_APP_INFO" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".LocationTrackingService"
             android:exported="false" />
