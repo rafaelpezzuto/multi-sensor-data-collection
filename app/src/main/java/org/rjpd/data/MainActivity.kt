@@ -313,8 +313,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun zipData (sourceFolder: File, targetZipFilename: String) {
+        var resp : Boolean = false
         Log.d(TAG, "Compacting data...")
-        zipEverything(sourceFolder, targetZipFilename)
+        // TODO: check when creating zip fails
+        resp = createZipFile(sourceFolder.toString(), targetZipFilename)
     }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
