@@ -6,6 +6,28 @@
         android:title="@string/preference_about_us"
         android:summary="@string/preference_about_information_summary" />
 
+    <PreferenceCategory app:title="@string/consumption">
+        <SwitchPreferenceCompat
+            app:key="consumption"
+            app:defaultValue="true"
+            app:title="@string/battery_consumption"
+            app:singleLineTitle="false"
+            android:summaryOn="@string/consumption_summary_on"
+            app:summaryOff="@string/consumption_summary_off" />
+
+        <SeekBarPreference
+            app:dependency="consumption"
+            app:key="consumption_interval"
+            app:singleLineTitle="false"
+            app:title="@string/battery_consumption_interval_title"
+            app:min="1"
+            android:max="160"
+            app:seekBarIncrement="1"
+            app:showSeekBarValue="true"
+            app:defaultValue="1" />
+
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="@string/sensors">
         <SwitchPreferenceCompat
             app:key="sensors"
@@ -16,6 +38,7 @@
         <ListPreference
             android:dependency="sensors"
             app:key="sensors_sr"
+            app:singleLineTitle="false"
             app:title="@string/sensors_sampling_rate"
             android:entries="@array/sensors_sr"
             android:entryValues="@array/sensors_sr_values"
@@ -66,6 +89,7 @@
         <SeekBarPreference
             app:dependency="gps"
             app:key="gps_interval"
+            app:singleLineTitle="false"
             app:title="@string/gps_interval_title"
             app:min="1"
             android:max="60"

@@ -56,4 +56,9 @@
     <string name="preference_about_information_summary">Application information</string>
     <string name="about_app_description">MultiSensor Data Collection is a mobile app that seamlessly gathers data from various sensors, including GPS, camera, and audio, allowing you to create a comprehensive dataset locally and effortlessly transmit it to the cloud for further analysis and storage.\n\nAuthor: rafael.damaceno@ime.usp.br\n\nVersion number: 0.1.0\n\nPrivacy policy: https://github.com/rafaelpezzuto/multi-sensor-data-collection/blob/main/privacy-policy.md\n\nSource code: https://github.com/rafaelpezzuto/multi-sensor-data-collection</string>
     <string name="about_app_close">Close</string>
+    <string name="consumption_summary_on">The battery consumption monitor is enabled</string>
+    <string name="consumption_summary_off">The battery consumption monitor is disabled</string>
+    <string name="battery_consumption">Battery consumption</string>
+    <string name="consumption">Consumption</string>
+    <string name="battery_consumption_interval_title">Interval in seconds for updating battery consumption data</string>
 </resources>
