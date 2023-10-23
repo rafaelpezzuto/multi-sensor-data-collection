@@ -56,6 +56,7 @@ class MainActivity : AppCompatActivity() {
     private var videoCapture: VideoCapture<Recorder>? = null
     private var recording: Recording? = null
 
+    private lateinit var intentConsumptionService: Intent
     private lateinit var intentLocationTrackingService: Intent
     private lateinit var intentSensorsService: Intent
     private lateinit var intentSettings: Intent
@@ -89,6 +90,7 @@ class MainActivity : AppCompatActivity() {
         intentSensorsService = Intent(this@MainActivity, SensorsService::class.java)
         intentLocationTrackingService = Intent(this@MainActivity, LocationTrackingService::class.java)
         intentSettings = Intent(this@MainActivity, SettingsActivity::class.java)
+        intentConsumptionService = Intent(this@MainActivity, ConsumptionService::class.java)
 
         if (allPermissionsGranted()){
             startCamera()
@@ -244,6 +246,8 @@ class MainActivity : AppCompatActivity() {
         intentSensorsService.putExtra("filename", filename)
         intentLocationTrackingService.putExtra("outputDirectory", systemDataDirectoryCollecting.absolutePath)
         intentLocationTrackingService.putExtra("filename", filename)
+        intentConsumptionService.putExtra("outputDirectory", systemDataDirectoryCollecting.absolutePath)
+        intentConsumptionService.putExtra("filename", filename)
 
         if (sharedPreferences.getBoolean("sensors", false)) {
             startService(intentSensorsService)
@@ -251,6 +255,10 @@ class MainActivity : AppCompatActivity() {
 
         if (sharedPreferences.getBoolean("gps", false)) {
             startService(intentLocationTrackingService)
+        }
+
+        if (sharedPreferences.getBoolean("consumption", false)) {
+            startService(intentConsumptionService)
         }
 
         startVideoRecording(filename)
@@ -265,6 +273,10 @@ class MainActivity : AppCompatActivity() {
 
         if (sharedPreferences.getBoolean("gps", true)) {
             stopService(intentLocationTrackingService)
+        }
+
+        if (sharedPreferences.getBoolean("consumption", true)) {
+            stopService(intentConsumptionService)
         }
 
         recording?.stop()
