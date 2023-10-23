@@ -1,6 +1,11 @@
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <Preference
+        android:key="about"
+        android:title="@string/preference_about_us"
+        android:summary="@string/preference_about_information_summary" />
+
     <PreferenceCategory app:title="@string/sensors">
         <SwitchPreferenceCompat
             app:key="sensors"
