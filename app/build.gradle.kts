@@ -4,15 +4,15 @@ plugins {
 }
 
 android {
-    namespace = "org.rjpd.data"
+    namespace = "org.rjpd.msdc"
     compileSdk = 33
 
     defaultConfig {
-        applicationId = "org.rjpd.data"
+        applicationId = "org.rjpd.msdc"
         minSdk = 24
         targetSdk = 33
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "0.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
