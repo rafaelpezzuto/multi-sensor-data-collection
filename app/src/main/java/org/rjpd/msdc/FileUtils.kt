@@ -110,6 +110,25 @@ fun writeSensorData(
     }
 }
 
+fun writeConsumptionData(
+    currentTime: Long,
+    batteryStatus: Int,
+    outputDir: String,
+    filename: String,
+) {
+
+    val line = "$currentTime,$batteryStatus\n"
+
+    try {
+        val file = File(outputDir, "${filename}.consumption.csv")
+        val writer = BufferedWriter(FileWriter(file, true))
+        writer.append(line)
+        writer.close()
+    } catch (e: IOException) {
+        e.printStackTrace()
+    }
+}
+
 fun writeMetadataFile(
     preferencesData: MutableMap<String, *>,
     displayMetrics: DisplayMetrics,
