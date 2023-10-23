@@ -77,6 +77,7 @@ class MainActivity : AppCompatActivity() {
 
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)
+        setSpinner()
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         infoUtils = InfoUtils(this)
@@ -318,11 +319,22 @@ class MainActivity : AppCompatActivity() {
             resources.displayMetrics,
             infoUtils.getAvailableSensors(),
             infoUtils.getAvailableCameraConfigurations(),
+            viewBinding.categorySpinner.selectedItem.toString(),
             filename,
             stopDatetime,
             downloadOutputDirCollecting,
             filename,
         )
+    }
+
+    private fun setSpinner() {
+        val items = resources.getStringArray(R.array.categories)
+
+        val adapter = ArrayAdapter(this, R.layout.custom_spinner_item, items)
+        adapter.setDropDownViewResource(R.layout.custom_spinner_item)
+
+        val spinner = viewBinding.categorySpinner
+        spinner.adapter = adapter
     }
 
     private fun zipData (sourceFolder: File, targetZipFilename: String) {
