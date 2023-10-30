@@ -45,7 +45,6 @@ import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-
 class MainActivity : AppCompatActivity() {
     private lateinit var viewBinding: ActivityMainBinding
     private lateinit var sharedPreferences: SharedPreferences
@@ -64,6 +63,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var downloadOutputDirCollecting: File
     private lateinit var mediaDataDirectoryCollecting: File
     private lateinit var filename: String
+
+    private var bucketName: String = "multisensordatacollection"
 
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -110,6 +111,10 @@ class MainActivity : AppCompatActivity() {
 
         viewBinding.exportButton.setOnClickListener {
             // ToDo: create exporting function
+            Log.d(TAG, "SENDING $downloadOutputDir, $bucketName, $filename.zip")
+            sendFileToS3(this, File(downloadOutputDir, filename+".zip").toString(),
+                          bucketName, bucketName+"/"+filename+".zip")
+
         }
 
         cameraExecutor = Executors.newSingleThreadExecutor()
@@ -357,6 +362,8 @@ class MainActivity : AppCompatActivity() {
             ).apply {
                 if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
                     add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    add(Manifest.permission.ACCESS_NETWORK_STATE)
+                    add(Manifest.permission.INTERNET)
                 }
             }.toTypedArray()
     }

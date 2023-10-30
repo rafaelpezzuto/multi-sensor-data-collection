@@ -1,10 +1,23 @@
 package org.rjpd.data
 
+import android.content.Context
+import android.content.res.Resources
 import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.os.Build
 import android.util.Log
-import android.widget.Toast
+import androidx.annotation.RequiresApi
+import com.amazonaws.ClientConfiguration
+import com.amazonaws.auth.BasicAWSCredentials
+import com.amazonaws.auth.CognitoCachingCredentialsProvider
+import com.amazonaws.mobile.config.AWSConfiguration
+import com.amazonaws.mobileconnectors.cognitoidentityprovider.CognitoUserAttributes
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferListener
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferState
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferUtility
+import com.amazonaws.regions.Region
+import com.amazonaws.regions.Regions
+import com.amazonaws.services.s3.AmazonS3Client
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedWriter
@@ -13,6 +26,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.FileWriter
 import java.io.IOException
+import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -191,5 +205,55 @@ fun saveInfoToJson(file: String, info: JSONObject) {
     } catch (e: IOException) {
         e.printStackTrace()
     }
+}
+
+fun retrieveAWSPoolInfo(resources: Resources, packageName:String): String {
+    val resourceId = resources.getIdentifier("awsconfiguration", "raw", packageName)
+
+    if (resourceId != 0) {
+        val inputStream: InputStream = resources.openRawResource(resourceId)
+
+        return inputStream.bufferedReader().use { it.readText() }
+    } else {
+        throw IllegalArgumentException("Jsonfile  with AWS configuration not found")
+    }
+}
+
+fun sendFileToS3(context:Context, filePath: String, bucketName: String, bucketPath: String) {
+    val accessKey = ""
+    val secretKey = ""
+    val file = File(filePath)
+
+    try {
+        //------------------------------------------------------------------------
+        val credentials: BasicAWSCredentials = BasicAWSCredentials(accessKey, secretKey)
+        val s3Client: AmazonS3Client = AmazonS3Client(
+            credentials, Region.getRegion(Regions.US_WEST_2))
+
+        val transferUtility: TransferUtility = TransferUtility.builder().context(context).s3Client(s3Client)
+            .defaultBucket(bucketName).build()
+
+        val uploadObserver = transferUtility.upload(bucketPath, file)
+
+        uploadObserver.setTransferListener(object : TransferListener {
+            override fun onStateChanged(id: Int, state: TransferState?) {
+                if (TransferState.COMPLETED == state) {
+                    Log.d(">>>", "Upload successfully complete")
+                } else if (TransferState.FAILED == state) {
+                    //Failed case from
+                }
+            }
+            override fun onProgressChanged(id: Int, bytesCurrent: Long, bytesTotal: Long) {
+            //Useful to show upload progress
+            }
+            override fun onError(id: Int, ex: java.lang.Exception?) {
+            //Error case
+            }
+        })
+    }
+    catch (exc: Exception) {
+        Log.d(">>>", "Failed to send to S3", exc)
+    }
+    Log.d(">>>", "Done")
 }
 

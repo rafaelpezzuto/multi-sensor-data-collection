@@ -43,6 +43,9 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/DEPENDENCIES"
+            excludes += "/META-INF/INDEX.LIST"
+            excludes += "/META-INF/io.netty.versions.properties"
         }
     }
 }
@@ -64,6 +67,11 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("software.amazon.awssdk:s3:2.16.13")
+    implementation("com.amazonaws:aws-android-sdk-mobile-client:2.16.13")
+    implementation("com.amazonaws:aws-android-sdk-s3:2.16.13")
+    implementation("com.amazonaws:aws-android-sdk-cognito:2.16.13")
+
     implementation("com.google.android.play:integrity:1.2.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
