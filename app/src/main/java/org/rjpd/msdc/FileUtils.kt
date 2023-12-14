@@ -88,6 +88,24 @@ fun writeGeolocationData(
     }
 }
 
+fun extractSensorPosfixFilename(axisData: String): String{
+    val nfields = axisData.split(",").size
+
+    if (nfields == 1) {
+        return "one"
+    }
+
+    if (nfields == 3){
+        return "three"
+    }
+
+    if (nfields == 6) {
+        return "three.uncalibrated"
+    }
+
+    return "unknown"
+}
+
 fun writeSensorData(
     name: String?,
     axisData: String?,
@@ -101,7 +119,8 @@ fun writeSensorData(
     val line = "$fmtDate,$name,$axisData,$timestamp,$accuracy\n"
 
     try {
-        val file = File(outputDir, "${filename}.sensors.csv")
+        val filePosfix = extractSensorPosfixFilename(axisData!!)
+        val file = File(outputDir, "$filename.sensors.$filePosfix.csv")
         val writer = BufferedWriter(FileWriter(file, true))
         writer.append(line)
         writer.close()
