@@ -16,7 +16,7 @@
     <string name="sensors_sampling_rate">Choose a sensor sampling rate configuration</string>
 
     <string name="accelerometer_title">Accelerometer sensor</string>
-    <string name="accelerometer_off">The accelerometer is disabled</string>
+    <string name="accelerometer_off">The accelerometer sensor is disabled</string>
     <string name="accelerometer_on">The accelerometer sensor is enabled</string>
 
     <string name="gravity_title">Gravity sensor</string>
