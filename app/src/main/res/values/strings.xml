@@ -16,7 +16,7 @@
     <string name="sensors_sampling_rate">Choose a sensor sampling rate configuration</string>
 
     <string name="accelerometer_title">Accelerometer sensor</string>
-    <string name="accelerometer_off">The accelerometer is disabled</string>
+    <string name="accelerometer_off">The accelerometer sensor is disabled</string>
     <string name="accelerometer_on">The accelerometer sensor is enabled</string>
 
     <string name="gravity_title">Gravity sensor</string>
@@ -30,6 +30,14 @@
     <string name="magnetometer_title">Magnetometer sensor</string>
     <string name="magnetometer_on">The magnetometer sensor is enabled</string>
     <string name="magnetometer_off">The magnetometer sensor is disabled</string>
+
+    <string name="light_title">Light sensor</string>
+    <string name="light_off">The light sensor is disabled</string>
+    <string name="light_on">The light sensor is enabled</string>
+
+    <string name="extra_title">Extra sensors (pressure, step, etc) </string>
+    <string name="extra_off">The extra sensors are disabled</string>
+    <string name="extra_on">The extra sensors are enabled</string>
 
     <string name="geolocation_preference_category">Geolocation</string>
     <string name="gps_title">GPS tracking service</string>
@@ -54,7 +62,7 @@
     <string name="timer_zero">00:00:00</string>
     <string name="preference_about_us">About us</string>
     <string name="preference_about_information_summary">Application information</string>
-    <string name="about_app_description">MultiSensor Data Collection is a mobile app that seamlessly gathers data from various sensors, including GPS, camera, and audio, allowing you to create a comprehensive dataset locally and effortlessly transmit it to the cloud for further analysis and storage.\n\nAuthor: rafael.damaceno@ime.usp.br\n\nVersion number: 0.1.0\n\nPrivacy policy: https://github.com/rafaelpezzuto/multi-sensor-data-collection/blob/main/privacy-policy.md\n\nSource code: https://github.com/rafaelpezzuto/multi-sensor-data-collection</string>
+    <string name="about_app_description">MultiSensor Data Collection is a mobile app that seamlessly gathers data from various sensors, including GPS, camera, and audio, allowing you to create a comprehensive dataset locally and effortlessly transmit it to the cloud for further analysis and storage.\n\nAuthor: rafael.damaceno@ime.usp.br\n\nVersion number: 0.3.0\n\nPrivacy policy: https://github.com/rafaelpezzuto/multi-sensor-data-collection/blob/main/privacy-policy.md\n\nSource code: https://github.com/rafaelpezzuto/multi-sensor-data-collection</string>
     <string name="about_app_close">Close</string>
     <string name="consumption_summary_on">The battery consumption monitor is enabled</string>
     <string name="consumption_summary_off">The battery consumption monitor is disabled</string>

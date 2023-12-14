@@ -38,6 +38,7 @@ class SensorsService : Service(), SensorEventListener {
 
         if (sharedPreferences.getBoolean("accelerometer", false)) {
             supportedSensors.add(Sensor.TYPE_ACCELEROMETER)
+            supportedSensors.add(Sensor.TYPE_LINEAR_ACCELERATION)
         }
 
         if (sharedPreferences.getBoolean("gravity", false)){
@@ -46,10 +47,24 @@ class SensorsService : Service(), SensorEventListener {
 
         if (sharedPreferences.getBoolean("gyroscope", false)){
             supportedSensors.add(Sensor.TYPE_GYROSCOPE)
+            supportedSensors.add(Sensor.TYPE_GYROSCOPE_UNCALIBRATED)
         }
 
         if (sharedPreferences.getBoolean("magnetometer", false)){
             supportedSensors.add(Sensor.TYPE_MAGNETIC_FIELD)
+            supportedSensors.add(Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED)
+        }
+
+        if (sharedPreferences.getBoolean("light", false)) {
+            supportedSensors.add(Sensor.TYPE_LIGHT)
+        }
+
+        if (sharedPreferences.getBoolean("extra", false)) {
+            supportedSensors.add(Sensor.TYPE_STEP_DETECTOR)
+            supportedSensors.add(Sensor.TYPE_STEP_COUNTER)
+            supportedSensors.add(Sensor.TYPE_SIGNIFICANT_MOTION)
+            supportedSensors.add(Sensor.TYPE_PRESSURE)
+            supportedSensors.add(Sensor.TYPE_PROXIMITY)
         }
 
         for (sensor in sensorManager.getSensorList(Sensor.TYPE_ALL)) {
