@@ -31,6 +31,14 @@
     <string name="magnetometer_on">The magnetometer sensor is enabled</string>
     <string name="magnetometer_off">The magnetometer sensor is disabled</string>
 
+    <string name="light_title">Light sensor</string>
+    <string name="light_off">The light sensor is disabled</string>
+    <string name="light_on">The light sensor is enabled</string>
+
+    <string name="extra_title">Extra sensors (pressure, step, etc) </string>
+    <string name="extra_off">The extra sensors are disabled</string>
+    <string name="extra_on">The extra sensors are enabled</string>
+
     <string name="geolocation_preference_category">Geolocation</string>
     <string name="gps_title">GPS tracking service</string>
     <string name="gps_off">The GPS tracking service is disabled</string>

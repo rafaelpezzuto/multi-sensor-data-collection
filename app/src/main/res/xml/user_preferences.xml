@@ -30,6 +30,20 @@
 
     <PreferenceCategory app:title="@string/sensors">
         <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="light"
+            app:summaryOff="@string/extra_off"
+            app:summaryOn="@string/extra_on"
+            app:title="@string/extra_title" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="extra"
+            app:summaryOff="@string/light_off"
+            app:summaryOn="@string/light_on"
+            app:title="@string/light_title" />
+
+        <SwitchPreferenceCompat
             app:key="sensors"
             app:defaultValue="true"
             app:title="@string/sensors_preference_category"
