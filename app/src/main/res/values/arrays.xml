@@ -12,17 +12,18 @@
         <item>3</item>
     </string-array>
     <string-array name="categories">
+        <item>Walk, flat, concrete</item>
+        <item>Walk, flat, grass</item>
+        <item>Walk, asc ramp, concrete</item>
+        <item>Walk, desc ramp, concrete</item>
+        <item>Walk, asc ramp, grass</item>
+        <item>Walk, desc ramp, grass</item>
+        <item>Walk, flat, concrete, obstacle</item>
+        <item>Walk, flat, grass, obstacle</item>
+        <item>Walk, asc ramp, concrete, obstacle</item>
+        <item>Walk, desc ramp, concrete, obstacle</item>
+        <item>Walk, asc ramp, grass, obstacle</item>
+        <item>Walk, desc ramp, grass, obstacle</item>
         <item>Diverse</item>
-        <item>Climbing stairs</item>
-        <item>Descending stairs</item>
-        <item>Dancing</item>
-        <item>Hiking</item>
-        <item>Jogging</item>
-        <item>Jumping</item>
-        <item>Opening the door</item>
-        <item>Closing the door</item>
-        <item>Taking the elevator down</item>
-        <item>Taking the elevator up</item>
-        <item>Walking</item>
     </string-array>
 </resources>
