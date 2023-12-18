@@ -355,6 +355,9 @@ class MainActivity : AppCompatActivity() {
     private fun zipData (sourceFolder: File, targetZipFilename: String) {
         Log.d(TAG, "Compacting data...")
         zipEverything(sourceFolder, targetZipFilename)
+
+        Log.d(TAG, "Deleting unzipped data...")
+        sourceFolder.deleteRecursively()
     }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
