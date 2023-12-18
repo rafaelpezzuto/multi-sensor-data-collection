@@ -5,11 +5,14 @@ import android.util.DisplayMetrics
 import android.util.Log
 import java.io.BufferedWriter
 import java.io.File
+import java.io.FileOutputStream
 import java.io.FileWriter
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 import org.json.JSONObject
 
 
@@ -36,7 +39,7 @@ fun moveContent(sourceDirOrFile: File, destDir: File): Boolean {
 
     if (sourceDirOrFile.isDirectory) {
         val files = sourceDirOrFile.listFiles()
-        for (file in files) {
+        for (file in files!!) {
             Log.d("FileUtils", "Moving file ${file.absolutePath}")
             val destFile = File(destDir, file.name)
             if (file.isDirectory) {
@@ -63,7 +66,23 @@ fun getZipTargetFilename(currentOutputDir: File): String {
 }
 
 fun zipEverything(sourceDir: File, targetZipFilename: String) {
-    // ToDo: method responsible for compressing everything inside the directory sourceDir
+    val outputZipFile = File(targetZipFilename)
+
+    ZipOutputStream(FileOutputStream(outputZipFile)).use { zipOutputStream ->
+        sourceDir.walkTopDown().forEach { file ->
+            if (file.isFile) {
+                val entry = ZipEntry(sourceDir.toPath().relativize(file.toPath()).toString())
+
+                zipOutputStream.putNextEntry(entry)
+
+                file.inputStream().use { input ->
+                    input.copyTo(zipOutputStream)
+                }
+
+                zipOutputStream.closeEntry()
+            }
+        }
+    }
 }
 
 fun writeGeolocationData(
