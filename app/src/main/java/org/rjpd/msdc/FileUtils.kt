@@ -14,6 +14,8 @@ import java.util.Locale
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import org.json.JSONObject
+import java.util.Enumeration
+import java.util.zip.ZipFile
 
 
 fun createSubDirectory(rootDirectory: String, subDirectory: String): File {
@@ -84,6 +86,38 @@ fun zipEverything(sourceDir: File, targetZipFilename: String) {
         }
     }
 }
+
+fun listCompressedFiles(zipFilepath: String): MutableList<String> {
+    val zipFile = ZipFile(zipFilepath)
+    val entries: Enumeration<out ZipEntry> = zipFile.entries()
+    val files = mutableListOf<String>()
+
+    while (entries.hasMoreElements()) {
+        val entry = entries.nextElement()
+        files.add(entry.name)
+        Log.d("FileUtils", "File ${entry.name} is in the ZIP")
+    }
+
+    zipFile.close()
+
+    Log.d("FileUtils", "There are ${files.size} compressed files in the ZIP")
+    return files
+}
+
+fun isFilesListValid(files: MutableList<String>): Boolean {
+    val validFilePatterns = listOf(".*sensors\\.three.*", ".*metadata\\.json", ".*\\.mp4")
+
+    for (pattern in validFilePatterns) {
+        val regex = Regex(pattern)
+        val fileFound = files.any { regex.matches(it) }
+
+        if (!fileFound) {
+            return false
+        }
+    }
+    return true
+}
+
 
 fun writeGeolocationData(
     gpsInterval: String,
