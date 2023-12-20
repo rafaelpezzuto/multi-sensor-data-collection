@@ -36,30 +36,30 @@ class SensorsService : Service(), SensorEventListener {
         outputDir = intent?.extras!!.getString("outputDirectory", "")
         filename = intent?.extras!!.getString("filename", "")
 
-        if (sharedPreferences.getBoolean("accelerometer", false)) {
+        if (sharedPreferences.getBoolean("accelerometer", true)) {
             supportedSensors.add(Sensor.TYPE_ACCELEROMETER)
             supportedSensors.add(Sensor.TYPE_LINEAR_ACCELERATION)
         }
 
-        if (sharedPreferences.getBoolean("gravity", false)){
+        if (sharedPreferences.getBoolean("gravity", true)){
             supportedSensors.add(Sensor.TYPE_GRAVITY)
         }
 
-        if (sharedPreferences.getBoolean("gyroscope", false)){
+        if (sharedPreferences.getBoolean("gyroscope", true)){
             supportedSensors.add(Sensor.TYPE_GYROSCOPE)
             supportedSensors.add(Sensor.TYPE_GYROSCOPE_UNCALIBRATED)
         }
 
-        if (sharedPreferences.getBoolean("magnetometer", false)){
+        if (sharedPreferences.getBoolean("magnetometer", true)){
             supportedSensors.add(Sensor.TYPE_MAGNETIC_FIELD)
             supportedSensors.add(Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED)
         }
 
-        if (sharedPreferences.getBoolean("light", false)) {
+        if (sharedPreferences.getBoolean("light", true)) {
             supportedSensors.add(Sensor.TYPE_LIGHT)
         }
 
-        if (sharedPreferences.getBoolean("extra", false)) {
+        if (sharedPreferences.getBoolean("extra", true)) {
             supportedSensors.add(Sensor.TYPE_STEP_DETECTOR)
             supportedSensors.add(Sensor.TYPE_STEP_COUNTER)
             supportedSensors.add(Sensor.TYPE_SIGNIFICANT_MOTION)
