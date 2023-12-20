@@ -164,7 +164,13 @@ class MainActivity : AppCompatActivity() {
                 ).build()
             videoCapture = VideoCapture.withOutput(recorder)
 
-            val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
+            var cameraSelector: CameraSelector
+
+            if (sharedPreferences.getBoolean("camera_lens_facing_use_front", false)) {
+                cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
+            } else {
+                cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+            }
 
             try {
                 cameraProvider.unbindAll()

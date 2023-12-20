@@ -6,6 +6,43 @@
         android:title="@string/preference_about_us"
         android:summary="@string/preference_about_information_summary" />
 
+    <PreferenceCategory app:title="Camera settings" android:summary="@string/camera_category" >
+        <SwitchPreferenceCompat
+            android:key="camera_lens_facing_use_front"
+            android:title="@string/camera_lens_facing_use_front_title"
+            android:summaryOn="@string/camera_lens_facing_use_front_on"
+            android:summaryOff="@string/camera_lens_facing_use_front_off"
+            android:defaultValue="false" />
+
+        <ListPreference
+            app:key="camera"
+            app:title="Choose a camera configuration"
+            app:summary="%s"
+            app:isPreferenceVisible="false">
+        </ListPreference>
+
+        <Preference
+            android:key="camera_id"
+            android:title="Camera ID"
+            app:isPreferenceVisible="false" />
+
+        <Preference
+            android:key="camera_resolution"
+            android:title="Camera resolution"
+            app:isPreferenceVisible="false" />
+
+        <Preference
+            android:key="camera_fps"
+            android:title="Camera FPS"
+            app:isPreferenceVisible="false" />
+
+        <Preference
+            android:key="camera_lens_facing"
+            android:title="Camera Lens Facing"
+            app:isPreferenceVisible="false" />
+
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="@string/consumption">
         <SwitchPreferenceCompat
             app:key="consumption"
@@ -110,35 +147,6 @@
             app:seekBarIncrement="1"
             app:showSeekBarValue="true"
             app:defaultValue="15" />
-    </PreferenceCategory>
-
-    <PreferenceCategory app:title="Camera settings" app:isPreferenceVisible="false">
-        <ListPreference
-            app:key="camera"
-            app:title="Choose a camera configuration"
-            app:summary="%s">
-        </ListPreference>
-
-        <Preference
-            android:key="camera_id"
-            android:title="Camera ID"
-            app:isPreferenceVisible="false" />
-
-        <Preference
-            android:key="camera_resolution"
-            android:title="Camera resolution"
-            app:isPreferenceVisible="false" />
-
-        <Preference
-            android:key="camera_fps"
-            android:title="Camera FPS"
-            app:isPreferenceVisible="false" />
-
-        <Preference
-            android:key="camera_lens_facing"
-            android:title="Camera Lens Facing"
-            app:isPreferenceVisible="false" />
-
     </PreferenceCategory>
 
 </PreferenceScreen>
