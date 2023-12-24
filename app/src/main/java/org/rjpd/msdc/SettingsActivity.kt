@@ -1,16 +1,19 @@
 package org.rjpd.msdc
 
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.os.Bundle
 import android.view.MenuItem
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
+import androidx.preference.SwitchPreference
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -41,6 +44,18 @@ class SettingsActivity : AppCompatActivity() {
                 startActivity(intent)
                 true
             }
+
+            findPreference<Preference>("camera_lens_facing_use_front")?.setOnPreferenceChangeListener { _, _ ->
+                restartActivity()
+                true
+            }
+        }
+
+        private fun restartActivity() {
+            val intent = Intent(requireContext(), MainActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(intent)
+            requireActivity().finish()
         }
 
         private fun setCameras(cameraManager: CameraManager, infoUtils: InfoUtils) {

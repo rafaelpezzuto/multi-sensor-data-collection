@@ -37,7 +37,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.rjpd.msdc.databinding.ActivityMainBinding
 import java.io.File
 import java.text.SimpleDateFormat
@@ -106,6 +105,7 @@ class MainActivity : AppCompatActivity() {
             if (isChecked) {
                 viewBinding.settingsButton.isEnabled = false
                 viewBinding.exportButton.isEnabled = false
+                viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.purple_200)
                 startDataCollecting()
             } else {
                 stopDataCollecting()
@@ -134,11 +134,6 @@ class MainActivity : AppCompatActivity() {
         super.onPause()
         Log.d(TAG, "A pause has been detected")
 
-        if (recording != null) {
-            // ToDo: create and activate the exporting method
-            //  viewBinding.exportButton.isEnabled = true
-        }
-
         viewBinding.startStopButton.isEnabled = true
         viewBinding.startStopButton.text = getText(R.string.start)
         viewBinding.startStopButton.isChecked = false
@@ -164,7 +159,13 @@ class MainActivity : AppCompatActivity() {
                 ).build()
             videoCapture = VideoCapture.withOutput(recorder)
 
-            val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
+            var cameraSelector: CameraSelector
+
+            if (sharedPreferences.getBoolean("camera_lens_facing_use_front", false)) {
+                cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
+            } else {
+                cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+            }
 
             try {
                 cameraProvider.unbindAll()
@@ -236,6 +237,8 @@ class MainActivity : AppCompatActivity() {
     private fun startDataCollecting() {
         timeUtils.startTimer()
 
+        viewBinding.statusTextview.text = ""
+
         filename = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
             .format(System.currentTimeMillis())
 
@@ -249,15 +252,15 @@ class MainActivity : AppCompatActivity() {
         intentConsumptionService.putExtra("outputDirectory", systemDataDirectoryCollecting.absolutePath)
         intentConsumptionService.putExtra("filename", filename)
 
-        if (sharedPreferences.getBoolean("sensors", false)) {
+        if (sharedPreferences.getBoolean("sensors", true)) {
             startService(intentSensorsService)
         }
 
-        if (sharedPreferences.getBoolean("gps", false)) {
+        if (sharedPreferences.getBoolean("gps", true)) {
             startService(intentLocationTrackingService)
         }
 
-        if (sharedPreferences.getBoolean("consumption", false)) {
+        if (sharedPreferences.getBoolean("consumption", true)) {
             startService(intentConsumptionService)
         }
 
@@ -267,20 +270,20 @@ class MainActivity : AppCompatActivity() {
     private fun stopDataCollecting() {
         timeUtils.stopTimer()
 
-        if (sharedPreferences.getBoolean("sensors", true)) {
+        try {
             stopService(intentSensorsService)
-        }
-
-        if (sharedPreferences.getBoolean("gps", true)) {
             stopService(intentLocationTrackingService)
-        }
-
-        if (sharedPreferences.getBoolean("consumption", true)) {
             stopService(intentConsumptionService)
+        } catch (e: Exception) {
+            Log.d(TAG, "Is was not possible to stop the SensorsService")
         }
 
-        recording?.stop()
-        recording = null
+        try {
+            recording?.stop()
+            recording = null
+        } catch (e: Exception) {
+            Log.d(TAG, "It was not possible to stop the Recording")
+        }
 
         stopDatetime = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
             .format(System.currentTimeMillis())
@@ -310,19 +313,40 @@ class MainActivity : AppCompatActivity() {
                     Toast.LENGTH_SHORT
                 ).show()
 
-                viewBinding.startStopButton.isEnabled = true
-                // ToDo: create and activate the exporting method
-                //  viewBinding.exportButton.isEnabled = true
-
-                viewBinding.settingsButton.isEnabled = true
-
                 Log.d(TAG, "Generating metadata...")
                 generateMetadata()
 
                 val zipTargetFilename = getZipTargetFilename(downloadOutputDirCollecting)
-                withContext(Dispatchers.IO) {
+
+                val zipJob = async(Dispatchers.IO){
                     zipData(downloadOutputDirCollecting, zipTargetFilename)
                 }
+
+                val zipJobResult = zipJob.await()
+
+                if (zipJobResult) {
+                    Log.d(TAG, "Checking zip file...")
+                    val files = listCompressedFiles(zipTargetFilename)
+                    val isValidFilesList = isFilesListValid(files)
+
+                    if (isValidFilesList) {
+                        viewBinding.statusTextview.text = getString(R.string.success_number_of_files_saved, files.size.toString())
+
+                        Log.d(TAG, "Deleting unzipped data...")
+                        downloadOutputDirCollecting.deleteRecursively()
+                    } else {
+                        viewBinding.statusTextview.text = getString(R.string.error_data_is_missing_number_of_files_saved, files.size.toString())
+                    }
+
+                    viewBinding.startStopButton.isEnabled = true
+                    viewBinding.settingsButton.isEnabled = true
+                    viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.red_700)
+                } else {
+                    Log.d(TAG, "The zip job is not ready")
+                }
+
+            } else {
+                Log.d(TAG, "The move job is not ready")
             }
         }
     }
@@ -352,12 +376,11 @@ class MainActivity : AppCompatActivity() {
         spinner.adapter = adapter
     }
 
-    private fun zipData (sourceFolder: File, targetZipFilename: String) {
+    private fun zipData (sourceFolder: File, targetZipFilename: String): Boolean {
         Log.d(TAG, "Compacting data...")
         zipEverything(sourceFolder, targetZipFilename)
 
-        Log.d(TAG, "Deleting unzipped data...")
-        sourceFolder.deleteRecursively()
+        return true
     }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
