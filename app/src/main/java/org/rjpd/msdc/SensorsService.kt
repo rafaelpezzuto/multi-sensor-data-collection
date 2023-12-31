@@ -8,6 +8,7 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.IBinder
+import android.os.SystemClock
 import android.util.Log
 import androidx.preference.PreferenceManager
 
@@ -70,7 +71,7 @@ class SensorsService : Service(), SensorEventListener {
         for (sensor in sensorManager.getSensorList(Sensor.TYPE_ALL)) {
             if (sensor.type in supportedSensors) {
                 val sensorDelay = sharedPreferences.getString("sensors_sr", SensorManager.SENSOR_DELAY_NORMAL.toString())!!.toInt()
-                Log.d("SensorsService", "Added sensor ${sensor.name} with sampling rate $sensorDelay (microseconds)")
+                Log.d("SensorsService", "Added sensor ${sensor.name} with sensor delay $sensorDelay")
                 sensorManager.registerListener(this, sensor, sensorDelay)
             }
         }
@@ -89,11 +90,26 @@ class SensorsService : Service(), SensorEventListener {
         if (event?.sensor?.type in supportedSensors) {
             val name = event?.sensor?.name
             val axisData = event?.values?.joinToString(",") { "${it}" }
-            val timestamp = event?.timestamp
             val accuracy = event?.accuracy
 
-            writeSensorData(name, axisData, timestamp, accuracy, outputDir, filename)
-            Log.d("SensorsService", "$name,$axisData,$timestamp,$accuracy")
+            // The time in nanoseconds at which the event happened
+            val eventTimeStampNano = event?.timestamp
+
+            // The elapsed real time in nanoseconds since the system booted
+            val elapsedRealtime = SystemClock.elapsedRealtimeNanos()
+
+            // The system time in milliseconds
+            val systemCurrentTimeMillis = System.currentTimeMillis()
+
+            // The date time in UTC at which the event happened
+            val eventDateTimeUTC = getDateTimeUTC(
+                systemCurrentTimeMillis,
+                eventTimeStampNano!!,
+                elapsedRealtime
+            )
+
+            writeSensorData(eventTimeStampNano, eventDateTimeUTC, name, axisData, accuracy, outputDir, filename)
+            Log.d("SensorsService","$eventTimeStampNano,$eventDateTimeUTC,$name,$axisData,$accuracy")
         }
     }
 
