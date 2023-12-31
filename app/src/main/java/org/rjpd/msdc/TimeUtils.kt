@@ -1,10 +1,14 @@
 package org.rjpd.msdc
 
 import android.os.Handler
+import android.os.SystemClock
 import android.widget.TextView
+import org.joda.time.DateTime
+import org.joda.time.DateTimeZone
 import java.util.Locale
 import java.util.Timer
 import java.util.TimerTask
+import java.util.concurrent.TimeUnit
 
 class TimeUtils(private val mainHandler: Handler, private val clockView: TextView) {
 
@@ -52,4 +56,20 @@ class TimeUtils(private val mainHandler: Handler, private val clockView: TextVie
             }
         }
     }
+}
+
+fun getDateTimeUTC(systemCurrentTimeMillis: Long): DateTime {
+    return DateTime(systemCurrentTimeMillis, DateTimeZone.UTC)
+}
+
+fun getDateTimeUTC(systemCurrentTimeMillis: Long, timestamp: Long): DateTime {
+    val systemClockElapsedRealtimeMillis = TimeUnit.NANOSECONDS.toMillis(SystemClock.elapsedRealtimeNanos())
+
+    val sensorEventTimeStampMillis = TimeUnit.NANOSECONDS.toMillis(timestamp)
+
+    val currentMinusElapsedRealtimeMillis = systemCurrentTimeMillis - systemClockElapsedRealtimeMillis
+
+    val actualEventTimeMillis = currentMinusElapsedRealtimeMillis + sensorEventTimeStampMillis
+
+    return DateTime(actualEventTimeMillis, DateTimeZone.UTC)
 }
