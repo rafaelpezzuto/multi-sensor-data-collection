@@ -37,6 +37,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.joda.time.DateTime
 import org.rjpd.msdc.databinding.ActivityMainBinding
 import java.io.File
 import java.text.SimpleDateFormat
@@ -66,7 +67,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var downloadOutputDirCollecting: File
     private lateinit var mediaDataDirectoryCollecting: File
     private lateinit var filename: String
-    private lateinit var stopDatetime: String
+    private lateinit var buttonStartDateTime: DateTime
+    private lateinit var buttonStopDateTime: DateTime
+    private lateinit var videoStartDateTime: DateTime
+    private lateinit var videoEndDateTime: DateTime
 
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -159,12 +163,11 @@ class MainActivity : AppCompatActivity() {
                 ).build()
             videoCapture = VideoCapture.withOutput(recorder)
 
-            var cameraSelector: CameraSelector
-
-            if (sharedPreferences.getBoolean("camera_lens_facing_use_front", false)) {
-                cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
+            val cameraSelector: CameraSelector =
+                if (sharedPreferences.getBoolean("camera_lens_facing_use_front", false)) {
+                CameraSelector.DEFAULT_FRONT_CAMERA
             } else {
-                cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+                CameraSelector.DEFAULT_BACK_CAMERA
             }
 
             try {
@@ -215,18 +218,17 @@ class MainActivity : AppCompatActivity() {
             .start(ContextCompat.getMainExecutor(this)) { recordEvent ->
                 when(recordEvent) {
                     is VideoRecordEvent.Start -> {
+                        videoStartDateTime = getDateTimeUTC(System.currentTimeMillis())
                         Log.d(TAG, "The video camera recording has been initialized")
                     }
                     is VideoRecordEvent.Finalize -> {
                         if (!recordEvent.hasError()) {
-                            val msg = "Data capture succeeded: " +
-                                    "${recordEvent.outputResults.outputUri}"
-                            Log.d(TAG, msg)
+                            videoEndDateTime = getDateTimeUTC(System.currentTimeMillis())
+                            Log.d(TAG, "Data capture succeeded: ${recordEvent.outputResults.outputUri}")
                         } else {
                             recording?.close()
                             recording = null
-                            Log.e(TAG, "Video capture ends with error: " +
-                                    "${recordEvent.error}")
+                            Log.e(TAG, "Video capture ends with error: ${recordEvent.error}")
                         }
                         viewBinding.startStopButton.isEnabled = false
                     }
@@ -239,8 +241,9 @@ class MainActivity : AppCompatActivity() {
 
         viewBinding.statusTextview.text = ""
 
-        filename = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
-            .format(System.currentTimeMillis())
+        val currentTimeMillis = System.currentTimeMillis()
+        buttonStartDateTime = getDateTimeUTC(currentTimeMillis)
+        filename = SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(buttonStartDateTime.toDate())
 
         systemDataDirectoryCollecting = createSubDirectory(systemDataDirectory.absolutePath, filename)
         downloadOutputDirCollecting = createSubDirectory(downloadOutputDir.absolutePath, filename)
@@ -269,6 +272,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun stopDataCollecting() {
         timeUtils.stopTimer()
+        buttonStopDateTime = getDateTimeUTC(System.currentTimeMillis())
 
         try {
             stopService(intentSensorsService)
@@ -284,9 +288,6 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.d(TAG, "It was not possible to stop the Recording")
         }
-
-        stopDatetime = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
-            .format(System.currentTimeMillis())
 
         Toast.makeText(
             this,
@@ -359,8 +360,10 @@ class MainActivity : AppCompatActivity() {
             infoUtils.getAvailableSensors(),
             infoUtils.getAvailableCameraConfigurations(),
             viewBinding.categorySpinner.selectedItem.toString(),
-            filename,
-            stopDatetime,
+            buttonStartDateTime,
+            buttonStopDateTime,
+            videoStartDateTime,
+            videoEndDateTime,
             downloadOutputDirCollecting,
             filename,
         )
