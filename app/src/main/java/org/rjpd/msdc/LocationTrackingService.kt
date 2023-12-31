@@ -104,7 +104,10 @@ class LocationTrackingService : Service() {
                     val longitude = location.longitude.toString()
                     val accuracy = location.accuracy.toString()
 
+                    val eventDateTimeUTC = getDateTimeUTC(System.currentTimeMillis())
+
                     writeGeolocationData(
+                        eventDateTimeUTC,
                         gpsInterval.toString(),
                         accuracy,
                         latitude,
@@ -112,7 +115,7 @@ class LocationTrackingService : Service() {
                         outputDir,
                         filename
                     )
-                    Log.d("LocationTrackingService", "$gpsInterval,$accuracy,$latitude,$longitude")
+                    Log.d("LocationTrackingService", "$eventDateTimeUTC,$gpsInterval,$accuracy,$latitude,$longitude")
                 }
             }
         }
