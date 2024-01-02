@@ -3,19 +3,17 @@ package org.rjpd.msdc
 import android.os.Build
 import android.util.DisplayMetrics
 import android.util.Log
+import org.joda.time.DateTime
+import org.json.JSONObject
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileOutputStream
 import java.io.FileWriter
 import java.io.IOException
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
-import org.json.JSONObject
 import java.util.Enumeration
+import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
+import java.util.zip.ZipOutputStream
 
 
 fun createSubDirectory(rootDirectory: String, subDirectory: String): File {
@@ -120,6 +118,7 @@ fun isFilesListValid(files: MutableList<String>): Boolean {
 
 
 fun writeGeolocationData(
+    eventDateTimeUTC: DateTime,
     gpsInterval: String,
     accuracy: String,
     latitude: String,
@@ -127,9 +126,7 @@ fun writeGeolocationData(
     outputDir: String,
     filename: String,
 ) {
-    val localeDate = SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(Date())
-
-    val line = "$localeDate,$gpsInterval,$accuracy,$latitude,$longitude\n"
+    val line = "$eventDateTimeUTC,$gpsInterval,$accuracy,$latitude,$longitude\n"
 
     try {
         val file = File(outputDir, "${filename}.gps.csv")
@@ -160,16 +157,15 @@ fun extractSensorPosfixFilename(axisData: String): String{
 }
 
 fun writeSensorData(
+    eventTimestampNano: Long?,
+    eventDateTimeUTC: DateTime,
     name: String?,
     axisData: String?,
-    timestamp: Long?,
     accuracy: Int?,
     outputDir: String,
     filename: String,
 ) {
-    val fmtDate = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS", Locale.getDefault()).format(Date())
-
-    val line = "$fmtDate,$name,$axisData,$timestamp,$accuracy\n"
+    val line = "$eventTimestampNano,$eventDateTimeUTC,$name,$axisData,$accuracy\n"
 
     try {
         val filePosfix = extractSensorPosfixFilename(axisData!!)
@@ -183,13 +179,12 @@ fun writeSensorData(
 }
 
 fun writeConsumptionData(
-    currentTime: Long,
+    eventDateTimeUTC: DateTime,
     batteryStatus: Int,
     outputDir: String,
     filename: String,
 ) {
-
-    val line = "$currentTime,$batteryStatus\n"
+    val line = "$eventDateTimeUTC,$batteryStatus\n"
 
     try {
         val file = File(outputDir, "${filename}.consumption.csv")
@@ -207,16 +202,21 @@ fun writeMetadataFile(
     sensorsData: Map<String, Any>,
     cameraConfigurationsData: ArrayList<CameraConfiguration>,
     category: String,
-    startDatetime: String,
-    stopDatetime: String,
+    buttonStartDateTime: DateTime,
+    buttonStopDatetime: DateTime,
+    videoStartDateTime: DateTime,
+    videoStopDateTime: DateTime,
     outputDir: File,
     filename: String,
 ) {
     val metadata = mutableMapOf<String, Any>()
     metadata["preferences"] = preferencesData.toMutableMap()
 
-    metadata["start_time"] = startDatetime
-    metadata["stop_time"] = stopDatetime
+    metadata["button_start_datetime"] = buttonStartDateTime
+    metadata["button_stop_datetime"] = buttonStopDatetime
+    metadata["video_start_datetime"] = videoStartDateTime
+    metadata["video_stop_datetime"] = videoStopDateTime
+
     metadata["category"] = category
 
     metadata["device"] = mutableMapOf(

@@ -42,11 +42,11 @@ class ConsumptionService : Service() {
 
         scheduledExecutor = Executors.newSingleThreadScheduledExecutor()
         scheduledExecutor.scheduleAtFixedRate({
-            val currentTime = System.currentTimeMillis()
+            val currentDateTime = getDateTimeUTC(System.currentTimeMillis())
             val batteryStatus = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
 
-            writeConsumptionData(currentTime, batteryStatus, outputDir, filename)
-            Log.d("ConsumptionService", "$currentTime,$batteryStatus")
+            writeConsumptionData(currentDateTime, batteryStatus, outputDir, filename)
+            Log.d("ConsumptionService", "$currentDateTime,$batteryStatus")
 
         }, 0, consumptionInterval, TimeUnit.SECONDS)
     }
