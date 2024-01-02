@@ -1,19 +1,17 @@
 package org.rjpd.msdc
 
 import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.os.Bundle
 import android.view.MenuItem
-import androidx.appcompat.app.AlertDialog
+import androidx.activity.OnBackPressedDispatcher
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
-import androidx.preference.SwitchPreference
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -35,8 +33,8 @@ class SettingsActivity : AppCompatActivity() {
             setPreferencesFromResource(R.xml.user_preferences, rootKey)
 
             val infoUtils = InfoUtils(requireContext())
-            val cameraManager = requireContext().getSystemService(Context.CAMERA_SERVICE) as CameraManager
-            setCameras(cameraManager, infoUtils)
+            requireContext().getSystemService(Context.CAMERA_SERVICE) as CameraManager
+            setCameras(infoUtils)
 
             val aboutPreference = findPreference<Preference>("about")
             aboutPreference?.onPreferenceClickListener = Preference.OnPreferenceClickListener {
@@ -58,7 +56,7 @@ class SettingsActivity : AppCompatActivity() {
             requireActivity().finish()
         }
 
-        private fun setCameras(cameraManager: CameraManager, infoUtils: InfoUtils) {
+        private fun setCameras(infoUtils: InfoUtils) {
             val cameraConfigurations = infoUtils.getAvailableCameraConfigurations()
 
             val cameraPreference = findPreference<ListPreference>("camera")
@@ -103,7 +101,7 @@ class SettingsActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             android.R.id.home -> {
-                onBackPressed()
+                OnBackPressedDispatcher().onBackPressed()
                 return true
             }
         }

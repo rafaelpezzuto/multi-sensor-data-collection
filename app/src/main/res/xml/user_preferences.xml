@@ -16,29 +16,24 @@
 
         <ListPreference
             app:key="camera"
-            app:title="Choose a camera configuration"
+            app:title="@string/camera_configuration_title"
             app:summary="%s"
             app:isPreferenceVisible="false">
         </ListPreference>
 
         <Preference
             android:key="camera_id"
-            android:title="Camera ID"
+            android:title="@string/camera_id_title"
             app:isPreferenceVisible="false" />
 
         <Preference
             android:key="camera_resolution"
-            android:title="Camera resolution"
+            android:title="@string/camera_resolution_title"
             app:isPreferenceVisible="false" />
 
         <Preference
             android:key="camera_fps"
-            android:title="Camera FPS"
-            app:isPreferenceVisible="false" />
-
-        <Preference
-            android:key="camera_lens_facing"
-            android:title="Camera Lens Facing"
+            android:title="@string/camera_fps_title"
             app:isPreferenceVisible="false" />
 
     </PreferenceCategory>
@@ -88,11 +83,11 @@
 
         <ListPreference
             android:dependency="sensors"
-            app:key="sensors_sr"
+            app:key="sensors_delay"
             app:singleLineTitle="false"
             app:title="@string/sensors_sampling_rate"
-            android:entries="@array/sensors_sr"
-            android:entryValues="@array/sensors_sr_values"
+            android:entries="@array/sensors_delay"
+            android:entryValues="@array/sensors_delay_values"
             android:defaultValue="3"
             app:summary="%s" />
 

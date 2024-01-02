@@ -5,11 +5,11 @@ import android.content.Context
 import android.content.Intent
 import android.os.BatteryManager
 import android.os.IBinder
-import android.util.Log
 import androidx.preference.PreferenceManager
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
+import timber.log.Timber
 
 class ConsumptionService : Service() {
     private lateinit var scheduledExecutor: ScheduledExecutorService
