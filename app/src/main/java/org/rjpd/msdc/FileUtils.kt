@@ -201,7 +201,6 @@ fun writeMetadataFile(
     preferencesData: MutableMap<String, *>,
     displayMetrics: DisplayMetrics,
     sensorsData: Map<String, Any>,
-    cameraConfigurationsData: ArrayList<CameraConfiguration>,
     category: String,
     buttonStartDateTime: DateTime,
     buttonStopDatetime: DateTime,
@@ -210,20 +209,23 @@ fun writeMetadataFile(
     outputDir: File,
     filename: String,
 ) {
+    val datetimeFormatUTC = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
     val metadata = mutableMapOf<String, Any>()
     metadata["preferences"] = preferencesData.toMutableMap()
 
-    metadata["button_start_datetime"] = buttonStartDateTime
-    metadata["button_stop_datetime"] = buttonStopDatetime
-    metadata["video_start_datetime"] = videoStartDateTime
-    metadata["video_stop_datetime"] = videoStopDateTime
+    metadata["time"] = mutableMapOf(
+        "buttonStartDateTime" to buttonStartDateTime.toString(datetimeFormatUTC),
+        "buttonStopDatetime" to buttonStopDatetime.toString(datetimeFormatUTC),
+        "videoStartDateTime" to videoStartDateTime.toString(datetimeFormatUTC),
+        "videoStopDateTime" to videoStopDateTime.toString(datetimeFormatUTC),
+    )
 
     metadata["category"] = category
 
     metadata["device"] = mutableMapOf(
         "model" to Build.MODEL,
         "manufacturer" to Build.MANUFACTURER,
-        "android_version" to Build.VERSION.SDK_INT,
+        "androidVersion" to Build.VERSION.SDK_INT,
         "screen" to mutableMapOf(
             "screenWidthPixels" to displayMetrics.widthPixels,
             "screenHeightPixels" to displayMetrics.heightPixels,
@@ -231,7 +233,6 @@ fun writeMetadataFile(
             "screenDpi" to displayMetrics.densityDpi,
         ),
         "sensors" to sensorsData.toMutableMap(),
-        "cameras" to cameraConfigurationsData.map { it.toString() },
     )
 
     val metadataString = JSONObject(metadata as Map<*, *>?).toString()
