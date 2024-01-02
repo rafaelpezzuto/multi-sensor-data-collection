@@ -55,17 +55,19 @@ class TimeUtils(private val mainHandler: Handler, private val clockView: TextVie
             }
         }
     }
-}
 
-fun getDateTimeUTC(systemCurrentTimeMillis: Long): DateTime {
-    return DateTime(systemCurrentTimeMillis, DateTimeZone.UTC)
-}
+    companion object {
+        fun getDateTimeUTC(systemCurrentTimeMillis: Long): DateTime {
+            return DateTime(systemCurrentTimeMillis, DateTimeZone.UTC)
+        }
 
-fun getDateTimeUTC(systemCurrentTimeMillis: Long, timestampNano: Long, elapsedRealtimeNano: Long): DateTime {
-    val systemClockElapsedRealtimeMillis = TimeUnit.NANOSECONDS.toMillis(elapsedRealtimeNano)
-    val sensorEventTimeStampMillis = TimeUnit.NANOSECONDS.toMillis(timestampNano)
-    val currentMinusElapsedRealtimeMillis = systemCurrentTimeMillis - systemClockElapsedRealtimeMillis
-    val actualEventTimeMillis = currentMinusElapsedRealtimeMillis + sensorEventTimeStampMillis
+        fun getDateTimeUTCSensor(systemCurrentTimeMillis: Long, timestampNano: Long, elapsedRealtimeNano: Long): DateTime {
+            val systemClockElapsedRealtimeMillis = TimeUnit.NANOSECONDS.toMillis(elapsedRealtimeNano)
+            val sensorEventTimeStampMillis = TimeUnit.NANOSECONDS.toMillis(timestampNano)
+            val currentMinusElapsedRealtimeMillis = systemCurrentTimeMillis - systemClockElapsedRealtimeMillis
+            val actualEventTimeMillis = currentMinusElapsedRealtimeMillis + sensorEventTimeStampMillis
 
-    return DateTime(actualEventTimeMillis, DateTimeZone.UTC)
+            return DateTime(actualEventTimeMillis, DateTimeZone.UTC)
+        }
+    }
 }

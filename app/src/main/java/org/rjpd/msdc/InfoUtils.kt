@@ -6,11 +6,13 @@ import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
-import android.util.Log
+import timber.log.Timber
+
+private const val TAG = "InfoUtils"
 
 class InfoUtils(context: Context) {
-    val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-    val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+    private val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+    private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
     fun getAvailableSensors(): Map<String, Any> {
         val data = mutableMapOf<String, Any>()
@@ -63,7 +65,7 @@ class InfoUtils(context: Context) {
                     )
 
                     cameraConfigurations.add(cc)
-                    Log.d("InfoUtils", cc.getLabel())
+                    Timber.tag(TAG).d(cc.getLabel())
 
                 } catch (exc: ArrayIndexOutOfBoundsException) {
                     //

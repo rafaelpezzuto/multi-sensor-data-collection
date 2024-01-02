@@ -36,17 +36,17 @@ class ConsumptionService : Service() {
         val consumptionInterval = sharedPreferences.getInt("consumption_interval", 15).toLong()
 
         outputDir = intent?.extras!!.getString("outputDirectory", "")
-        filename = intent?.extras!!.getString("filename", "")
+        filename = intent.extras!!.getString("filename", "")
 
         val batteryManager = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
 
         scheduledExecutor = Executors.newSingleThreadScheduledExecutor()
         scheduledExecutor.scheduleAtFixedRate({
-            val currentDateTime = getDateTimeUTC(System.currentTimeMillis())
+            val currentDateTime = TimeUtils.getDateTimeUTC(System.currentTimeMillis())
             val batteryStatus = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
 
             writeConsumptionData(currentDateTime, batteryStatus, outputDir, filename)
-            Log.d("ConsumptionService", "$currentDateTime,$batteryStatus")
+            Timber.tag(TAG).d("$currentDateTime,$batteryStatus")
 
         }, 0, consumptionInterval, TimeUnit.SECONDS)
     }
@@ -59,5 +59,9 @@ class ConsumptionService : Service() {
     private fun stopMonitoring() {
         isMonitoring = false
         scheduledExecutor.shutdown()
+    }
+
+    companion object {
+        private const val TAG = "ConsumptionService"
     }
 }

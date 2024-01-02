@@ -9,8 +9,8 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.IBinder
 import android.os.SystemClock
-import android.util.Log
 import androidx.preference.PreferenceManager
+import timber.log.Timber
 
 
 class SensorsService : Service(), SensorEventListener {
@@ -35,7 +35,7 @@ class SensorsService : Service(), SensorEventListener {
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
 
         outputDir = intent?.extras!!.getString("outputDirectory", "")
-        filename = intent?.extras!!.getString("filename", "")
+        filename = intent.extras!!.getString("filename", "")
 
         if (sharedPreferences.getBoolean("accelerometer", true)) {
             supportedSensors.add(Sensor.TYPE_ACCELEROMETER)
@@ -70,8 +70,8 @@ class SensorsService : Service(), SensorEventListener {
 
         for (sensor in sensorManager.getSensorList(Sensor.TYPE_ALL)) {
             if (sensor.type in supportedSensors) {
-                val sensorDelay = sharedPreferences.getString("sensors_sr", SensorManager.SENSOR_DELAY_NORMAL.toString())!!.toInt()
-                Log.d("SensorsService", "Added sensor ${sensor.name} with sensor delay $sensorDelay")
+                val sensorDelay = sharedPreferences.getString("sensors_delay", SensorManager.SENSOR_DELAY_NORMAL.toString())!!.toInt()
+                Timber.tag(TAG).d("Added sensor ${sensor.name} with sensor delay $sensorDelay.")
                 sensorManager.registerListener(this, sensor, sensorDelay)
             }
         }
@@ -89,7 +89,7 @@ class SensorsService : Service(), SensorEventListener {
     override fun onSensorChanged(event: SensorEvent?) {
         if (event?.sensor?.type in supportedSensors) {
             val name = event?.sensor?.name
-            val axisData = event?.values?.joinToString(",") { "${it}" }
+            val axisData = event?.values?.joinToString(",") { "$it" }
             val accuracy = event?.accuracy
 
             // The time in nanoseconds at which the event happened
@@ -102,18 +102,22 @@ class SensorsService : Service(), SensorEventListener {
             val systemCurrentTimeMillis = System.currentTimeMillis()
 
             // The date time in UTC at which the event happened
-            val eventDateTimeUTC = getDateTimeUTC(
+            val eventDateTimeUTC = TimeUtils.getDateTimeUTCSensor(
                 systemCurrentTimeMillis,
                 eventTimeStampNano!!,
                 elapsedRealtime
             )
 
             writeSensorData(eventTimeStampNano, eventDateTimeUTC, name, axisData, accuracy, outputDir, filename)
-            Log.d("SensorsService","$eventTimeStampNano,$eventDateTimeUTC,$name,$axisData,$accuracy")
+            Timber.tag(TAG).d("$eventTimeStampNano,$eventDateTimeUTC,$name,$axisData,$accuracy")
         }
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, p1: Int) {
         return
+    }
+
+    companion object {
+        private const val TAG = "SensorsService"
     }
 }
