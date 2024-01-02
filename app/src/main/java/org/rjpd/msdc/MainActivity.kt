@@ -11,7 +11,6 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
-import android.util.Log
 import android.view.WindowManager
 import android.widget.ArrayAdapter
 import android.widget.Toast
@@ -32,6 +31,11 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.preference.PreferenceManager
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -39,11 +43,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.joda.time.DateTime
 import org.rjpd.msdc.databinding.ActivityMainBinding
-import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Locale
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
+import timber.log.Timber
 
 
 class MainActivity : AppCompatActivity() {
@@ -75,6 +75,10 @@ class MainActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (BuildConfig.DEBUG) {
+            Timber.plant(Timber.DebugTree())
+        }
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
@@ -136,7 +140,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        Log.d(TAG, "A pause has been detected")
+        Timber.tag(TAG).d("A pause has been detected.")
 
         viewBinding.startStopButton.isEnabled = true
         viewBinding.startStopButton.text = getText(R.string.start)
@@ -180,7 +184,7 @@ class MainActivity : AppCompatActivity() {
                     videoCapture,
                 )
             } catch (exc: Exception) {
-                Log.d(TAG, "Use case binding failed", exc)
+                Timber.tag(TAG).d(exc, "Use case binding failed.")
             }
         }, ContextCompat.getMainExecutor(this))
     }
@@ -218,17 +222,17 @@ class MainActivity : AppCompatActivity() {
             .start(ContextCompat.getMainExecutor(this)) { recordEvent ->
                 when(recordEvent) {
                     is VideoRecordEvent.Start -> {
-                        videoStartDateTime = getDateTimeUTC(System.currentTimeMillis())
-                        Log.d(TAG, "The video camera recording has been initialized")
+                        videoStartDateTime = TimeUtils.getDateTimeUTC(System.currentTimeMillis())
+                        Timber.tag(TAG).d("The video camera recording has been initialized at $videoStartDateTime.")
                     }
                     is VideoRecordEvent.Finalize -> {
                         if (!recordEvent.hasError()) {
-                            videoEndDateTime = getDateTimeUTC(System.currentTimeMillis())
-                            Log.d(TAG, "Data capture succeeded: ${recordEvent.outputResults.outputUri}")
+                            videoEndDateTime = TimeUtils.getDateTimeUTC(System.currentTimeMillis())
+                            Timber.tag(TAG).d("Data capture succeeded at $videoEndDateTime: ${recordEvent.outputResults.outputUri}.")
                         } else {
                             recording?.close()
                             recording = null
-                            Log.e(TAG, "Video capture ends with error: ${recordEvent.error}")
+                            Timber.tag(TAG).e("Video capture ends with error: ${recordEvent.error}")
                         }
                         viewBinding.startStopButton.isEnabled = false
                     }
@@ -242,7 +246,7 @@ class MainActivity : AppCompatActivity() {
         viewBinding.statusTextview.text = ""
 
         val currentTimeMillis = System.currentTimeMillis()
-        buttonStartDateTime = getDateTimeUTC(currentTimeMillis)
+        buttonStartDateTime = TimeUtils.getDateTimeUTC(currentTimeMillis)
         filename = SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(buttonStartDateTime.toDate())
 
         systemDataDirectoryCollecting = createSubDirectory(systemDataDirectory.absolutePath, filename)
@@ -272,21 +276,21 @@ class MainActivity : AppCompatActivity() {
 
     private fun stopDataCollecting() {
         timeUtils.stopTimer()
-        buttonStopDateTime = getDateTimeUTC(System.currentTimeMillis())
+        buttonStopDateTime = TimeUtils.getDateTimeUTC(System.currentTimeMillis())
 
         try {
             stopService(intentSensorsService)
             stopService(intentLocationTrackingService)
             stopService(intentConsumptionService)
         } catch (e: Exception) {
-            Log.d(TAG, "Is was not possible to stop the SensorsService")
+            Timber.tag(TAG).d("Is was not possible to stop the SensorsService.")
         }
 
         try {
             recording?.stop()
             recording = null
         } catch (e: Exception) {
-            Log.d(TAG, "It was not possible to stop the Recording")
+            Timber.tag(TAG).d("It was not possible to stop the Recording.")
         }
 
         Toast.makeText(
@@ -314,7 +318,6 @@ class MainActivity : AppCompatActivity() {
                     Toast.LENGTH_SHORT
                 ).show()
 
-                Log.d(TAG, "Generating metadata...")
                 generateMetadata()
 
                 val zipTargetFilename = getZipTargetFilename(downloadOutputDirCollecting)
@@ -326,14 +329,14 @@ class MainActivity : AppCompatActivity() {
                 val zipJobResult = zipJob.await()
 
                 if (zipJobResult) {
-                    Log.d(TAG, "Checking zip file...")
+                    Timber.tag(TAG).d("Checking zip file.")
                     val files = listCompressedFiles(zipTargetFilename)
                     val isValidFilesList = isFilesListValid(files)
 
                     if (isValidFilesList) {
                         viewBinding.statusTextview.text = getString(R.string.success_number_of_files_saved, files.size.toString())
 
-                        Log.d(TAG, "Deleting unzipped data...")
+                        Timber.tag(TAG).d("Deleting unzipped data.")
                         downloadOutputDirCollecting.deleteRecursively()
                     } else {
                         viewBinding.statusTextview.text = getString(R.string.error_data_is_missing_number_of_files_saved, files.size.toString())
@@ -343,22 +346,21 @@ class MainActivity : AppCompatActivity() {
                     viewBinding.settingsButton.isEnabled = true
                     viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.red_700)
                 } else {
-                    Log.d(TAG, "The zip job is not ready")
+                    Timber.tag(TAG).d("The zip job is not ready.")
                 }
 
             } else {
-                Log.d(TAG, "The move job is not ready")
+                Timber.tag(TAG).d("The move job is not ready.")
             }
         }
     }
 
     private fun generateMetadata() {
-        Log.d(TAG, "Generating metadata...")
+        Timber.tag(TAG).d("Generating metadata.")
         writeMetadataFile(
             sharedPreferences.all,
             resources.displayMetrics,
             infoUtils.getAvailableSensors(),
-            infoUtils.getAvailableCameraConfigurations(),
             viewBinding.categorySpinner.selectedItem.toString(),
             buttonStartDateTime,
             buttonStopDateTime,
@@ -380,7 +382,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun zipData (sourceFolder: File, targetZipFilename: String): Boolean {
-        Log.d(TAG, "Compacting data...")
+        Timber.tag(TAG).d("Compacting data.")
         zipEverything(sourceFolder, targetZipFilename)
 
         return true

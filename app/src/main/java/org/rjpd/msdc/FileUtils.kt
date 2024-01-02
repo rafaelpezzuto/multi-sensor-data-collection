@@ -2,9 +2,6 @@ package org.rjpd.msdc
 
 import android.os.Build
 import android.util.DisplayMetrics
-import android.util.Log
-import org.joda.time.DateTime
-import org.json.JSONObject
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileOutputStream
@@ -14,7 +11,11 @@ import java.util.Enumeration
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
+import org.joda.time.DateTime
+import org.json.JSONObject
+import timber.log.Timber
 
+private const val TAG = "FileUtils"
 
 fun createSubDirectory(rootDirectory: String, subDirectory: String): File {
     val directory = File(
@@ -29,7 +30,7 @@ fun createSubDirectory(rootDirectory: String, subDirectory: String): File {
 
 fun moveContent(sourceDirOrFile: File, destDir: File): Boolean {
     if (!sourceDirOrFile.exists()) {
-        Log.d("FileUtils", "$sourceDirOrFile does not exist")
+        Timber.tag(TAG).d("$sourceDirOrFile does not exist.")
         return false
     }
 
@@ -40,7 +41,7 @@ fun moveContent(sourceDirOrFile: File, destDir: File): Boolean {
     if (sourceDirOrFile.isDirectory) {
         val files = sourceDirOrFile.listFiles()
         for (file in files!!) {
-            Log.d("FileUtils", "Moving file ${file.absolutePath}")
+            Timber.tag(TAG).d("Moving file ${file.absolutePath}.")
             val destFile = File(destDir, file.name)
             if (file.isDirectory) {
                 moveContent(file, destFile)
@@ -93,12 +94,12 @@ fun listCompressedFiles(zipFilepath: String): MutableList<String> {
     while (entries.hasMoreElements()) {
         val entry = entries.nextElement()
         files.add(entry.name)
-        Log.d("FileUtils", "File ${entry.name} is in the ZIP")
+        Timber.tag(TAG).d("File ${entry.name} is in the ZIP.")
     }
 
     zipFile.close()
 
-    Log.d("FileUtils", "There are ${files.size} compressed files in the ZIP")
+    Timber.tag(TAG).d("There are ${files.size} compressed files in the ZIP.")
     return files
 }
 
@@ -138,18 +139,18 @@ fun writeGeolocationData(
     }
 }
 
-fun extractSensorPosfixFilename(axisData: String): String{
-    val nfields = axisData.split(",").size
+fun extractSensorPostfixFilename(axisData: String): String{
+    val numberOfFields = axisData.split(",").size
 
-    if (nfields == 1) {
+    if (numberOfFields == 1) {
         return "one"
     }
 
-    if (nfields == 3){
+    if (numberOfFields == 3){
         return "three"
     }
 
-    if (nfields == 6) {
+    if (numberOfFields == 6) {
         return "three.uncalibrated"
     }
 
@@ -168,8 +169,8 @@ fun writeSensorData(
     val line = "$eventTimestampNano,$eventDateTimeUTC,$name,$axisData,$accuracy\n"
 
     try {
-        val filePosfix = extractSensorPosfixFilename(axisData!!)
-        val file = File(outputDir, "$filename.sensors.$filePosfix.csv")
+        val filePostfix = extractSensorPostfixFilename(axisData!!)
+        val file = File(outputDir, "$filename.sensors.$filePostfix.csv")
         val writer = BufferedWriter(FileWriter(file, true))
         writer.append(line)
         writer.close()
@@ -200,7 +201,6 @@ fun writeMetadataFile(
     preferencesData: MutableMap<String, *>,
     displayMetrics: DisplayMetrics,
     sensorsData: Map<String, Any>,
-    cameraConfigurationsData: ArrayList<CameraConfiguration>,
     category: String,
     buttonStartDateTime: DateTime,
     buttonStopDatetime: DateTime,
@@ -209,20 +209,23 @@ fun writeMetadataFile(
     outputDir: File,
     filename: String,
 ) {
+    val datetimeFormatUTC = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
     val metadata = mutableMapOf<String, Any>()
     metadata["preferences"] = preferencesData.toMutableMap()
 
-    metadata["button_start_datetime"] = buttonStartDateTime
-    metadata["button_stop_datetime"] = buttonStopDatetime
-    metadata["video_start_datetime"] = videoStartDateTime
-    metadata["video_stop_datetime"] = videoStopDateTime
+    metadata["time"] = mutableMapOf(
+        "buttonStartDateTime" to buttonStartDateTime.toString(datetimeFormatUTC),
+        "buttonStopDatetime" to buttonStopDatetime.toString(datetimeFormatUTC),
+        "videoStartDateTime" to videoStartDateTime.toString(datetimeFormatUTC),
+        "videoStopDateTime" to videoStopDateTime.toString(datetimeFormatUTC),
+    )
 
     metadata["category"] = category
 
     metadata["device"] = mutableMapOf(
         "model" to Build.MODEL,
         "manufacturer" to Build.MANUFACTURER,
-        "android_version" to Build.VERSION.SDK_INT,
+        "androidVersion" to Build.VERSION.SDK_INT,
         "screen" to mutableMapOf(
             "screenWidthPixels" to displayMetrics.widthPixels,
             "screenHeightPixels" to displayMetrics.heightPixels,
@@ -230,11 +233,10 @@ fun writeMetadataFile(
             "screenDpi" to displayMetrics.densityDpi,
         ),
         "sensors" to sensorsData.toMutableMap(),
-        "cameras" to cameraConfigurationsData.map { it.toString() },
     )
 
     val metadataString = JSONObject(metadata as Map<*, *>?).toString()
-    Log.d("FileUtils", metadataString)
+    Timber.d(TAG, metadataString)
 
     try {
         val file = File(outputDir, "${filename}.metadata.json")

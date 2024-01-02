@@ -1,17 +1,18 @@
 <resources>
-    <string-array name="sensors_sr">
+    <string-array name="sensors_delay">
         <item>Fastest</item>
         <item>Game</item>
         <item>UI</item>
         <item>Normal</item>
     </string-array>
-    <string-array name="sensors_sr_values">
+    <string-array name="sensors_delay_values">
         <item>0</item>
         <item>1</item>
         <item>2</item>
         <item>3</item>
     </string-array>
     <string-array name="categories">
+        <item>Diverse</item>
         <item>Walk, flat, concrete</item>
         <item>Walk, flat, grass</item>
         <item>Walk, asc ramp, concrete</item>
@@ -24,6 +25,5 @@
         <item>Walk, desc ramp, concrete, obstacle</item>
         <item>Walk, asc ramp, grass, obstacle</item>
         <item>Walk, desc ramp, grass, obstacle</item>
-        <item>Diverse</item>
     </string-array>
 </resources>
