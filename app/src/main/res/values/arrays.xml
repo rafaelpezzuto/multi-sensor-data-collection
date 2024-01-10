@@ -12,18 +12,13 @@
         <item>3</item>
     </string-array>
     <string-array name="categories">
-        <item>Diverse</item>
-        <item>Walk, flat, concrete</item>
-        <item>Walk, flat, grass</item>
-        <item>Walk, asc ramp, concrete</item>
-        <item>Walk, desc ramp, concrete</item>
-        <item>Walk, asc ramp, grass</item>
-        <item>Walk, desc ramp, grass</item>
-        <item>Walk, flat, concrete, obstacle</item>
-        <item>Walk, flat, grass, obstacle</item>
-        <item>Walk, asc ramp, concrete, obstacle</item>
-        <item>Walk, desc ramp, concrete, obstacle</item>
-        <item>Walk, asc ramp, grass, obstacle</item>
-        <item>Walk, desc ramp, grass, obstacle</item>
+        <item>Curb Ramps</item>
+        <item>Missing Curb Ramps</item>
+        <item>Missing Sidewalks</item>
+        <item>Sidewalk Geometry</item>
+        <item>Sidewalk Obstacles</item>
+        <item>Surface Materials</item>
+        <item>Surface Problems</item>
+        <item>Others</item>
     </string-array>
 </resources>
