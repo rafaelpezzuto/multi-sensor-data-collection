@@ -5,14 +5,14 @@ import org.junit.Assert.*
 
 class FileUtilsUnitTest {
     @Test
-    fun generateFilenameNoSpace_isCorrect() {
-        val filenameWithSpace = "sidewalk material"
-        assertEquals("sidewalkmaterial", generateFilename(filenameWithSpace))
+    fun generateInstanceNameNoSpace_isCorrect() {
+        val instanceNameWithSpace = "sidewalk material"
+        assertEquals("sidewalkmaterial", generateInstanceName(instanceNameWithSpace))
     }
 
     @Test
-    fun generateFilenameNoDot_isCorrect() {
-        val filenameWithDoubleQuotes = "category name"
-        assertEquals("categoryname", generateFilename(filenameWithDoubleQuotes))
+    fun generateInstanceNameNoDot_isCorrect() {
+        val instanceNameWithDoubleQuotes = "category name"
+        assertEquals("categoryname", generateInstanceName(instanceNameWithDoubleQuotes))
     }
 }

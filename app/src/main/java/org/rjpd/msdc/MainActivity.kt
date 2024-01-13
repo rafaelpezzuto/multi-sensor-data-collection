@@ -233,7 +233,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
+            put(MediaStore.MediaColumns.DISPLAY_NAME, "$filename.video")
             put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
             if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
                 put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/MultiSensorDC")
@@ -281,17 +281,21 @@ class MainActivity : AppCompatActivity() {
 
         val currentTimeMillis = System.currentTimeMillis()
         buttonStartDateTime = TimeUtils.getDateTimeUTC(currentTimeMillis)
-        filename = SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(buttonStartDateTime.toDate())
+        tmpFilename = SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(buttonStartDateTime.toDate())
 
-        systemDataDirectoryCollecting = createSubDirectory(systemDataDirectory.absolutePath, filename)
-        downloadOutputDirCollecting = createSubDirectory(downloadOutputDir.absolutePath, filename)
+        userDataInstancePath = generateInstancePath(
+            downloadOutputDir,
+            viewBinding.categorySpinner.selectedItem.toString()
+        )
 
-        intentSensorsService.putExtra("outputDirectory", systemDataDirectoryCollecting.absolutePath)
-        intentSensorsService.putExtra("filename", filename)
-        intentLocationTrackingService.putExtra("outputDirectory", systemDataDirectoryCollecting.absolutePath)
-        intentLocationTrackingService.putExtra("filename", filename)
-        intentConsumptionService.putExtra("outputDirectory", systemDataDirectoryCollecting.absolutePath)
-        intentConsumptionService.putExtra("filename", filename)
+        systemDataInstancePath = createSubDirectory(systemDataDirectory.absolutePath, tmpFilename)
+
+        intentSensorsService.putExtra("outputDirectory", systemDataInstancePath.absolutePath)
+        intentSensorsService.putExtra("filename", tmpFilename)
+        intentLocationTrackingService.putExtra("outputDirectory", systemDataInstancePath.absolutePath)
+        intentLocationTrackingService.putExtra("filename", tmpFilename)
+        intentConsumptionService.putExtra("outputDirectory", systemDataInstancePath.absolutePath)
+        intentConsumptionService.putExtra("filename", tmpFilename)
 
         if (sharedPreferences.getBoolean("sensors", true)) {
             startService(intentSensorsService)
@@ -305,7 +309,7 @@ class MainActivity : AppCompatActivity() {
             startService(intentConsumptionService)
         }
 
-        startVideoRecording(filename)
+        startVideoRecording(tmpFilename)
     }
 
     private fun stopDataCollecting() {
@@ -334,13 +338,13 @@ class MainActivity : AppCompatActivity() {
         ).show()
 
         CoroutineScope(Dispatchers.Main).launch {
-            while (!mediaDataDirectoryCollecting.resolve("${filename}.mp4").exists()) {
+            while (!mediaDataDirectoryCollecting.resolve("${tmpFilename}.video.mp4").exists()) {
                 delay(500)
             }
 
             val moveJob = async(Dispatchers.IO) {
-                moveContent(systemDataDirectoryCollecting, downloadOutputDirCollecting)
-                moveContent(mediaDataDirectoryCollecting.resolve("${filename}.mp4"), downloadOutputDirCollecting)
+                moveContent(systemDataInstancePath, userDataInstancePath)
+                moveContent(mediaDataDirectoryCollecting.resolve("${tmpFilename}.video.mp4"), userDataInstancePath)
             }
 
             val moveJobResult = moveJob.await()
@@ -354,10 +358,10 @@ class MainActivity : AppCompatActivity() {
 
                 generateMetadata()
 
-                val zipTargetFilename = getZipTargetFilename(downloadOutputDirCollecting)
+                val zipTargetFilename = getZipTargetFilename(userDataInstancePath)
 
                 val zipJob = async(Dispatchers.IO){
-                    zipData(downloadOutputDirCollecting, zipTargetFilename)
+                    zipData(userDataInstancePath, zipTargetFilename)
                 }
 
                 val zipJobResult = zipJob.await()
