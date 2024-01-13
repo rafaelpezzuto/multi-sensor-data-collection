@@ -5,20 +5,69 @@
         <item>UI</item>
         <item>Normal</item>
     </string-array>
+
     <string-array name="sensors_delay_values">
         <item>0</item>
         <item>1</item>
         <item>2</item>
         <item>3</item>
     </string-array>
+
     <string-array name="categories">
         <item>Curb Ramps</item>
         <item>Missing Curb Ramps</item>
-        <item>Missing Sidewalks</item>
-        <item>Sidewalk Geometry</item>
         <item>Sidewalk Obstacles</item>
-        <item>Surface Materials</item>
         <item>Surface Problems</item>
-        <item>Others</item>
+        <item>Missing Sidewalks</item>
+    </string-array>
+
+    <string-array name="tags_curb_ramps">
+        <item>Missing friction strip</item>
+        <item>Narrow</item>
+        <item>Not enough landing space</item>
+        <item>Not level with street</item>
+        <item>Points into traffic</item>
+        <item>Steep</item>
+    </string-array>
+
+    <string-array name="tags_missing_curb_ramps">
+        <item>Alternate wheelchair route present</item>
+        <item>No alternate wheelchair route</item>
+        <item>Unclear if curb ramp needed</item>
+    </string-array>
+
+    <string-array name="tags_sidewalk_obstacles">
+        <item>Fire hydrant</item>
+        <item>Garage entrance</item>
+        <item>Height difference</item>
+        <item>Narrow</item>
+        <item>Parked bike</item>
+        <item>Parked car</item>
+        <item>Pole</item>
+        <item>Sign</item>
+        <item>Stairs</item>
+        <item>Street vendor</item>
+        <item>Trash/recycling can</item>
+        <item>Tree</item>
+        <item>Vegetation</item>
+    </string-array>
+
+    <string-array name="tags_surface_problems">
+        <item>Brick</item>
+        <item>Bumpy</item>
+        <item>Cracks</item>
+        <item>Grass</item>
+        <item>Height difference</item>
+        <item>Narrow sidewalk</item>
+        <item>Uneven/slanted</item>
+        <item>Very broken</item>
+    </string-array>
+
+    <string-array name="tags_missing_sidewalks">
+        <item>Ends abruptly</item>
+        <item>Gravel/dirt road</item>
+        <item>Shared pedestrian and car space</item>
+        <item>Street has a sidewalk</item>
+        <item>Street has no sidewalk</item>
     </string-array>
 </resources>

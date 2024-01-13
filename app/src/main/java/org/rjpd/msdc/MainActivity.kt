@@ -13,10 +13,13 @@ import android.os.Looper
 import android.provider.MediaStore
 import android.view.OrientationEventListener
 import android.view.Surface
+import android.view.View
 import android.view.WindowManager
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
@@ -33,11 +36,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.preference.PreferenceManager
-import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Locale
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -46,6 +44,11 @@ import kotlinx.coroutines.launch
 import org.joda.time.DateTime
 import org.rjpd.msdc.databinding.ActivityMainBinding
 import timber.log.Timber
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 
 class MainActivity : AppCompatActivity() {
@@ -65,15 +68,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var intentSettings: Intent
 
     private lateinit var systemDataDirectory: File
-    private lateinit var systemDataDirectoryCollecting: File
+    private lateinit var systemDataInstancePath: File
     private lateinit var downloadOutputDir: File
-    private lateinit var downloadOutputDirCollecting: File
+    private lateinit var userDataInstancePath: File
     private lateinit var mediaDataDirectoryCollecting: File
-    private lateinit var filename: String
+    private lateinit var tmpFilename: String
     private lateinit var buttonStartDateTime: DateTime
     private lateinit var buttonStopDateTime: DateTime
     private lateinit var videoStartDateTime: DateTime
     private lateinit var videoEndDateTime: DateTime
+
+    private var selectedTagsMap =  mutableMapOf<String, BooleanArray>()
 
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -116,6 +121,8 @@ class MainActivity : AppCompatActivity() {
             if (isChecked) {
                 viewBinding.settingsButton.isEnabled = false
                 viewBinding.exportButton.isEnabled = false
+                viewBinding.categorySpinner.isEnabled = false
+                viewBinding.selectTagsButton.isEnabled = false
                 viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.purple_200)
                 startDataCollecting()
             } else {
@@ -129,6 +136,24 @@ class MainActivity : AppCompatActivity() {
 
         viewBinding.exportButton.setOnClickListener {
             // ToDo: create exporting function
+        }
+
+        viewBinding.selectTagsButton.setOnClickListener {
+            showTagsModal(viewBinding.categorySpinner.selectedItem as String)
+        }
+
+        viewBinding.categorySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parentView: AdapterView<*>?, selectedItemView: View?, categoryID: Int, id: Long) {
+                val categories = resources.getStringArray(R.array.categories)
+                val category = getCategoryForIDSearch(categories[categoryID])
+
+                val tagsResourcesID = R.array::class.java.getDeclaredField("tags_$category").getInt(null)
+                val tags = resources.getStringArray(tagsResourcesID)
+
+                val selectedItems = selectedTagsMap.getOrDefault(category, BooleanArray(tags.size))
+                setSelectedTagsStatus(selectedItems, tags)
+            }
+            override fun onNothingSelected(parentView: AdapterView<*>?) {}
         }
 
         cameraExecutor = Executors.newSingleThreadExecutor()
@@ -164,6 +189,38 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun getCategoryForIDSearch(category: String): String {
+        return category.replace(" ", "_").lowercase()
+    }
+
+    private fun showTagsModal(category: String) {
+        val categoryForIDSearch = getCategoryForIDSearch(category)
+        val tagsResourcesID = R.array::class.java.getDeclaredField("tags_${category.replace(" ", "_").lowercase()}").getInt(null)
+        val tags = resources.getStringArray(tagsResourcesID)
+        val selectedItems = selectedTagsMap.getOrDefault(categoryForIDSearch, BooleanArray(tags.size))
+
+        val dialogBuilder = AlertDialog.Builder(this)
+        dialogBuilder.setTitle("Available tags")
+            .setMultiChoiceItems(tags, selectedItems) { _, which, isChecked ->
+                selectedItems[which] = isChecked
+            }
+            .setPositiveButton("OK") { dialog, _ ->
+                selectedTagsMap[categoryForIDSearch] = selectedItems
+                setSelectedTagsStatus(selectedItems, tags)
+                dialog.dismiss()
+            }
+        dialogBuilder.create().show()
+    }
+
+    private fun setSelectedTagsStatus(selectedItems: BooleanArray, arrayResources: Array<String>) {
+        val statusTags = mutableListOf<String>()
+        for (i in selectedItems.indices) {
+            if (selectedItems[i]) {
+                statusTags.add(arrayResources[i])
+            }
+        }
+        viewBinding.selectedTagsTextview.text = statusTags.joinToString("\n")
+    }
 
     override fun onDestroy() {
         super.onDestroy()
@@ -372,14 +429,23 @@ class MainActivity : AppCompatActivity() {
                     val isValidFilesList = isFilesListValid(files)
 
                     if (isValidFilesList) {
-                        viewBinding.statusTextview.text = getString(R.string.success_number_of_files_saved, files.size.toString())
+                        viewBinding.statusTextview.text = buildString {
+                            append(getString(R.string.status_success))
+                            append("\n")
+                            append(getString(R.string.status_success_detail, "${files.size}"))
+                        }
 
                         Timber.tag(TAG).d("Deleting unzipped data.")
-                        downloadOutputDirCollecting.deleteRecursively()
+                        userDataInstancePath.deleteRecursively()
                     } else {
-                        viewBinding.statusTextview.text = getString(R.string.error_data_is_missing_number_of_files_saved, files.size.toString())
+                        viewBinding.statusTextview.text = buildString {
+                            append(getString(R.string.status_error))
+                            append("\n")
+                            append(getString(R.string.status_error_detail, "${files.size}"))
+                        }
                     }
-
+                    viewBinding.categorySpinner.isEnabled = true
+                    viewBinding.selectTagsButton.isEnabled = true
                     viewBinding.startStopButton.isEnabled = true
                     viewBinding.settingsButton.isEnabled = true
                     viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.red_700)
@@ -399,13 +465,13 @@ class MainActivity : AppCompatActivity() {
             sharedPreferences.all,
             resources.displayMetrics,
             infoUtils.getAvailableSensors(),
-            viewBinding.categorySpinner.selectedItem.toString(),
+            viewBinding.categorySpinner.selectedItem as String,
+            viewBinding.selectedTagsTextview.text as String,
             buttonStartDateTime,
             buttonStopDateTime,
             videoStartDateTime,
             videoEndDateTime,
-            downloadOutputDirCollecting,
-            filename,
+            userDataInstancePath
         )
     }
 
@@ -415,8 +481,7 @@ class MainActivity : AppCompatActivity() {
         val adapter = ArrayAdapter(this, R.layout.custom_spinner_item, items)
         adapter.setDropDownViewResource(R.layout.custom_spinner_item)
 
-        val spinner = viewBinding.categorySpinner
-        spinner.adapter = adapter
+        viewBinding.categorySpinner.adapter = adapter
     }
 
     private fun zipData (sourceFolder: File, targetZipFilename: String): Boolean {

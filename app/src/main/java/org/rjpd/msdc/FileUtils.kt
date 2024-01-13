@@ -263,6 +263,12 @@ fun writeMetadataFile(
 
     metadata["category"] = category
 
+    if (tags.isNotEmpty()) {
+        metadata["tags"] = tags.split("\n")
+    } else {
+        metadata["tags"] = emptyList<String>()
+    }
+
     metadata["device"] = mutableMapOf(
         "model" to Build.MODEL,
         "manufacturer" to Build.MANUFACTURER,
