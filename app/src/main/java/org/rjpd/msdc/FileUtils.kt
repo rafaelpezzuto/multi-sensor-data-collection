@@ -2,20 +2,23 @@ package org.rjpd.msdc
 
 import android.os.Build
 import android.util.DisplayMetrics
+import org.joda.time.DateTime
+import org.json.JSONObject
+import timber.log.Timber
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileOutputStream
 import java.io.FileWriter
 import java.io.IOException
 import java.util.Enumeration
+import java.util.regex.Pattern
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
-import org.joda.time.DateTime
-import org.json.JSONObject
-import timber.log.Timber
 
 private const val TAG = "FileUtils"
+private val datePattern = Pattern.compile("(\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-\\d{3}\\.)\\w+\\.\\w+")
+
 
 fun createSubDirectory(rootDirectory: String, subDirectory: String): File {
     val directory = File(
@@ -42,16 +45,14 @@ fun moveContent(sourceDirOrFile: File, destDir: File): Boolean {
         val files = sourceDirOrFile.listFiles()
         for (file in files!!) {
             Timber.tag(TAG).d("Moving file ${file.absolutePath}.")
-            val destFile = File(destDir, file.name)
             if (file.isDirectory) {
-                moveContent(file, destFile)
+                moveContent(file, File(destDir, file.name))
             } else {
-                file.renameTo(destFile)
+                file.renameTo(removeDateFromFilename(destDir, file.name))
             }
         }
     } else {
-        val destFile = File(destDir, sourceDirOrFile.name)
-        sourceDirOrFile.renameTo(destFile)
+        sourceDirOrFile.renameTo(removeDateFromFilename(destDir, sourceDirOrFile.name))
     }
 
     return true
@@ -117,6 +118,34 @@ fun isFilesListValid(files: MutableList<String>): Boolean {
     return true
 }
 
+fun generateInstanceName(text: String): String {
+    val specialChars = setOf(
+        ' ', '\\', '/', ':', '*', '?', '"', '<', '>', '|',
+        '`', '~', '!', '@', '#', '$', '%', '^', '&', '(',
+        ')', '{', '}', '[', ']', '+', '=', ',', ';'
+    )
+
+    return text.filter { it !in specialChars }
+}
+
+fun generateInstancePath(outputDir: File, category: String): File {
+    val instanceName = generateInstanceName(category)
+
+    var categoryPath = File(outputDir, instanceName)
+    if (!categoryPath.exists()) {
+        categoryPath = createSubDirectory(outputDir.absolutePath, instanceName)
+    }
+
+    var instanceNumber = 1
+    var instancePathZipFile = File(categoryPath.absolutePath, "$instanceNumber.zip")
+
+    while (instancePathZipFile.exists()) {
+        instanceNumber++
+        instancePathZipFile = File(categoryPath, "$instanceNumber.zip")
+    }
+
+    return createSubDirectory(categoryPath.absolutePath, "$instanceNumber")
+}
 
 fun writeGeolocationData(
     eventDateTimeUTC: DateTime,
@@ -155,6 +184,18 @@ fun extractSensorPostfixFilename(axisData: String): String{
     }
 
     return "unknown"
+}
+
+fun removeDateFromFilename(destDir: File, fileName: String): File {
+    val matcher = datePattern.matcher(fileName)
+    return if (matcher.find()) {
+        val newFilename = fileName.replaceFirst(matcher.group(1), "")
+        Timber.tag(TAG).d("$fileName changed to $newFilename")
+
+        File(destDir, newFilename)
+    } else {
+        File(destDir, fileName)
+    }
 }
 
 fun writeSensorData(
@@ -202,12 +243,12 @@ fun writeMetadataFile(
     displayMetrics: DisplayMetrics,
     sensorsData: Map<String, Any>,
     category: String,
+    tags: String,
     buttonStartDateTime: DateTime,
     buttonStopDatetime: DateTime,
     videoStartDateTime: DateTime,
     videoStopDateTime: DateTime,
-    outputDir: File,
-    filename: String,
+    outputDir: File
 ) {
     val datetimeFormatUTC = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
     val metadata = mutableMapOf<String, Any>()
@@ -221,6 +262,12 @@ fun writeMetadataFile(
     )
 
     metadata["category"] = category
+
+    if (tags.isNotEmpty()) {
+        metadata["tags"] = tags.split("\n")
+    } else {
+        metadata["tags"] = emptyList<String>()
+    }
 
     metadata["device"] = mutableMapOf(
         "model" to Build.MODEL,
@@ -239,7 +286,7 @@ fun writeMetadataFile(
     Timber.d(TAG, metadataString)
 
     try {
-        val file = File(outputDir, "${filename}.metadata.json")
+        val file = File(outputDir, "metadata.json")
         val writer = BufferedWriter(FileWriter(file, false))
         writer.write(metadataString)
         writer.close()
