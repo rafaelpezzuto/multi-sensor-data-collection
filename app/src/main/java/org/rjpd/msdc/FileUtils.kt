@@ -264,7 +264,7 @@ fun writeMetadataFile(
     metadata["category"] = category
 
     if (tags.isNotEmpty()) {
-        metadata["tags"] = tags.split("\n")
+        metadata["tags"] = tags.split(", ")
     } else {
         metadata["tags"] = emptyList<String>()
     }

@@ -219,7 +219,7 @@ class MainActivity : AppCompatActivity() {
                 statusTags.add(arrayResources[i])
             }
         }
-        viewBinding.selectedTagsTextview.text = statusTags.joinToString("\n")
+        viewBinding.selectedTagsTextview.text = statusTags.joinToString(", ")
     }
 
     override fun onDestroy() {

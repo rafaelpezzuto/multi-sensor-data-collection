@@ -14,60 +14,77 @@
     </string-array>
 
     <string-array name="categories">
-        <item>Curb Ramps</item>
-        <item>Missing Curb Ramps</item>
-        <item>Sidewalk Obstacles</item>
-        <item>Surface Problems</item>
-        <item>Missing Sidewalks</item>
+        <item>Obstacles</item>
+        <item>Pavement condition</item>
+        <item>Sidewalk geometry</item>
+        <item>Sidewalk structure</item>
+        <item>Surface type</item>
+        <item>Others</item>
     </string-array>
 
-    <string-array name="tags_curb_ramps">
-        <item>Missing friction strip</item>
+    <string-array name="tags_obstacles">
+        <item>Aerial vegetation</item>
+        <item>Bench</item>
+        <item>Bike rack</item>
+        <item>Car barrier</item>
+        <item>Construction material</item>
+        <item>Dirt</item>
+        <item>Fence</item>
+        <item>Fire hydrant</item>
+        <item>Garage entrance</item>
+        <item>Ground vegetation</item>
+        <item>Manhole cover</item>
+        <item>Parked vehicle</item>
+        <item>Person</item>
+        <item>Pole</item>
+        <item>Pothole</item>
+        <item>Potted plant</item>
+        <item>Puddle</item>
+        <item>Rock</item>
+        <item>Sewer cover</item>
+        <item>Steep</item>
+        <item>Transit sign</item>
+        <item>Trash can</item>
+        <item>Tree leaves</item>
+        <item>Trunck</item>
+        <item>Water channel</item>
+        <item>Water fountain</item>-
+    </string-array>
+
+    <string-array name="tags_pavement_condition">
+        <item>Broken</item>
+        <item>Corrugation</item>
+        <item>Cracked</item>
+        <item>Detached</item>
+        <item>Patching</item>
+        <item>Pothole</item>
+    </string-array>
+
+    <string-array name="tags_sidewalk_geometry">
+        <item>Height difference</item>
         <item>Narrow</item>
-        <item>Not enough landing space</item>
-        <item>Not level with street</item>
-        <item>Points into traffic</item>
         <item>Steep</item>
     </string-array>
 
-    <string-array name="tags_missing_curb_ramps">
-        <item>Alternate wheelchair route present</item>
-        <item>No alternate wheelchair route</item>
-        <item>Unclear if curb ramp needed</item>
-    </string-array>
-
-    <string-array name="tags_sidewalk_obstacles">
-        <item>Fire hydrant</item>
-        <item>Garage entrance</item>
-        <item>Height difference</item>
-        <item>Narrow</item>
-        <item>Parked bike</item>
-        <item>Parked car</item>
-        <item>Pole</item>
-        <item>Sign</item>
+    <string-array name="tags_sidewalk_structure">
+        <item>Bioswale</item>
+        <item>Curb cut</item>
+        <item>Curb ramp</item>
+        <item>Footbridge</item>
+        <item>Friction strip</item>
+        <item>Ramp</item>
         <item>Stairs</item>
-        <item>Street vendor</item>
-        <item>Trash/recycling can</item>
-        <item>Tree</item>
-        <item>Vegetation</item>
     </string-array>
 
-    <string-array name="tags_surface_problems">
+    <string-array name="tags_surface_type">
+        <item>Asphalt</item>
         <item>Brick</item>
-        <item>Bumpy</item>
-        <item>Cracks</item>
+        <item>Coating</item>
+        <item>Concrete</item>
         <item>Grass</item>
-        <item>Height difference</item>
-        <item>Narrow sidewalk</item>
-        <item>Uneven/slanted</item>
-        <item>Very broken</item>
-    </string-array>
-
-    <string-array name="tags_missing_sidewalks">
-        <item>Ends abruptly</item>
-        <item>Gravel/dirt road</item>
-        <item>Shared pedestrian and car space</item>
-        <item>Street has a sidewalk</item>
-        <item>Street has no sidewalk</item>
+        <item>Gravel</item>
+        <item>Red brick</item>
+        <item>Slab</item>
+        <item>Tactile paving</item>
     </string-array>
 </resources>
