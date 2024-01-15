@@ -11,12 +11,14 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
+import android.text.InputFilter.LengthFilter
 import android.view.OrientationEventListener
 import android.view.Surface
 import android.view.View
 import android.view.WindowManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.EditText
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
@@ -79,6 +81,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var videoEndDateTime: DateTime
 
     private var selectedTagsMap =  mutableMapOf<String, BooleanArray>()
+    private var enteredTagsCustom = ""
 
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -145,13 +148,16 @@ class MainActivity : AppCompatActivity() {
         viewBinding.categorySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parentView: AdapterView<*>?, selectedItemView: View?, categoryID: Int, id: Long) {
                 val categories = resources.getStringArray(R.array.categories)
-                val category = getCategoryForIDSearch(categories[categoryID])
+                val category = getCategoryName(categories[categoryID])
 
-                val tagsResourcesID = R.array::class.java.getDeclaredField("tags_$category").getInt(null)
-                val tags = resources.getStringArray(tagsResourcesID)
-
-                val selectedItems = selectedTagsMap.getOrDefault(category, BooleanArray(tags.size))
-                setSelectedTagsStatus(selectedItems, tags)
+                if (category != "others") {
+                    val tagsResourcesID = getCategoryResourceID(category)
+                    val tags = resources.getStringArray(tagsResourcesID)
+                    val selectedItems = selectedTagsMap.getOrDefault(category, BooleanArray(tags.size))
+                    setSelectedTagsStatus(selectedItems, tags)
+                } else {
+                    viewBinding.selectedTagsTextview.text = enteredTagsCustom
+                }
             }
             override fun onNothingSelected(parentView: AdapterView<*>?) {}
         }
@@ -189,26 +195,37 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun getCategoryForIDSearch(category: String): String {
-        return category.replace(" ", "_").lowercase()
-    }
-
     private fun showTagsModal(category: String) {
-        val categoryForIDSearch = getCategoryForIDSearch(category)
-        val tagsResourcesID = R.array::class.java.getDeclaredField("tags_${category.replace(" ", "_").lowercase()}").getInt(null)
+        val categoryForIDSearch = getCategoryName(category)
+        val tagsResourcesID = getCategoryResourceID(categoryForIDSearch)
         val tags = resources.getStringArray(tagsResourcesID)
         val selectedItems = selectedTagsMap.getOrDefault(categoryForIDSearch, BooleanArray(tags.size))
 
         val dialogBuilder = AlertDialog.Builder(this)
-        dialogBuilder.setTitle("Available tags")
-            .setMultiChoiceItems(tags, selectedItems) { _, which, isChecked ->
-                selectedItems[which] = isChecked
-            }
-            .setPositiveButton("OK") { dialog, _ ->
-                selectedTagsMap[categoryForIDSearch] = selectedItems
-                setSelectedTagsStatus(selectedItems, tags)
-                dialog.dismiss()
-            }
+
+        if (categoryForIDSearch != "others") {
+            dialogBuilder.setTitle("Available tags")
+                .setMultiChoiceItems(tags, selectedItems) { _, which, isChecked ->
+                    selectedItems[which] = isChecked
+                }
+                .setPositiveButton("OK") { dialog, _ ->
+                    selectedTagsMap[categoryForIDSearch] = selectedItems
+                    setSelectedTagsStatus(selectedItems, tags)
+                    dialog.dismiss()
+                }
+        } else {
+            val et = EditText(this)
+            et.setText(enteredTagsCustom)
+            et.filters = arrayOf(LengthFilter(64), NoNewLineFilter())
+            dialogBuilder.setTitle("Enter one or more tags")
+                .setView(et)
+                .setPositiveButton("OK") { dialog, _ ->
+                    enteredTagsCustom = cleanTagString(et.text.toString())
+                    viewBinding.selectedTagsTextview.text = enteredTagsCustom
+                    dialog.dismiss()
+                }
+        }
+
         dialogBuilder.create().show()
     }
 
