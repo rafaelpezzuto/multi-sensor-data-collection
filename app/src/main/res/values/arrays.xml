@@ -15,40 +15,43 @@
 
     <string-array name="categories">
         <item>Obstacles</item>
-        <item>Pavement condition</item>
-        <item>Sidewalk geometry</item>
-        <item>Sidewalk structure</item>
-        <item>Surface type</item>
+        <item>Pavement Condition</item>
+        <item>Sidewalk Geometry</item>
+        <item>Sidewalk Structure</item>
+        <item>Surface Type</item>
         <item>Others</item>
     </string-array>
 
+    <string-array name="tags_others">
+    </string-array>
+
     <string-array name="tags_obstacles">
-        <item>Aerial vegetation</item>
+        <item>Aerial Vegetation</item>
         <item>Bench</item>
-        <item>Bike rack</item>
-        <item>Car barrier</item>
-        <item>Construction material</item>
+        <item>Bike Rack</item>
+        <item>Car Barrier</item>
+        <item>Construction Material</item>
         <item>Dirt</item>
         <item>Fence</item>
-        <item>Fire hydrant</item>
-        <item>Garage entrance</item>
-        <item>Ground vegetation</item>
-        <item>Manhole cover</item>
-        <item>Parked vehicle</item>
+        <item>Fire Hydrant</item>
+        <item>Garage Entrance</item>
+        <item>Ground Vegetation</item>
+        <item>Manhole Cover</item>
+        <item>Parked Vehicle</item>
         <item>Person</item>
         <item>Pole</item>
         <item>Pothole</item>
-        <item>Potted plant</item>
+        <item>Potted Plant</item>
         <item>Puddle</item>
         <item>Rock</item>
-        <item>Sewer cover</item>
+        <item>Sewer Cover</item>
         <item>Steep</item>
-        <item>Transit sign</item>
-        <item>Trash can</item>
-        <item>Tree leaves</item>
+        <item>Transit Sign</item>
+        <item>Trash Can</item>
+        <item>Tree Leaves</item>
         <item>Trunck</item>
-        <item>Water channel</item>
-        <item>Water fountain</item>-
+        <item>Water Channel</item>
+        <item>Water Fountain</item>-
     </string-array>
 
     <string-array name="tags_pavement_condition">
@@ -61,17 +64,17 @@
     </string-array>
 
     <string-array name="tags_sidewalk_geometry">
-        <item>Height difference</item>
+        <item>Height Difference</item>
         <item>Narrow</item>
         <item>Steep</item>
     </string-array>
 
     <string-array name="tags_sidewalk_structure">
         <item>Bioswale</item>
-        <item>Curb cut</item>
-        <item>Curb ramp</item>
+        <item>Curb Cut</item>
+        <item>Curb Ramp</item>
         <item>Footbridge</item>
-        <item>Friction strip</item>
+        <item>Friction Strip</item>
         <item>Ramp</item>
         <item>Stairs</item>
     </string-array>
@@ -83,8 +86,8 @@
         <item>Concrete</item>
         <item>Grass</item>
         <item>Gravel</item>
-        <item>Red brick</item>
+        <item>Red Brick</item>
         <item>Slab</item>
-        <item>Tactile paving</item>
+        <item>Tactile Paving</item>
     </string-array>
 </resources>
