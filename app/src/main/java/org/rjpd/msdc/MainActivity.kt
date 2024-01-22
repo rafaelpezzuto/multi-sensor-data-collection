@@ -83,6 +83,8 @@ class MainActivity : AppCompatActivity() {
     private var selectedTagsMap =  mutableMapOf<String, BooleanArray>()
     private var enteredTagsCustom = ""
 
+    private lateinit var angleDetectionService: AngleDetectionService
+
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -110,6 +112,10 @@ class MainActivity : AppCompatActivity() {
         intentSettings = Intent(this@MainActivity, SettingsActivity::class.java)
         intentConsumptionService = Intent(this@MainActivity, ConsumptionService::class.java)
 
+        angleDetectionService = AngleDetectionService(this)
+        angleDetectionService.create()
+        angleDetectionService.start(viewBinding.angleTextview)
+
         if (allPermissionsGranted()){
             startCamera()
         } else {
@@ -127,6 +133,7 @@ class MainActivity : AppCompatActivity() {
                 viewBinding.categorySpinner.isEnabled = false
                 viewBinding.selectTagsButton.isEnabled = false
                 viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.purple_200)
+                angleDetectionService.stop()
                 startDataCollecting()
             } else {
                 stopDataCollecting()
@@ -191,6 +198,9 @@ class MainActivity : AppCompatActivity() {
 
                 videoCapture?.targetRotation = rotation
                 preview?.targetRotation = rotation
+
+                Timber.tag(TAG).d("A rotation was detected: $rotation")
+                angleDetectionService.setDevicePosition(rotation)
             }
         }
     }
@@ -242,6 +252,8 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         cameraExecutor.shutdown()
+        orientationEventListener.disable()
+        angleDetectionService.stop()
         stopService(intentLocationTrackingService)
         stopService(intentSensorsService)
     }
@@ -466,6 +478,8 @@ class MainActivity : AppCompatActivity() {
                     viewBinding.startStopButton.isEnabled = true
                     viewBinding.settingsButton.isEnabled = true
                     viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.red_700)
+                    viewBinding.startStopButton.setTextColor(getColorStateList(R.color.white))
+                    angleDetectionService.start(viewBinding.angleTextview)
                 } else {
                     Timber.tag(TAG).d("The zip job is not ready.")
                 }
@@ -484,6 +498,7 @@ class MainActivity : AppCompatActivity() {
             infoUtils.getAvailableSensors(),
             viewBinding.categorySpinner.selectedItem as String,
             viewBinding.selectedTagsTextview.text as String,
+            viewBinding.angleTextview.text as String,
             buttonStartDateTime,
             buttonStopDateTime,
             videoStartDateTime,
