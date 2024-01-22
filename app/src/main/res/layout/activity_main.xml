@@ -106,6 +106,21 @@
         app:layout_constraintStart_toEndOf="@id/start_stop_button"/>
 
     <TextView
+        android:id="@+id/angle_textview"
+        android:fontFamily="monospace"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/red_a100"
+        android:layout_marginStart="25dp"
+        android:layout_marginTop="25dp"
+        android:text="@string/degree_zero"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        />
+
+    <TextView
         android:id="@+id/selected_tags_textview"
         android:layout_alignParentStart="true"
         android:fontFamily="monospace"
