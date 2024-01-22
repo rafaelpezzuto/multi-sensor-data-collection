@@ -2,9 +2,6 @@ package org.rjpd.msdc
 
 import android.os.Build
 import android.util.DisplayMetrics
-import org.joda.time.DateTime
-import org.json.JSONObject
-import timber.log.Timber
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileOutputStream
@@ -15,6 +12,9 @@ import java.util.regex.Pattern
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
+import org.joda.time.DateTime
+import org.json.JSONObject
+import timber.log.Timber
 
 private const val TAG = "FileUtils"
 private val datePattern = Pattern.compile("(\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-\\d{3}\\.)\\w+\\.\\w+")

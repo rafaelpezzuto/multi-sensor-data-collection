@@ -38,6 +38,11 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.preference.PreferenceManager
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -46,11 +51,6 @@ import kotlinx.coroutines.launch
 import org.joda.time.DateTime
 import org.rjpd.msdc.databinding.ActivityMainBinding
 import timber.log.Timber
-import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Locale
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
 
 class MainActivity : AppCompatActivity() {
