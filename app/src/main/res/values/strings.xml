@@ -67,7 +67,7 @@
     <string name="timer_zero">00:00:00</string>
     <string name="preference_about_us">About us</string>
     <string name="preference_about_information_summary">Application information</string>
-    <string name="about_app_description">MultiSensor Data Collection is a mobile app that seamlessly gathers data from various sensors, including GPS, camera, and audio, allowing you to create a comprehensive dataset locally and effortlessly transmit it to the cloud for further analysis and storage.\n\nAuthor: rafael.damaceno@ime.usp.br\n\nVersion number: 0.8.2\n\nPrivacy policy: https://github.com/rafaelpezzuto/multi-sensor-data-collection/blob/main/privacy-policy.md\n\nSource code: https://github.com/rafaelpezzuto/multi-sensor-data-collection</string>
+    <string name="about_app_description">MultiSensor Data Collection is a mobile app that seamlessly gathers data from various sensors, including GPS, camera, and audio, allowing you to create a comprehensive dataset locally and effortlessly transmit it to the cloud for further analysis and storage.\n\nAuthor: rafael.damaceno@ime.usp.br\n\nVersion number: 0.8.3\n\nPrivacy policy: https://github.com/rafaelpezzuto/multi-sensor-data-collection/blob/main/privacy-policy.md\n\nSource code: https://github.com/rafaelpezzuto/multi-sensor-data-collection</string>
     <string name="about_app_close">Close</string>
     <string name="consumption_summary_on">The battery consumption monitor is enabled</string>
     <string name="consumption_summary_off">The battery consumption monitor is disabled</string>
@@ -82,4 +82,6 @@
     <string name="camera_id_title">Camera ID</string>
     <string name="camera_resolution_title">Camera resolution</string>
     <string name="camera_fps_title">Camera FPS</string>
+    <string name="tags">Tags</string>
+    <string name="degree_zero">00.00°</string>
 </resources>
