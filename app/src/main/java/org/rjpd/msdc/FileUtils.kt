@@ -244,6 +244,7 @@ fun writeMetadataFile(
     sensorsData: Map<String, Any>,
     category: String,
     tags: String,
+    deviceStartAngle: String,
     buttonStartDateTime: DateTime,
     buttonStopDatetime: DateTime,
     videoStartDateTime: DateTime,
@@ -260,6 +261,8 @@ fun writeMetadataFile(
         "videoStartDateTime" to videoStartDateTime.toString(datetimeFormatUTC),
         "videoStopDateTime" to videoStopDateTime.toString(datetimeFormatUTC),
     )
+
+    metadata["deviceStartAngle"] = deviceStartAngle
 
     metadata["category"] = category
 
