@@ -266,6 +266,7 @@ class MainActivity : AppCompatActivity() {
         viewBinding.startStopButton.text = getText(R.string.start)
         viewBinding.startStopButton.isChecked = false
         viewBinding.settingsButton.isEnabled = true
+        viewBinding.instructionsButton.isEnabled = true
     }
 
     private fun startCamera() {
@@ -477,6 +478,7 @@ class MainActivity : AppCompatActivity() {
                     viewBinding.selectTagsButton.isEnabled = true
                     viewBinding.startStopButton.isEnabled = true
                     viewBinding.settingsButton.isEnabled = true
+                    viewBinding.instructionsButton.isEnabled = true
                     viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.red_700)
                     viewBinding.startStopButton.setTextColor(getColorStateList(R.color.white))
                     angleDetectionService.start(viewBinding.angleTextview)
