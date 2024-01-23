@@ -23,7 +23,8 @@ class InstructionsActivity : AppCompatActivity() {
                       font-family: Arial, sans-serif;
                       max-width: 800px;
                       margin: 20px auto;
-                      line-height: 1.6;
+                      padding: 0 20px;
+                      line-height: 1.4;
                       color: #333;
                     }
                 
@@ -137,7 +138,7 @@ class InstructionsActivity : AppCompatActivity() {
                     </ul>
                     
                     <h3>Here are the suggested categories and tags to be considered in the data collection</h3>
-                    <table border="1" cellpadding="4">
+                    <table border="1" cellpadding="2">
                       <tr>
                         <th>Category</th>
                         <th>Tag</th>
