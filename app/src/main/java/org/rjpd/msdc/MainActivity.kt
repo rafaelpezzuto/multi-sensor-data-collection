@@ -129,7 +129,7 @@ class MainActivity : AppCompatActivity() {
         viewBinding.startStopButton.setOnCheckedChangeListener {_, isChecked ->
             if (isChecked) {
                 viewBinding.settingsButton.isEnabled = false
-                viewBinding.exportButton.isEnabled = false
+                viewBinding.instructionsButton.isEnabled = false
                 viewBinding.categorySpinner.isEnabled = false
                 viewBinding.selectTagsButton.isEnabled = false
                 viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.purple_200)
@@ -144,8 +144,8 @@ class MainActivity : AppCompatActivity() {
             startActivity(intentSettings)
         }
 
-        viewBinding.exportButton.setOnClickListener {
-            // ToDo: create exporting function
+        viewBinding.instructionsButton.setOnClickListener {
+            startActivity(Intent(this@MainActivity, InstructionsActivity::class.java))
         }
 
         viewBinding.selectTagsButton.setOnClickListener {

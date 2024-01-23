@@ -44,6 +44,13 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".InstructionsActivity"
+            android:exported="false"
+            android:label="Instructions"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
+        </activity>
+
         <service
             android:name=".LocationTrackingService"
             android:exported="false" />
