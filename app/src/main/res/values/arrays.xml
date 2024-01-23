@@ -29,6 +29,7 @@
         <item>Aerial Vegetation</item>
         <item>Bench</item>
         <item>Bike Rack</item>
+        <item>Black Ice</item>
         <item>Car Barrier</item>
         <item>Construction Material</item>
         <item>Dirt</item>
@@ -40,18 +41,16 @@
         <item>Parked Vehicle</item>
         <item>Person</item>
         <item>Pole</item>
-        <item>Pothole</item>
         <item>Potted Plant</item>
         <item>Puddle</item>
         <item>Rock</item>
         <item>Sewer Cover</item>
-        <item>Steep</item>
         <item>Transit Sign</item>
         <item>Trash Can</item>
         <item>Tree Leaves</item>
         <item>Trunck</item>
         <item>Water Channel</item>
-        <item>Water Fountain</item>-
+        <item>Water Fountain</item>
     </string-array>
 
     <string-array name="tags_pavement_condition">
@@ -81,11 +80,15 @@
 
     <string-array name="tags_surface_type">
         <item>Asphalt</item>
+        <item>Bluestone</item>
         <item>Brick</item>
         <item>Coating</item>
+        <item>Cobblestone</item>
         <item>Concrete</item>
+        <item>Concrete with Aggregates</item>
         <item>Grass</item>
         <item>Gravel</item>
+        <item>Large Pavers</item>
         <item>Red Brick</item>
         <item>Slab</item>
         <item>Tactile Paving</item>
