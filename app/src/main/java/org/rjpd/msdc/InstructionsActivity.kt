@@ -97,17 +97,17 @@ class InstructionsActivity : AppCompatActivity() {
                 </head>
                 <body>
                     <h2>Welcome to the MultiSensor Data Collection App!</h2>
-                    <p>This is an instructional tutorial on how to use the app for collecting data.</p>
+                    <p>This is an instructional tutorial on how to use the app for collecting data. To view the captured data, follow the instructions in the Jupyter Notebook available at <a href="https://github.com/rafaelpezzuto/multi-sensor-data-collection/blob/main/analysis/msdc_dataviz.ipynb">https://github.com/rafaelpezzuto/multi-sensor-data-collection/blob/main/analysis/msdc_dataviz.ipynb</a>.</p>
                     
                     <h3>A) Preparation</h3>
                     <ol>
                         <li>Install the mobile phone on the chest strap holder so that the display is facing the person wearing the strap;
                         <li>Wear the chest strap;</li>
                         <li>Adjust the phone holder so that the phone is in landscape mode;</li>
-                        <li>Set the phone holder to an angle of <strong>G</strong> degrees relative to the ground;</li>
-                        <li>Activate the mobile phone's geolocation (GPS) service;</li>
                         <li>Enable the auto-rotation of the mobile phone screen;</li>
+                        <li>Activate the mobile phone's geolocation (GPS) service;</li>
                         <li>Open the MultiSensor Data Collection application;</li>
+                        <li>Set the phone holder to an angle of <strong>G</strong> degrees relative to the ground;</li>
                         <li>Keep the default installed settings.</li>
                     </ol>
                     
@@ -365,7 +365,6 @@ class InstructionsActivity : AppCompatActivity() {
                 </body>
             </html>
         """
-
         instructionWebView.loadDataWithBaseURL(null, instructions, "text/html", "UTF-8", null)
     }
 }
