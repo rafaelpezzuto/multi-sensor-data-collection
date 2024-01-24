@@ -1,0 +1,55 @@
+Category,Tag
+Obstacles,Aerial vegetation
+Obstacles,Bench
+Obstacles,Bike rack
+Obstacles,Black ice
+Obstacles,Car barrier
+Obstacles,Construction material
+Obstacles,Dirt
+Obstacles,Fence
+Obstacles,Fire hydrant
+Obstacles,Garage entrance
+Obstacles,Ground vegetation
+Obstacles,Manhole cover
+Obstacles,Parked vehicle
+Obstacles,Person
+Obstacles,Pole
+Obstacles,Potted plant
+Obstacles,Puddle
+Obstacles,Rock
+Obstacles,Sewer cover
+Obstacles,Transit sign
+Obstacles,Trash can
+Obstacles,Tree leaves
+Obstacles,Trunck
+Obstacles,Water channel
+Obstacles,Water fountain
+Pavement condition,Broken
+Pavement condition,Corrugation
+Pavement condition,Cracked
+Pavement condition,Detached
+Pavement condition,Patching
+Pavement condition,Pothole
+Sidewalk geometry,Height difference
+Sidewalk geometry,Narrow
+Sidewalk geometry,Steep
+Sidewalk structure,Bioswale
+Sidewalk structure,Curb cut
+Sidewalk structure,Curb ramp
+Sidewalk structure,Footbridge
+Sidewalk structure,Friction strip
+Sidewalk structure,Ramp
+Sidewalk structure,Stairs
+Surface type,Asphalt
+Surface type,Bluestone
+Surface type,Brick
+Surface type,Coating
+Surface type,Cobblestone
+Surface type,Concrete
+Surface type,Concrete with aggregates
+Surface type,Grass
+Surface type,Gravel
+Surface type,Large pavers
+Surface type,Red brick
+Surface type,Slab
+Surface type,Tactile paving
