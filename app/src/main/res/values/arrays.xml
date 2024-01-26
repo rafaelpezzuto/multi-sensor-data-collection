@@ -14,12 +14,20 @@
     </string-array>
 
     <string-array name="categories">
+        <item>Adjacent Road Type</item>
         <item>Obstacles</item>
         <item>Pavement Condition</item>
         <item>Sidewalk Geometry</item>
         <item>Sidewalk Structure</item>
         <item>Surface Type</item>
         <item>Others</item>
+    </string-array>
+
+    <string-array name="tags_adjacent_road_type">
+        <item>Motorway/Highway</item>
+        <item>Residential</item>
+        <item>Service</item>
+        <item>None</item>
     </string-array>
 
     <string-array name="tags_others">
@@ -30,12 +38,14 @@
         <item>Bench</item>
         <item>Bike Rack</item>
         <item>Black Ice</item>
+        <item>Bus Stop</item>
         <item>Car Barrier</item>
         <item>Construction Material</item>
         <item>Dirt</item>
         <item>Fence</item>
         <item>Fire Hydrant</item>
         <item>Garage Entrance</item>
+        <item>Ground Light</item>
         <item>Ground Vegetation</item>
         <item>Manhole Cover</item>
         <item>Parked Vehicle</item>
@@ -44,7 +54,6 @@
         <item>Potted Plant</item>
         <item>Puddle</item>
         <item>Rock</item>
-        <item>Sewer Cover</item>
         <item>Transit Sign</item>
         <item>Trash Can</item>
         <item>Tree Leaves</item>
@@ -70,12 +79,12 @@
 
     <string-array name="tags_sidewalk_structure">
         <item>Bioswale</item>
-        <item>Curb Cut</item>
         <item>Curb Ramp</item>
         <item>Footbridge</item>
         <item>Friction Strip</item>
         <item>Ramp</item>
         <item>Stairs</item>
+        <item>Tactile Paving</item>
     </string-array>
 
     <string-array name="tags_surface_type">
@@ -91,6 +100,7 @@
         <item>Large Pavers</item>
         <item>Red Brick</item>
         <item>Slab</item>
-        <item>Tactile Paving</item>
+        <item>Stone Pavement</item>
+        <item>Tiles</item>
     </string-array>
 </resources>

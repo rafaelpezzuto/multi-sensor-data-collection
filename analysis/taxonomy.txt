@@ -1,55 +1,61 @@
-Category,Tag
-Obstacles,Aerial vegetation
-Obstacles,Bench
-Obstacles,Bike rack
-Obstacles,Black ice
-Obstacles,Car barrier
-Obstacles,Construction material
-Obstacles,Dirt
-Obstacles,Fence
-Obstacles,Fire hydrant
-Obstacles,Garage entrance
-Obstacles,Ground vegetation
-Obstacles,Manhole cover
-Obstacles,Parked vehicle
-Obstacles,Person
-Obstacles,Pole
-Obstacles,Potted plant
-Obstacles,Puddle
-Obstacles,Rock
-Obstacles,Sewer cover
-Obstacles,Transit sign
-Obstacles,Trash can
-Obstacles,Tree leaves
-Obstacles,Trunck
-Obstacles,Water channel
-Obstacles,Water fountain
-Pavement condition,Broken
-Pavement condition,Corrugation
-Pavement condition,Cracked
-Pavement condition,Detached
-Pavement condition,Patching
-Pavement condition,Pothole
-Sidewalk geometry,Height difference
-Sidewalk geometry,Narrow
-Sidewalk geometry,Steep
-Sidewalk structure,Bioswale
-Sidewalk structure,Curb cut
-Sidewalk structure,Curb ramp
-Sidewalk structure,Footbridge
-Sidewalk structure,Friction strip
-Sidewalk structure,Ramp
-Sidewalk structure,Stairs
-Surface type,Asphalt
-Surface type,Bluestone
-Surface type,Brick
-Surface type,Coating
-Surface type,Cobblestone
-Surface type,Concrete
-Surface type,Concrete with aggregates
-Surface type,Grass
-Surface type,Gravel
-Surface type,Large pavers
-Surface type,Red brick
-Surface type,Slab
-Surface type,Tactile paving
+category,tag
+adjacent road type,motorway/highway
+adjacent road type,none
+adjacent road type,residential
+adjacent road type,service
+obstacles,aerial vegetation
+obstacles,bench
+obstacles,bike rack
+obstacles,black ice
+obstacles,bus stop
+obstacles,car barrier
+obstacles,construction material
+obstacles,dirt
+obstacles,fence
+obstacles,fire hydrant
+obstacles,garage entrance
+obstacles,ground light
+obstacles,ground vegetation
+obstacles,manhole cover
+obstacles,parked vehicle
+obstacles,person
+obstacles,pole
+obstacles,potted plant
+obstacles,puddle
+obstacles,rock
+obstacles,transit sign
+obstacles,trash can
+obstacles,tree leaves
+obstacles,trunck
+obstacles,water channel
+obstacles,water fountain
+pavement condition,broken
+pavement condition,corrugation
+pavement condition,cracked
+pavement condition,detached
+pavement condition,patching
+pavement condition,pothole
+sidewalk geometry,height difference
+sidewalk geometry,narrow
+sidewalk geometry,steep
+sidewalk structure,bioswale
+sidewalk structure,curb ramp
+sidewalk structure,footbridge
+sidewalk structure,friction strip
+sidewalk structure,ramp
+sidewalk structure,stairs
+sidewalk structure,tactile paving
+surface type,asphalt
+surface type,bluestone
+surface type,brick
+surface type,coating
+surface type,cobblestone
+surface type,concrete
+surface type,concrete with aggregates
+surface type,grass
+surface type,gravel
+surface type,large pavers
+surface type,red brick
+surface type,slab
+surface type,stone pavement
+surface type,tiles
