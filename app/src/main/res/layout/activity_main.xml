@@ -28,45 +28,35 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <Spinner
-        android:background="@color/white_alpha70"
-        style="@style/TextAppearance.AppCompat.Widget.Button.Borderless.Colored"
-        android:id="@+id/category_spinner"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="end"
-        android:layout_marginTop="5dp"
-        android:entries="@array/categories"
-        app:layout_constraintTop_toBottomOf="@id/category_textview"
-        app:layout_constraintEnd_toEndOf="@id/category_textview" />
-
-    <Button
-        android:id="@+id/select_tags_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:elevation="2dp"
-        android:text="@string/tags"
-        android:layout_marginEnd="-4dp"
-        android:textSize="12sp"
-        android:layout_marginTop="5dp"
-        android:textColor="@color/red_700"
-        app:layout_constraintTop_toBottomOf="@id/category_spinner"
-        app:layout_constraintEnd_toEndOf="@id/category_textview" />
-
-    <TextView
-        android:id="@+id/category_textview"
-        android:layout_alignParentStart="true"
+    <EditText
+        android:id="@+id/dir_edittext"
+        tools:ignore="LabelFor"
+        android:textAlignment="textEnd"
+        android:textSize="6pt"
         android:fontFamily="monospace"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/categories"
-        android:layout_marginTop="10dp"
-        android:textAllCaps="true"
-        android:textSize="12sp"
-        android:textStyle="bold"
+        android:layout_width="200dp"
+        android:layout_height="50dp"
+        android:backgroundTint="@color/red_a100"
         android:textColor="@color/red_a100"
+        android:inputType="textCapCharacters"
         app:layout_constraintEnd_toEndOf="@id/clock_textview"
-        app:layout_constraintTop_toBottomOf="@id/clock_textview" />
+        app:layout_constraintTop_toBottomOf="@id/clock_textview"
+        android:autofillHints="Enter the directory name" />
+
+    <EditText
+        android:id="@+id/subdir_edittext"
+        tools:ignore="LabelFor"
+        android:textAlignment="textEnd"
+        android:textSize="6pt"
+        android:fontFamily="monospace"
+        android:layout_width="200dp"
+        android:layout_height="50dp"
+        android:backgroundTint="@color/red_a100"
+        android:textColor="@color/red_a100"
+        android:inputType="textCapCharacters"
+        app:layout_constraintEnd_toEndOf="@id/dir_edittext"
+        app:layout_constraintTop_toBottomOf="@id/dir_edittext"
+        android:autofillHints="Enter the subdirectory name" />
 
     <ToggleButton
         android:backgroundTint="@color/red_700"
@@ -119,22 +109,6 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         />
-
-    <TextView
-        android:id="@+id/selected_tags_textview"
-        android:layout_alignParentStart="true"
-        android:fontFamily="monospace"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:layout_marginHorizontal="25dp"
-        android:textAllCaps="true"
-        android:textSize="12sp"
-        android:textStyle="bold"
-        android:textColor="@color/red_a100"
-        android:textAlignment="textEnd"
-        app:layout_constraintTop_toBottomOf="@id/select_tags_button"
-        android:text="" />
 
     <TextView
         android:id="@+id/status_textview"
