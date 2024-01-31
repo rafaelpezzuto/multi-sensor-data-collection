@@ -107,7 +107,7 @@ class InstructionsActivity : AppCompatActivity() {
                         <li>Enable the auto-rotation of the mobile phone screen;</li>
                         <li>Activate the mobile phone's geolocation (GPS) service;</li>
                         <li>Open the MultiSensor Data Collection application;</li>
-                        <li>Set the phone holder to an angle of <strong>G</strong> degrees relative to the ground;</li>
+                        <li>Set the phone holder to an angle of <strong>G=-70</strong> degrees relative to the ground;</li>
                         <li>Keep the default installed settings.</li>
                     </ol>
                     
@@ -115,21 +115,15 @@ class InstructionsActivity : AppCompatActivity() {
                     <ol>
                         <li>Select the category;</li>
                         <li>Add the tags;</li>
-                        <li>Click the <button class='button-is-red'>START</button> button and stand still for <strong>T</strong> seconds (without moving the body);</li>
-                        <li>Walk until completing <strong>P</strong> steps, going;</li>
-                        <li>Stand still for <strong>T</strong> seconds;</li>
-                        <li>Walk until completing </strong>P</strong> steps, returning;</li>
-                        <li>Repeat steps 4-6 once;</li>
-                        <li>Click the <button class='button-is-purple'>STOP</button> button; and</li>
+                        <li>Click the <button class='button-is-red'>START</button> button;
+                        <li>Stand still for <strong>T=2</strong> seconds (without moving the body);</li>
+                        <li>Walk until completing <strong>P=40</strong> steps, going;</li>
+                        <li>Stand still for <strong>T=2</strong> seconds;</li>
+                        <li>Walk until completing </strong>P=40</strong> steps, returning;</li>
+                        <li>Repeat steps 4-7 once;</li>
+                        <li>Stand still for <strong>T=2</strong> seconds and click the <button class='button-is-purple'>STOP</button> button; and</li>
                         <li>Wait for the <button class='button-is-purple'>START</button> button to become active again (colored in red, like <button class='button-is-red'>START</button>) to start a new collection.</li>
                     </ol>
-                    
-                    <h3>Recommended parameters</h3>
-                    <ul>
-                        <li>T = 2 seconds</li>
-                        <li>P = 40 steps per direction</li>
-                        <li>G = 70 degrees</li>
-                    </ul>
                     
                     <h3>Notes</h3>
                     <ul>
@@ -139,36 +133,6 @@ class InstructionsActivity : AppCompatActivity() {
                         <li>The walking speed should correspond to the usual pace of the recording person</li>
                         <li>The person recording can wear any footwear or be barefoot</li>
                     </ul>
-                    
-                    <h3>Here are the suggested categories and tags to be considered in the data collection</h3>
-                    <table border="1" cellpadding="2">
-                        <tbody>
-                          <tr>
-                            <td>Adjacent road type</td>
-                            <td>Motorway/Highway · Residential · Service · None</td>
-                          </tr>
-                          <tr>
-                            <td>Obstacles</td>
-                            <td>Aerial vegetation · Bench · Bike rack · Black ice · Bus stop · Car barrier · Construction material · Dirt · Fence · Fire hydrant · Garage entrance · Ground light · Ground vegetation · Manhole cover · Parked vehicle · Person · Pole · Potted plant · Puddle · Rock · Transit sign · Trash can · Tree leaves · Trunk · Water channel · Water fountain</td>
-                          </tr>
-                          <tr>
-                            <td>Pavement condition</td>
-                            <td>Broken · Corrugation · Cracked · Detached · Patching · Pothole</td>
-                          </tr>
-                          <tr>
-                            <td>Sidewalk geometry</td>
-                            <td>Height difference · Narrow · Steep</td>
-                          </tr>
-                          <tr>
-                            <td>Sidewalk structure</td>
-                            <td>Bioswale · Curb ramp · Footbridge · Friction strip · Ramp · Stairs · Tactile paving</td>
-                          </tr>
-                          <tr>
-                            <td>Surface type</td>
-                            <td>Asphalt · Brick · Coating · Concrete · Concrete with aggregates · Grass · Gravel · Large pavers · Red brick · Slab · Stone pavement · Tiles</td>
-                          </tr>
-                        </tbody>
-                    </table>
 
                     <p>Thank you for using our app!</p>
                 </body>
