@@ -152,23 +152,23 @@ fun generateInstanceName(text: String): String {
     return titledText.filter { it !in specialChars }
 }
 
-fun generateInstancePath(outputDir: File, category: String): File {
-    val instanceName = generateInstanceName(category)
+fun generateInstancePath(outputDir: File, tempFileName: String, levelOne: String, levelTwo: String): File {
+    val levelOneName = generateInstanceName(levelOne)
+    val levelTwoName = generateInstanceName(levelTwo)
 
-    var categoryPath = File(outputDir, instanceName)
-    if (!categoryPath.exists()) {
-        categoryPath = createSubDirectory(outputDir.absolutePath, instanceName)
+    if (levelOneName.isEmpty() && levelTwoName.isEmpty()) {
+        return createSubDirectory(outputDir.absolutePath, tempFileName)
     }
 
-    var instanceNumber = 1
-    var instancePathZipFile = File(categoryPath.absolutePath, "$instanceNumber.zip")
-
-    while (instancePathZipFile.exists()) {
-        instanceNumber++
-        instancePathZipFile = File(categoryPath, "$instanceNumber.zip")
+    if (levelOneName.isNotEmpty() && levelTwoName.isEmpty()) {
+        return createSubDirectory(outputDir.absolutePath, "$levelOneName-${tempFileName}")
     }
 
-    return createSubDirectory(categoryPath.absolutePath, "$instanceNumber")
+    if (levelOneName.isEmpty() && levelTwoName.isNotEmpty()) {
+        return createSubDirectory(outputDir.absolutePath, "$levelTwoName-${tempFileName}")
+    }
+
+    return createSubDirectory(createSubDirectory(outputDir.absolutePath, levelOneName).absolutePath, "$levelTwoName-${tempFileName}")
 }
 
 fun writeGeolocationData(
