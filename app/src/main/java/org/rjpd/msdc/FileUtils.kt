@@ -266,8 +266,6 @@ fun writeMetadataFile(
     preferencesData: MutableMap<String, *>,
     displayMetrics: DisplayMetrics,
     sensorsData: Map<String, Any>,
-    category: String,
-    tags: String,
     deviceStartAngle: String,
     buttonStartDateTime: DateTime,
     buttonStopDatetime: DateTime,
@@ -287,14 +285,6 @@ fun writeMetadataFile(
     )
 
     metadata["deviceStartAngle"] = deviceStartAngle
-
-    metadata["category"] = category
-
-    if (tags.isNotEmpty()) {
-        metadata["tags"] = tags.split(", ")
-    } else {
-        metadata["tags"] = emptyList<String>()
-    }
 
     metadata["device"] = mutableMapOf(
         "model" to Build.MODEL,
