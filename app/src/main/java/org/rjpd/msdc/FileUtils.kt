@@ -8,6 +8,7 @@ import java.io.FileOutputStream
 import java.io.FileWriter
 import java.io.IOException
 import java.util.Enumeration
+import java.util.Locale
 import java.util.regex.Pattern
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
@@ -102,6 +103,22 @@ fun listCompressedFiles(zipFilepath: String): MutableList<String> {
 
     Timber.tag(TAG).d("There are ${files.size} compressed files in the ZIP.")
     return files
+}
+
+fun listFiles(directory: File): MutableList<String> {
+    val fileList = mutableListOf<String>()
+
+    if (directory.exists() && directory.isDirectory) {
+        val files = directory.listFiles()
+
+        files?.let {
+            for (file in it) {
+                fileList.add(file.name)
+            }
+        }
+    }
+
+    return fileList
 }
 
 fun isFilesListValid(files: MutableList<String>): Boolean {
