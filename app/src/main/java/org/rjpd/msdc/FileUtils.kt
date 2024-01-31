@@ -136,13 +136,20 @@ fun isFilesListValid(files: MutableList<String>): Boolean {
 }
 
 fun generateInstanceName(text: String): String {
+    val titledText = text.lowercase().split(" ").joinToString(" ") { it ->
+        it.replaceFirstChar {
+        if (it.isLowerCase()) it.titlecase(
+            Locale.ROOT
+        ) else it.toString()
+    } }
+
     val specialChars = setOf(
         ' ', '\\', '/', ':', '*', '?', '"', '<', '>', '|',
         '`', '~', '!', '@', '#', '$', '%', '^', '&', '(',
         ')', '{', '}', '[', ']', '+', '=', ',', ';'
     )
 
-    return text.filter { it !in specialChars }
+    return titledText.filter { it !in specialChars }
 }
 
 fun generateInstancePath(outputDir: File, category: String): File {
