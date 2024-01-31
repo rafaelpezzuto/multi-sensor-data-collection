@@ -11,17 +11,11 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
-import android.text.InputFilter.LengthFilter
 import android.view.OrientationEventListener
 import android.view.Surface
-import android.view.View
 import android.view.WindowManager
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.EditText
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
@@ -80,9 +74,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var videoStartDateTime: DateTime
     private lateinit var videoEndDateTime: DateTime
 
-    private var selectedTagsMap =  mutableMapOf<String, BooleanArray>()
-    private var enteredTagsCustom = ""
-
     private lateinit var angleDetectionService: AngleDetectionService
 
     @RequiresApi(Build.VERSION_CODES.P)
@@ -101,7 +92,6 @@ class MainActivity : AppCompatActivity() {
 
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)
-        setSpinner()
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         infoUtils = InfoUtils(this)
@@ -129,9 +119,9 @@ class MainActivity : AppCompatActivity() {
         viewBinding.startStopButton.setOnCheckedChangeListener {_, isChecked ->
             if (isChecked) {
                 viewBinding.settingsButton.isEnabled = false
+                viewBinding.dirEdittext.isEnabled = false
+                viewBinding.subdirEdittext.isEnabled = false
                 viewBinding.instructionsButton.isEnabled = false
-                viewBinding.categorySpinner.isEnabled = false
-                viewBinding.selectTagsButton.isEnabled = false
                 viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.purple_200)
                 angleDetectionService.stop()
                 startDataCollecting()
@@ -146,27 +136,6 @@ class MainActivity : AppCompatActivity() {
 
         viewBinding.instructionsButton.setOnClickListener {
             startActivity(Intent(this@MainActivity, InstructionsActivity::class.java))
-        }
-
-        viewBinding.selectTagsButton.setOnClickListener {
-            showTagsModal(viewBinding.categorySpinner.selectedItem as String)
-        }
-
-        viewBinding.categorySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parentView: AdapterView<*>?, selectedItemView: View?, categoryID: Int, id: Long) {
-                val categories = resources.getStringArray(R.array.categories)
-                val category = getCategoryName(categories[categoryID])
-
-                if (category != "others") {
-                    val tagsResourcesID = getCategoryResourceID(category)
-                    val tags = resources.getStringArray(tagsResourcesID)
-                    val selectedItems = selectedTagsMap.getOrDefault(category, BooleanArray(tags.size))
-                    setSelectedTagsStatus(selectedItems, tags)
-                } else {
-                    viewBinding.selectedTagsTextview.text = enteredTagsCustom
-                }
-            }
-            override fun onNothingSelected(parentView: AdapterView<*>?) {}
         }
 
         cameraExecutor = Executors.newSingleThreadExecutor()
@@ -205,50 +174,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showTagsModal(category: String) {
-        val categoryForIDSearch = getCategoryName(category)
-        val tagsResourcesID = getCategoryResourceID(categoryForIDSearch)
-        val tags = resources.getStringArray(tagsResourcesID)
-        val selectedItems = selectedTagsMap.getOrDefault(categoryForIDSearch, BooleanArray(tags.size))
-
-        val dialogBuilder = AlertDialog.Builder(this)
-
-        if (categoryForIDSearch != "others") {
-            dialogBuilder.setTitle("Available tags")
-                .setMultiChoiceItems(tags, selectedItems) { _, which, isChecked ->
-                    selectedItems[which] = isChecked
-                }
-                .setPositiveButton("OK") { dialog, _ ->
-                    selectedTagsMap[categoryForIDSearch] = selectedItems
-                    setSelectedTagsStatus(selectedItems, tags)
-                    dialog.dismiss()
-                }
-        } else {
-            val et = EditText(this)
-            et.setText(enteredTagsCustom)
-            et.filters = arrayOf(LengthFilter(64), NoNewLineFilter())
-            dialogBuilder.setTitle("Enter one or more tags")
-                .setView(et)
-                .setPositiveButton("OK") { dialog, _ ->
-                    enteredTagsCustom = cleanTagString(et.text.toString())
-                    viewBinding.selectedTagsTextview.text = enteredTagsCustom
-                    dialog.dismiss()
-                }
-        }
-
-        dialogBuilder.create().show()
-    }
-
-    private fun setSelectedTagsStatus(selectedItems: BooleanArray, arrayResources: Array<String>) {
-        val statusTags = mutableListOf<String>()
-        for (i in selectedItems.indices) {
-            if (selectedItems[i]) {
-                statusTags.add(arrayResources[i])
-            }
-        }
-        viewBinding.selectedTagsTextview.text = statusTags.joinToString(", ")
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         cameraExecutor.shutdown()
@@ -266,6 +191,8 @@ class MainActivity : AppCompatActivity() {
         viewBinding.startStopButton.text = getText(R.string.start)
         viewBinding.startStopButton.isChecked = false
         viewBinding.settingsButton.isEnabled = true
+        viewBinding.dirEdittext.isEnabled = true
+        viewBinding.subdirEdittext.isEnabled = true
         viewBinding.instructionsButton.isEnabled = true
     }
 
@@ -372,7 +299,9 @@ class MainActivity : AppCompatActivity() {
 
         userDataInstancePath = generateInstancePath(
             downloadOutputDir,
-            viewBinding.categorySpinner.selectedItem.toString()
+            tmpFilename,
+            viewBinding.dirEdittext.text.toString(),
+            viewBinding.subdirEdittext.text.toString(),
         )
 
         systemDataInstancePath = createSubDirectory(systemDataDirectory.absolutePath, tmpFilename)
@@ -397,6 +326,27 @@ class MainActivity : AppCompatActivity() {
         }
 
         startVideoRecording(tmpFilename)
+    }
+
+    private fun finishCollectionCheck(isValid: Boolean, filesSize:Int, deleteDirectory:Boolean, directory:File) {
+        if (isValid) {
+            viewBinding.statusTextview.text = buildString {
+                append(getString(R.string.status_success))
+                append("\n")
+                append(getString(R.string.status_success_detail, "$filesSize"))
+            }
+
+            if (deleteDirectory) {
+                Timber.tag(TAG).d("Deleting unzipped data.")
+                directory.deleteRecursively()
+            }
+        } else {
+            viewBinding.statusTextview.text = buildString {
+                append(getString(R.string.status_error))
+                append("\n")
+                append(getString(R.string.status_error_detail, "$filesSize"))
+            }
+        }
     }
 
     private fun stopDataCollecting() {
@@ -445,47 +395,37 @@ class MainActivity : AppCompatActivity() {
 
                 generateMetadata()
 
-                val zipTargetFilename = getZipTargetFilename(userDataInstancePath)
+                if (sharedPreferences.getBoolean("zip", false)) {
+                    val zipTargetFilename = getZipTargetFilename(userDataInstancePath)
 
-                val zipJob = async(Dispatchers.IO){
-                    zipData(userDataInstancePath, zipTargetFilename)
-                }
-
-                val zipJobResult = zipJob.await()
-
-                if (zipJobResult) {
-                    Timber.tag(TAG).d("Checking zip file.")
-                    val files = listCompressedFiles(zipTargetFilename)
-                    val isValidFilesList = isFilesListValid(files)
-
-                    if (isValidFilesList) {
-                        viewBinding.statusTextview.text = buildString {
-                            append(getString(R.string.status_success))
-                            append("\n")
-                            append(getString(R.string.status_success_detail, "${files.size}"))
-                        }
-
-                        Timber.tag(TAG).d("Deleting unzipped data.")
-                        userDataInstancePath.deleteRecursively()
-                    } else {
-                        viewBinding.statusTextview.text = buildString {
-                            append(getString(R.string.status_error))
-                            append("\n")
-                            append(getString(R.string.status_error_detail, "${files.size}"))
-                        }
+                    val zipJob = async(Dispatchers.IO) {
+                        zipData(userDataInstancePath, zipTargetFilename)
                     }
-                    viewBinding.categorySpinner.isEnabled = true
-                    viewBinding.selectTagsButton.isEnabled = true
-                    viewBinding.startStopButton.isEnabled = true
-                    viewBinding.settingsButton.isEnabled = true
-                    viewBinding.instructionsButton.isEnabled = true
-                    viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.red_700)
-                    viewBinding.startStopButton.setTextColor(getColorStateList(R.color.white))
-                    angleDetectionService.start(viewBinding.angleTextview)
-                } else {
-                    Timber.tag(TAG).d("The zip job is not ready.")
-                }
 
+                    val zipJobResult = zipJob.await()
+
+                    if (zipJobResult) {
+                        Timber.tag(TAG).d("Checking zip file.")
+                        val files = listCompressedFiles(zipTargetFilename)
+                        val isValidFilesList = isFilesListValid(files)
+                        finishCollectionCheck(isValidFilesList, files.size, true, userDataInstancePath)
+                    } else {
+                        Timber.tag(TAG).d("The zip job is not ready.")
+                    }
+                } else {
+                    Timber.tag(TAG).d("Checking directory.")
+                    val files = listFiles(userDataInstancePath)
+                    val isValidFilesList = isFilesListValid(files)
+                    finishCollectionCheck(isValidFilesList, files.size, false, userDataInstancePath)
+                }
+                viewBinding.startStopButton.isEnabled = true
+                viewBinding.settingsButton.isEnabled = true
+                viewBinding.dirEdittext.isEnabled = true
+                viewBinding.subdirEdittext.isEnabled = true
+                viewBinding.instructionsButton.isEnabled = true
+                viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.red_700)
+                viewBinding.startStopButton.setTextColor(getColorStateList(R.color.white))
+                angleDetectionService.start(viewBinding.angleTextview)
             } else {
                 Timber.tag(TAG).d("The move job is not ready.")
             }
@@ -498,8 +438,6 @@ class MainActivity : AppCompatActivity() {
             sharedPreferences.all,
             resources.displayMetrics,
             infoUtils.getAvailableSensors(),
-            viewBinding.categorySpinner.selectedItem as String,
-            viewBinding.selectedTagsTextview.text as String,
             viewBinding.angleTextview.text as String,
             buttonStartDateTime,
             buttonStopDateTime,
@@ -507,15 +445,6 @@ class MainActivity : AppCompatActivity() {
             videoEndDateTime,
             userDataInstancePath
         )
-    }
-
-    private fun setSpinner() {
-        val items = resources.getStringArray(R.array.categories)
-
-        val adapter = ArrayAdapter(this, R.layout.custom_spinner_item, items)
-        adapter.setDropDownViewResource(R.layout.custom_spinner_item)
-
-        viewBinding.categorySpinner.adapter = adapter
     }
 
     private fun zipData (sourceFolder: File, targetZipFilename: String): Boolean {
