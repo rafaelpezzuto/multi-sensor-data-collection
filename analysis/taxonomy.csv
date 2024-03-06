@@ -22,6 +22,7 @@ obstacles,pole
 obstacles,potted plant
 obstacles,puddle
 obstacles,rock
+obstacles,snow
 obstacles,transit sign
 obstacles,trash can
 obstacles,tree leaves
@@ -41,6 +42,7 @@ sidewalk structure,bioswale
 sidewalk structure,curb ramp
 sidewalk structure,footbridge
 sidewalk structure,friction strip
+sidewalk structure,grate
 sidewalk structure,ramp
 sidewalk structure,stairs
 sidewalk structure,tactile paving
