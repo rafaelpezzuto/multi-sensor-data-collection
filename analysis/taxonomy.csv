@@ -3,6 +3,7 @@ adjacent road type,none
 adjacent road type,residential
 adjacent road type,service
 obstacles,aerial vegetation
+obstacles,barrier
 obstacles,bench
 obstacles,bike rack
 obstacles,black ice
@@ -17,12 +18,14 @@ obstacles,ground light
 obstacles,ground vegetation
 obstacles,manhole cover
 obstacles,parked vehicle
+obstacles,parking booth
 obstacles,person
 obstacles,pole
 obstacles,potted plant
 obstacles,puddle
 obstacles,rock
 obstacles,snow
+obstacles,telephone booth
 obstacles,transit sign
 obstacles,trash can
 obstacles,tree leaves
