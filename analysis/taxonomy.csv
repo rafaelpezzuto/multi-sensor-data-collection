@@ -13,10 +13,12 @@ obstacles,construction material
 obstacles,dirt
 obstacles,fence
 obstacles,fire hydrant
+obstacles,floor standing board
 obstacles,garage entrance
 obstacles,ground light
 obstacles,ground vegetation
 obstacles,manhole cover
+obstacles,newsstand
 obstacles,parked vehicle
 obstacles,parking booth
 obstacles,person
@@ -26,6 +28,7 @@ obstacles,puddle
 obstacles,rock
 obstacles,snow
 obstacles,telephone booth
+obstacles,traffic cone
 obstacles,transit sign
 obstacles,trash can
 obstacles,tree leaves
