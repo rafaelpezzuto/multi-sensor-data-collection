@@ -28,7 +28,7 @@
     <string name="magnetometer_on">Magnetometer sensor is enabled</string>
     <string name="magnetometer_off">Magnetometer sensor is disabled</string>
 
-    <string name="camera_category">Changing this setting will trigger an app restart</string>
+    <string name="camera_category">Changing these settings will trigger an app restart</string>
     <string name="camera_lens_facing_use_front_title">Recording using the front camera"</string>
     <string name="camera_lens_facing_use_front_on">Front camera is selected</string>
     <string name="camera_lens_facing_use_front_off">Back camera is selected</string>
@@ -64,7 +64,7 @@
     <string name="timer_zero">00:00:00</string>
     <string name="preference_about_us">About us</string>
     <string name="preference_about_information_summary">Application information</string>
-    <string name="about_app_description">MultiSensor Data Collection is a mobile app that seamlessly gathers data from various sensors, including GPS, camera, and audio, allowing you to create a comprehensive dataset locally and effortlessly transmit it to the cloud for further analysis and storage.\n\nAuthor: rafael.damaceno@ime.usp.br\n\nVersion number: 0.9.4.0\n\nPrivacy policy: https://github.com/rafaelpezzuto/multi-sensor-data-collection/blob/main/privacy-policy.md\n\nSource code: https://github.com/rafaelpezzuto/multi-sensor-data-collection</string>
+    <string name="about_app_description">MultiSensor Data Collection is a mobile app that seamlessly gathers data from various sensors, including GPS, camera, and audio, allowing you to create a comprehensive dataset locally and effortlessly transmit it to the cloud for further analysis and storage.\n\nAuthor: rafael.damaceno@ime.usp.br\n\nVersion number: 0.9.5.0\n\nPrivacy policy: https://github.com/rafaelpezzuto/multi-sensor-data-collection/blob/main/privacy-policy.md\n\nSource code: https://github.com/rafaelpezzuto/multi-sensor-data-collection</string>
     <string name="about_app_close">Close</string>
     <string name="consumption_summary_on">Battery consumption monitor is enabled</string>
     <string name="consumption_summary_off">Battery consumption monitor is disabled</string>

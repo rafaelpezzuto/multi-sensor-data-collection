@@ -47,6 +47,11 @@ class SettingsActivity : AppCompatActivity() {
                 restartActivity()
                 true
             }
+
+            findPreference<Preference>("camera_resolution")?.setOnPreferenceChangeListener { _, _ ->
+                restartActivity()
+                true
+            }
         }
 
         private fun restartActivity() {
