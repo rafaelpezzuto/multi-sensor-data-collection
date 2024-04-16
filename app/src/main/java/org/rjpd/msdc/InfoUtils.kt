@@ -6,6 +6,7 @@ import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
+import androidx.camera.video.Quality
 import timber.log.Timber
 
 private const val TAG = "InfoUtils"
@@ -13,6 +14,18 @@ private const val TAG = "InfoUtils"
 class InfoUtils(context: Context) {
     private val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+
+    fun stringToCamQuality(camQuality: String?): Quality {
+        return when(camQuality) {
+            "1" -> Quality.SD
+            "2" -> Quality.HD
+            "3" -> Quality.FHD
+            "4" -> Quality.UHD
+            else -> {
+                Quality.LOWEST
+            }
+        }
+    }
 
     fun getAvailableSensors(): Map<String, Any> {
         val data = mutableMapOf<String, Any>()
