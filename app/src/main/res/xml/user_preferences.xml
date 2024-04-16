@@ -34,10 +34,14 @@
             android:title="@string/camera_id_title"
             app:isPreferenceVisible="false" />
 
-        <Preference
+        <ListPreference
             android:key="camera_resolution"
             android:title="@string/camera_resolution_title"
-            app:isPreferenceVisible="false" />
+            android:entries="@array/camera_resolution"
+            android:entryValues="@array/camera_resolution_values"
+            android:defaultValue="3"
+            app:summary="%s"
+            app:isPreferenceVisible="true" />
 
         <Preference
             android:key="camera_fps"

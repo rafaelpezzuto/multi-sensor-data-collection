@@ -22,7 +22,6 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.FallbackStrategy
 import androidx.camera.video.MediaStoreOutputOptions
-import androidx.camera.video.Quality
 import androidx.camera.video.QualitySelector
 import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
@@ -207,11 +206,16 @@ class MainActivity : AppCompatActivity() {
                 .also {
                     it.setSurfaceProvider(viewBinding.viewFinder.surfaceProvider)
                 }
+
+            val camQuality = infoUtils.stringToCamQuality(
+                sharedPreferences.getString("camera_resolution", "3")
+            )
+
             val recorder = Recorder.Builder()
                 .setQualitySelector(
                     QualitySelector.from(
-                        Quality.HD,
-                        FallbackStrategy.higherQualityOrLowerThan(Quality.SD))
+                        camQuality,
+                        FallbackStrategy.higherQualityOrLowerThan(camQuality))
                 ).build()
             videoCapture = VideoCapture.withOutput(recorder)
 
