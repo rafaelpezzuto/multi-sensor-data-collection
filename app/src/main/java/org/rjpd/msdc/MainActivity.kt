@@ -101,9 +101,13 @@ class MainActivity : AppCompatActivity() {
         intentSettings = Intent(this@MainActivity, SettingsActivity::class.java)
         intentConsumptionService = Intent(this@MainActivity, ConsumptionService::class.java)
 
-        angleDetectionService = AngleDetectionService(this)
-        angleDetectionService.create()
-        angleDetectionService.start(viewBinding.angleTextview)
+        try {
+            angleDetectionService = AngleDetectionService(this)
+            angleDetectionService.create()
+            angleDetectionService.start(viewBinding.angleTextview)
+        } catch (_: java.lang.NullPointerException) {
+            Timber.tag(TAG).d("Angle Detection Service is not supported on this device.")
+        }
 
         if (allPermissionsGranted()){
             startCamera()
@@ -122,7 +126,7 @@ class MainActivity : AppCompatActivity() {
                 viewBinding.subdirEdittext.isEnabled = false
                 viewBinding.instructionsButton.isEnabled = false
                 viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.purple_200)
-                angleDetectionService.stop()
+                angleDetectionService?.stop()
                 startDataCollecting()
             } else {
                 stopDataCollecting()
@@ -168,7 +172,7 @@ class MainActivity : AppCompatActivity() {
                 preview?.targetRotation = rotation
 
                 Timber.tag(TAG).d("A rotation was detected: $rotation")
-                angleDetectionService.setDevicePosition(rotation)
+                angleDetectionService?.setDevicePosition(rotation)
             }
         }
     }
@@ -177,7 +181,7 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         cameraExecutor.shutdown()
         orientationEventListener.disable()
-        angleDetectionService.stop()
+        angleDetectionService?.stop()
         stopService(intentLocationTrackingService)
         stopService(intentSensorsService)
     }
@@ -429,7 +433,7 @@ class MainActivity : AppCompatActivity() {
                 viewBinding.instructionsButton.isEnabled = true
                 viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.red_700)
                 viewBinding.startStopButton.setTextColor(getColorStateList(R.color.white))
-                angleDetectionService.start(viewBinding.angleTextview)
+                angleDetectionService?.start(viewBinding.angleTextview)
             } else {
                 Timber.tag(TAG).d("The move job is not ready.")
             }
