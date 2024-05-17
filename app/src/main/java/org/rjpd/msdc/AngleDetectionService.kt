@@ -75,11 +75,15 @@ class AngleDetectionService(private val context: Context) {
 
     fun start(textView: TextView) {
         statusView = textView
-        sensorManager.registerListener(
-            sensorListener,
-            sensor,
-            SensorManager.SENSOR_DELAY_NORMAL
-        )
+        if (::sensorListener.isInitialized) {
+            sensorManager.registerListener(
+                sensorListener,
+                sensor,
+                SensorManager.SENSOR_DELAY_NORMAL
+            )
+        } else {
+            Timber.tag(TAG).d("Angle Detection Service is not initialized.")
+        }
     }
 
     fun stop() {
