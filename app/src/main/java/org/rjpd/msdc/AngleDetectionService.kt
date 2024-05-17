@@ -83,7 +83,11 @@ class AngleDetectionService(private val context: Context) {
     }
 
     fun stop() {
-        sensorManager.unregisterListener(sensorListener)
+        if (::sensorManager.isInitialized && ::sensorListener.isInitialized) {
+            sensorManager.unregisterListener(sensorListener)
+        } else {
+            Timber.tag(TAG).d("Angle Detection Service is not initialized.")
+        }
     }
 
     private fun convertFloatsToDoubles(input: FloatArray?): DoubleArray {
