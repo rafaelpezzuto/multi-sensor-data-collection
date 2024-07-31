@@ -32,6 +32,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.preference.PreferenceManager
 import java.io.File
+import java.io.FileNotFoundException
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.ExecutorService
@@ -299,7 +301,7 @@ class MainActivity : AppCompatActivity() {
     private fun startDataCollecting() {
         timeUtils.startTimer()
 
-        viewBinding.statusTextview.text = ""
+        viewBinding.statusTextview.text = getString(R.string.status)
 
         val currentTimeMillis = System.currentTimeMillis()
         buttonStartDateTime = TimeUtils.getDateTimeUTC(currentTimeMillis)
@@ -457,9 +459,22 @@ class MainActivity : AppCompatActivity() {
 
     private fun zipData (sourceFolder: File, targetZipFilename: String): Boolean {
         Timber.tag(TAG).d("Compacting data.")
-        zipEverything(sourceFolder, targetZipFilename)
-
-        return true
+        return try {
+            zipEverything(sourceFolder, targetZipFilename)
+            true
+        } catch (e: FileNotFoundException) {
+            Timber.tag(TAG).e(e, "Output file not found.")
+            false
+        } catch (e: IOException) {
+            Timber.tag(TAG).e(e, "I/O error occurred.")
+            false
+        } catch (e: SecurityException) {
+            Timber.tag(TAG).e(e, "Permission denied.")
+            false
+        } catch (e: Exception) {
+            Timber.tag(TAG).e(e, "Unexpected error occurred.")
+            false
+        }
     }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
