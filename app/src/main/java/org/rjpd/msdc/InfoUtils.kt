@@ -81,7 +81,7 @@ class InfoUtils(context: Context) {
                     Timber.tag(TAG).d(cc.getLabel())
 
                 } catch (exc: ArrayIndexOutOfBoundsException) {
-                    //
+                    Timber.tag(TAG).e("Exception: $exc")
                 }
             }
         }

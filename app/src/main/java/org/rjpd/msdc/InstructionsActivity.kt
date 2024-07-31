@@ -97,7 +97,7 @@ class InstructionsActivity : AppCompatActivity() {
                 </head>
                 <body>
                     <h2>Welcome to the MultiSensor Data Collection App!</h2>
-                    <p>This is an instructional tutorial on how to use the app for collecting data. To view the captured data, follow the instructions in the Jupyter Notebook available at <a href="https://github.com/rafaelpezzuto/multi-sensor-data-collection/blob/main/analysis/msdc_dataviz.ipynb">https://github.com/rafaelpezzuto/multi-sensor-data-collection/blob/main/analysis/msdc_dataviz.ipynb</a>.</p>
+                    <p>This is an instructional tutorial on how to use the app for collecting data. To view the captured data, follow the instructions in the Jupyter Notebook available at <a href="https://github.com/rafaelpezzuto/multi-sensor-data-collection/blob/main/analysis/loader.ipynb">https://github.com/rafaelpezzuto/multi-sensor-data-collection/blob/main/analysis/loader.ipynb</a>.</p>
                     
                     <h3>A) Preparation</h3>
                     <ol>
@@ -119,17 +119,17 @@ class InstructionsActivity : AppCompatActivity() {
                         <li>Stand still for <strong>T=2</strong> seconds (without moving the body);</li>
                         <li>Walk until completing <strong>P=40</strong> steps, going;</li>
                         <li>Stand still for <strong>T=2</strong> seconds;</li>
-                        <li>Walk until completing </strong>P=40</strong> steps, returning;</li>
+                        <li>Walk until completing <strong>P=40</strong> steps, returning;</li>
                         <li>Repeat steps 4-7 once;</li>
                         <li>Stand still for <strong>T=2</strong> seconds and click the <button class='button-is-purple'>STOP</button> button; and</li>
                         <li>Wait for the <button class='button-is-purple'>START</button> button to become active again (colored in red, like <button class='button-is-red'>START</button>) to start a new collection.</li>
                     </ol>
-                    
+                                        
                     <h3>Notes</h3>
                     <ul>
-                        <li>The accelerometer data will be characterized by 40 peaks in one direction</li>
-                        <li>The recording duration should be around 100 seconds, corresponding to 10 seconds standing still plus the time to walk 160 steps</li>
-                        <li>The path must be completed twice, going and returning</li>
+                        <li>Adopt the desired values for <strong>P</strong> (number of steps) and <strong>T</strong>(seconds)</li>
+                        <li>The accelerometer data will be characterized by 40 peaks in one direction (for <strong>T=2</strong> and <strong>P=40</strong>)</li>
+                        <li>The recording duration should be around 100 seconds, corresponding to 10 seconds standing still plus the time to walk 160 steps (for <strong>T=2</strong> and <strong>P=40</strong>)</li>
                         <li>The walking speed should correspond to the usual pace of the recording person</li>
                         <li>The person recording can wear any footwear or be barefoot</li>
                     </ul>

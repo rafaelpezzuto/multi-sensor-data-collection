@@ -217,7 +217,7 @@ fun extractSensorPostfixFilename(axisData: String): String{
 fun removeDateFromFilename(destDir: File, fileName: String): File {
     val matcher = datePattern.matcher(fileName)
     return if (matcher.find()) {
-        val newFilename = fileName.replaceFirst(matcher.group(1), "")
+        val newFilename = fileName.replaceFirst(matcher.group(1)!!, "")
         Timber.tag(TAG).d("$fileName changed to $newFilename")
 
         File(destDir, newFilename)
@@ -326,7 +326,7 @@ fun writeMetadataFile(
 
     metadata["time"] = mutableMapOf(
         "buttonStartDateTime" to buttonStartDateTime.toString(datetimeFormatUTC),
-        "buttonStopDatetime" to buttonStopDatetime.toString(datetimeFormatUTC),
+        "buttonStopDateTime" to buttonStopDatetime.toString(datetimeFormatUTC),
         "videoStartDateTime" to videoStartDateTime.toString(datetimeFormatUTC),
         "videoStopDateTime" to videoStopDateTime.toString(datetimeFormatUTC),
     )
@@ -346,7 +346,7 @@ fun writeMetadataFile(
         "sensors" to sensorsData.toMutableMap(),
     )
 
-    val metadataString = JSONObject(metadata as Map<*, *>?).toString()
+    val metadataString = JSONObject((metadata as Map<*, *>?)!!).toString()
     Timber.d(TAG, metadataString)
 
     try {
