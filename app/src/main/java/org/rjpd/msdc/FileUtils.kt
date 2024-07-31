@@ -19,7 +19,16 @@ import timber.log.Timber
 
 private const val TAG = "FileUtils"
 private val datePattern = Pattern.compile("(\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-\\d{3}\\.)\\w+\\.\\w+")
-
+const val FILE_HEADER_SENSOR_ONE = "timestamp_nano,datetime_utc,name,axis_x,accuracy\n"
+const val FILE_HEADER_SENSOR_THREE = "timestamp_nano,datetime_utc,name,axis_x,axis_y,axis_z,accuracy\n"
+const val FILE_HEADER_SENSOR_THREE_UNCALIBRATED = "timestamp_nano,datetime_utc,name,axis_x,axis_y,axis_z,delta_x,delta_y,delta_z,accuracy\n"
+const val FILE_HEADER_GPS = "datetime_utc,gps_interval,accuracy,latitude,longitude\n"
+const val FILE_HEADER_CONSUMPTION = "datetime_utc,battery_microamperes\n"
+val headerMap = mapOf(
+    "one" to FILE_HEADER_SENSOR_ONE,
+    "three" to FILE_HEADER_SENSOR_THREE,
+    "three.uncalibrated" to FILE_HEADER_SENSOR_THREE_UNCALIBRATED
+)
 
 fun createSubDirectory(rootDirectory: String, subDirectory: String): File {
     val directory = File(
