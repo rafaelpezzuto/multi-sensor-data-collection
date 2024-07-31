@@ -41,7 +41,7 @@ class ConsumptionService : Service() {
         val batteryManager = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
 
         scheduledExecutor = Executors.newSingleThreadScheduledExecutor()
-        scheduledExecutor.scheduleAtFixedRate({
+        scheduledExecutor.scheduleWithFixedDelay({
             val currentDateTime = TimeUtils.getDateTimeUTC(System.currentTimeMillis())
             val batteryStatus = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
 
