@@ -22,7 +22,7 @@ class TimeUtils(private val mainHandler: Handler, private val clockView: TextVie
             startTime = System.currentTimeMillis()
             isRunning = true
 
-            timer.scheduleAtFixedRate(object: TimerTask() {
+            timer.schedule(object: TimerTask() {
                 override fun run() { updateTimer() }
             }, 0, 1000)
         }

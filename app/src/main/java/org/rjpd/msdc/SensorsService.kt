@@ -113,8 +113,8 @@ class SensorsService : Service(), SensorEventListener {
         }
     }
 
-    override fun onAccuracyChanged(sensor: Sensor?, p1: Int) {
-        return
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+        Timber.tag(TAG).d("Accuracy has been changed.")
     }
 
     companion object {
