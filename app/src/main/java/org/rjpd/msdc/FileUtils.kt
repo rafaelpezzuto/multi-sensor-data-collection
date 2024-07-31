@@ -16,6 +16,7 @@ import java.util.zip.ZipOutputStream
 import org.joda.time.DateTime
 import org.json.JSONObject
 import timber.log.Timber
+import java.io.OutputStreamWriter
 
 private const val TAG = "FileUtils"
 private val datePattern = Pattern.compile("(\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-\\d{3}\\.)\\w+\\.\\w+")
@@ -180,43 +181,37 @@ fun generateInstancePath(outputDir: File, tempFileName: String, levelOne: String
     return createSubDirectory(createSubDirectory(outputDir.absolutePath, levelOneName).absolutePath, "$levelTwoName-${tempFileName}")
 }
 
-fun writeGeolocationData(
-    eventDateTimeUTC: DateTime,
-    gpsInterval: String,
-    accuracy: String,
-    latitude: String,
-    longitude: String,
-    outputDir: String,
-    filename: String,
-) {
-    val line = "$eventDateTimeUTC,$gpsInterval,$accuracy,$latitude,$longitude\n"
+fun createFile(file: File, fileContentType: String, filePostfix: String) {
+    val header = detectFileHeader(fileContentType, filePostfix)
 
     try {
-        val file = File(outputDir, "${filename}.gps.csv")
-        val writer = BufferedWriter(FileWriter(file, true))
-        writer.append(line)
-        writer.close()
+        FileOutputStream(file, true).use { fos ->
+            OutputStreamWriter(fos).use { writer ->
+                writer.append(header)
+            }
+        }
     } catch (e: IOException) {
-        e.printStackTrace()
+        Timber.tag(TAG).d(e.toString())
+    }
+}
+
+fun detectFileHeader(fileContentType: String, filePostfix: String): String {
+    return when (fileContentType) {
+        "gps" -> FILE_HEADER_GPS
+        "consumption" -> FILE_HEADER_CONSUMPTION
+        "sensor" -> headerMap.getOrDefault(filePostfix, FILE_HEADER_SENSOR_ONE)
+        else -> FILE_HEADER_SENSOR_ONE
     }
 }
 
 fun extractSensorPostfixFilename(axisData: String): String{
     val numberOfFields = axisData.split(",").size
-
-    if (numberOfFields == 1) {
-        return "one"
+    return when (numberOfFields) {
+        1 -> "one"
+        3 -> "three"
+        6 -> "three.uncalibrated"
+        else ->"unknown"
     }
-
-    if (numberOfFields == 3){
-        return "three"
-    }
-
-    if (numberOfFields == 6) {
-        return "three.uncalibrated"
-    }
-
-    return "unknown"
 }
 
 fun removeDateFromFilename(destDir: File, fileName: String): File {
@@ -245,11 +240,47 @@ fun writeSensorData(
     try {
         val filePostfix = extractSensorPostfixFilename(axisData!!)
         val file = File(outputDir, "$filename.sensors.$filePostfix.csv")
-        val writer = BufferedWriter(FileWriter(file, true))
-        writer.append(line)
-        writer.close()
+
+        if (!file.exists()) {
+            createFile(file, "sensor", filePostfix)
+        }
+
+        FileOutputStream(file, true).use { fos ->
+            OutputStreamWriter(fos).use { writer ->
+                writer.write(line)
+            }
+        }
+
     } catch (e: IOException) {
-        e.printStackTrace()
+        Timber.tag(TAG).d(e, "Error writing sensor data to file.")
+    }
+}
+
+fun writeGeolocationData(
+    eventDateTimeUTC: DateTime,
+    gpsInterval: String,
+    accuracy: String,
+    latitude: String,
+    longitude: String,
+    outputDir: String,
+    filename: String,
+) {
+    val line = "$eventDateTimeUTC,$gpsInterval,$accuracy,$latitude,$longitude\n"
+
+    try {
+        val file = File(outputDir, "${filename}.gps.csv")
+
+        if (!file.exists()) {
+            createFile(file, "gps", "")
+        }
+
+        FileOutputStream(file, true).use { fos ->
+            OutputStreamWriter(fos).use { writer ->
+                writer.write(line)
+            }
+        }
+    } catch (e: IOException) {
+        Timber.tag(TAG).d(e, "Error writing geolocation data to file.")
     }
 }
 
@@ -263,11 +294,18 @@ fun writeConsumptionData(
 
     try {
         val file = File(outputDir, "${filename}.consumption.csv")
-        val writer = BufferedWriter(FileWriter(file, true))
-        writer.append(line)
-        writer.close()
+
+        if (!file.exists()) {
+            createFile(file, "consumption", "")
+        }
+
+        FileOutputStream(file, true).use { fos ->
+            OutputStreamWriter(fos).use { writer ->
+                writer.write(line)
+            }
+        }
     } catch (e: IOException) {
-        e.printStackTrace()
+        Timber.tag(TAG).d(e, "Error writing consumption data to file.")
     }
 }
 
