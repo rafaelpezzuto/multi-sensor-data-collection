@@ -6,6 +6,7 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.widget.TextView
+import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.asin
 import kotlin.math.atan2
@@ -61,9 +62,9 @@ class AngleDetectionService(private val context: Context) {
                 Timber.tag(TAG).d("$pitch,$tilt,$azimuth")
 
                 if (devicePosition == 0 || devicePosition == 2) {
-                    statusView.text = String.format("%.2f°", pitch).replace(",", ".")
+                    statusView.text = String.format(Locale("en"), "%.2f°", pitch).replace(",", ".")
                 } else {
-                    statusView.text = String.format("%.2f°", tilt).replace(",", ".")
+                    statusView.text = String.format(Locale("en"), "%.2f°", tilt).replace(",", ".")
                 }
             }
         }
