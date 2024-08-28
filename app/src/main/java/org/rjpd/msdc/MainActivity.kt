@@ -63,6 +63,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var intentLocationTrackingService: Intent
     private lateinit var intentSensorsService: Intent
     private lateinit var intentSettings: Intent
+    private lateinit var intentExternalSensorsService: Intent
 
     private lateinit var systemDataDirectory: File
     private lateinit var systemDataInstancePath: File
@@ -102,6 +103,7 @@ class MainActivity : AppCompatActivity() {
         intentLocationTrackingService = Intent(this@MainActivity, LocationTrackingService::class.java)
         intentSettings = Intent(this@MainActivity, SettingsActivity::class.java)
         intentConsumptionService = Intent(this@MainActivity, ConsumptionService::class.java)
+        intentExternalSensorsService = Intent(this@MainActivity, ExternalSensorsService::class.java)
 
         try {
             angleDetectionService = AngleDetectionService(this)
@@ -126,7 +128,7 @@ class MainActivity : AppCompatActivity() {
                 viewBinding.settingsButton.isEnabled = false
                 viewBinding.dirEdittext.isEnabled = false
                 viewBinding.subdirEdittext.isEnabled = false
-                viewBinding.instructionsButton.isEnabled = false
+                viewBinding.externalSensorsButton.isEnabled = false
                 viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.purple_200)
                 angleDetectionService?.stop()
                 startDataCollecting()
@@ -139,8 +141,20 @@ class MainActivity : AppCompatActivity() {
             startActivity(intentSettings)
         }
 
-        viewBinding.instructionsButton.setOnClickListener {
-            startActivity(Intent(this@MainActivity, InstructionsActivity::class.java))
+        viewBinding.externalSensorsButton.setOnCheckedChangeListener {_, isChecked ->
+            if (isChecked) {
+                viewBinding.externalSensorsButton.backgroundTintList = getColorStateList(R.color.purple_200)
+
+                tmpFilename = SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(TimeUtils.getDateTimeUTC(System.currentTimeMillis()).toDate())
+                systemDataInstancePath = createSubDirectory(systemDataDirectory.absolutePath, tmpFilename)
+                intentExternalSensorsService.putExtra("outputDirectory", systemDataInstancePath.absolutePath)
+                intentExternalSensorsService.putExtra("filename", tmpFilename)
+                startService(intentExternalSensorsService)
+            } else {
+                viewBinding.externalSensorsButton.backgroundTintList = getColorStateList(R.color.red_700)
+                viewBinding.externalSensorsButton.setTextColor(getColorStateList(R.color.white))
+                stopService(intentExternalSensorsService)
+            }
         }
 
         cameraExecutor = Executors.newSingleThreadExecutor()
@@ -198,7 +212,7 @@ class MainActivity : AppCompatActivity() {
         viewBinding.settingsButton.isEnabled = true
         viewBinding.dirEdittext.isEnabled = true
         viewBinding.subdirEdittext.isEnabled = true
-        viewBinding.instructionsButton.isEnabled = true
+        viewBinding.externalSensorsButton.isEnabled = true
     }
 
     private fun startCamera() {
@@ -322,6 +336,8 @@ class MainActivity : AppCompatActivity() {
         intentLocationTrackingService.putExtra("filename", tmpFilename)
         intentConsumptionService.putExtra("outputDirectory", systemDataInstancePath.absolutePath)
         intentConsumptionService.putExtra("filename", tmpFilename)
+        intentExternalSensorsService.putExtra("outputDirectory", systemDataInstancePath.absolutePath)
+        intentExternalSensorsService.putExtra("filename", tmpFilename)
 
         if (sharedPreferences.getBoolean("sensors", true)) {
             startService(intentSensorsService)
@@ -333,6 +349,10 @@ class MainActivity : AppCompatActivity() {
 
         if (sharedPreferences.getBoolean("consumption", true)) {
             startService(intentConsumptionService)
+        }
+
+        if (sharedPreferences.getBoolean("external_sensors", false)) {
+            startService(intentExternalSensorsService)
         }
 
         startVideoRecording(tmpFilename)
@@ -367,6 +387,7 @@ class MainActivity : AppCompatActivity() {
             stopService(intentSensorsService)
             stopService(intentLocationTrackingService)
             stopService(intentConsumptionService)
+            stopService(intentExternalSensorsService)
         } catch (e: Exception) {
             Timber.tag(TAG).d("Is was not possible to stop the SensorsService.")
         }
@@ -432,7 +453,7 @@ class MainActivity : AppCompatActivity() {
                 viewBinding.settingsButton.isEnabled = true
                 viewBinding.dirEdittext.isEnabled = true
                 viewBinding.subdirEdittext.isEnabled = true
-                viewBinding.instructionsButton.isEnabled = true
+                viewBinding.externalSensorsButton.isEnabled = true
                 viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.red_700)
                 viewBinding.startStopButton.setTextColor(getColorStateList(R.color.white))
                 angleDetectionService?.start(viewBinding.angleTextview)
