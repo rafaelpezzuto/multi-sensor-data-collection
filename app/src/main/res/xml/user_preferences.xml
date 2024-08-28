@@ -47,7 +47,6 @@
             android:key="camera_fps"
             android:title="@string/camera_fps_title"
             app:isPreferenceVisible="false" />
-
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/consumption">
@@ -69,7 +68,27 @@
             app:seekBarIncrement="1"
             app:showSeekBarValue="true"
             app:defaultValue="1" />
+    </PreferenceCategory>
 
+    <PreferenceCategory app:title="@string/external_sensors_category_title">
+        <SwitchPreferenceCompat
+            app:key="external_sensors"
+            app:defaultValue="true"
+            app:title="@string/external_sensors_preference_title"
+            app:singleLineTitle="false"
+            android:summaryOn="@string/external_sensors_preference_summary_on"
+            app:summaryOff="@string/external_sensors_preference_summary_off" />
+
+        <SeekBarPreference
+            app:dependency="external_sensors"
+            app:key="external_sensors_interval"
+            app:singleLineTitle="false"
+            app:title="@string/external_sensors_preference_interval_title"
+            app:min="1"
+            android:max="100"
+            app:seekBarIncrement="1"
+            app:showSeekBarValue="true"
+            app:defaultValue="10" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/sensors">
