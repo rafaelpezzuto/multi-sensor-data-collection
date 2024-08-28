@@ -57,6 +57,16 @@
     <string name="battery_consumption">Battery consumption</string>
     <string name="consumption">Consumption</string>
     <string name="battery_consumption_interval_title">Interval in seconds for updating battery consumption data</string>
+
+    <string name="external_sensors_category_title">External sensors</string>
+    <string name="external_sensors_preference_title">External sensors</string>
+    <string name="external_sensors_preference_summary_on">External sensors monitor is enabled</string>
+    <string name="external_sensors_preference_summary_off">External sensors monitor is disabled</string>
+    <string name="external_sensors_preference_interval_title">Interval in seconds for updating  external sensors data</string>
+
+    <string name="external_sensors_button_start">USB</string>
+    <string name="external_sensors_button_stop">USB</string>
+
     <string name="status"/>
     <string name="status_success">Success</string>
     <string name="status_success_detail">%1$s files have been saved</string>
@@ -67,7 +77,7 @@
     <string name="camera_resolution_title">Camera resolution</string>
     <string name="camera_fps_title">Camera FPS</string>
     <string name="degree_zero">00.00°</string>
-    <string name="instructions_title">Guide</string>
+    <string name="external_sensors_button_title">USB</string>
     <string name="compact_on">ZIP generation for each collection is enabled</string>
     <string name="compact_off">ZIP generation for each collection is disabled</string>
     <string name="compact_title">Compact data</string>
