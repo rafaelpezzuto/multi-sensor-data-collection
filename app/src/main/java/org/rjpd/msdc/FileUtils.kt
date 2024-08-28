@@ -25,6 +25,7 @@ const val FILE_HEADER_SENSOR_THREE = "timestamp_nano,datetime_utc,name,axis_x,ax
 const val FILE_HEADER_SENSOR_THREE_UNCALIBRATED = "timestamp_nano,datetime_utc,name,axis_x,axis_y,axis_z,delta_x,delta_y,delta_z,accuracy\n"
 const val FILE_HEADER_GPS = "datetime_utc,gps_interval,accuracy,latitude,longitude\n"
 const val FILE_HEADER_CONSUMPTION = "datetime_utc,battery_microamperes\n"
+const val FILE_HEADER_EXTERNAL_SENSOR = "datime_utc,sensor_value\n"
 val headerMap = mapOf(
     "one" to FILE_HEADER_SENSOR_ONE,
     "three" to FILE_HEADER_SENSOR_THREE,
@@ -199,6 +200,7 @@ fun detectFileHeader(fileContentType: String, filePostfix: String): String {
     return when (fileContentType) {
         "gps" -> FILE_HEADER_GPS
         "consumption" -> FILE_HEADER_CONSUMPTION
+        "external_sensor" -> FILE_HEADER_EXTERNAL_SENSOR
         "sensor" -> headerMap.getOrDefault(filePostfix, FILE_HEADER_SENSOR_ONE)
         else -> FILE_HEADER_SENSOR_ONE
     }
@@ -253,6 +255,31 @@ fun writeSensorData(
 
     } catch (e: IOException) {
         Timber.tag(TAG).d(e, "Error writing sensor data to file.")
+    }
+}
+
+fun writeExternalSensorData(
+    eventDateTimeUTC: DateTime,
+    sensorValue: String?,
+    outputDir: String,
+    filename: String
+) {
+    val line = "$eventDateTimeUTC,$sensorValue\n"
+
+    try {
+        val file = File(outputDir, "$filename.sensors.external.csv")
+
+        if (!file.exists()) {
+            createFile(file, "external_sensor", "")
+        }
+
+        FileOutputStream(file, true).use { fos ->
+            OutputStreamWriter(fos).use { writer ->
+                writer.write(line)
+            }
+        }
+    } catch (e: IOException) {
+        Timber.tag(TAG).d(e, "Error writing external sensor data to file.")
     }
 }
 
