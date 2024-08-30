@@ -72,21 +72,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="@+id/vertical_centerline" />
 
-    <ToggleButton
-        android:backgroundTint="@color/red_700"
-        android:textColor="@color/white"
-        android:id="@+id/external_sensors_button"
-        android:layout_width="wrap_content"
-        android:layout_height="50dp"
-        android:layout_marginBottom="25dp"
-        android:layout_marginEnd="25dp"
-        android:elevation="2dp"
-        android:textOff="@string/external_sensors_button_start"
-        android:textOn="@string/external_sensors_button_stop"
-        android:enabled="true"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/start_stop_button" />
-
     <Button
         android:id="@+id/settings_button"
         android:layout_width="wrap_content"

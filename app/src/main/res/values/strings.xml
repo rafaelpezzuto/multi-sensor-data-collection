@@ -64,9 +64,6 @@
     <string name="external_sensors_preference_summary_off">External sensors monitor is disabled</string>
     <string name="external_sensors_preference_interval_title">Interval in seconds for updating  external sensors data</string>
 
-    <string name="external_sensors_button_start">USB</string>
-    <string name="external_sensors_button_stop">USB</string>
-
     <string name="status"/>
     <string name="status_success">Success</string>
     <string name="status_success_detail">%1$s files have been saved</string>

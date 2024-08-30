@@ -128,7 +128,6 @@ class MainActivity : AppCompatActivity() {
                 viewBinding.settingsButton.isEnabled = false
                 viewBinding.dirEdittext.isEnabled = false
                 viewBinding.subdirEdittext.isEnabled = false
-                viewBinding.externalSensorsButton.isEnabled = false
                 viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.purple_200)
                 angleDetectionService?.stop()
                 startDataCollecting()
@@ -139,22 +138,6 @@ class MainActivity : AppCompatActivity() {
 
         viewBinding.settingsButton.setOnClickListener {
             startActivity(intentSettings)
-        }
-
-        viewBinding.externalSensorsButton.setOnCheckedChangeListener {_, isChecked ->
-            if (isChecked) {
-                viewBinding.externalSensorsButton.backgroundTintList = getColorStateList(R.color.purple_200)
-
-                tmpFilename = SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(TimeUtils.getDateTimeUTC(System.currentTimeMillis()).toDate())
-                systemDataInstancePath = createSubDirectory(systemDataDirectory.absolutePath, tmpFilename)
-                intentExternalSensorsService.putExtra("outputDirectory", systemDataInstancePath.absolutePath)
-                intentExternalSensorsService.putExtra("filename", tmpFilename)
-                startService(intentExternalSensorsService)
-            } else {
-                viewBinding.externalSensorsButton.backgroundTintList = getColorStateList(R.color.red_700)
-                viewBinding.externalSensorsButton.setTextColor(getColorStateList(R.color.white))
-                stopService(intentExternalSensorsService)
-            }
         }
 
         cameraExecutor = Executors.newSingleThreadExecutor()
@@ -212,7 +195,6 @@ class MainActivity : AppCompatActivity() {
         viewBinding.settingsButton.isEnabled = true
         viewBinding.dirEdittext.isEnabled = true
         viewBinding.subdirEdittext.isEnabled = true
-        viewBinding.externalSensorsButton.isEnabled = true
     }
 
     private fun startCamera() {
@@ -453,7 +435,6 @@ class MainActivity : AppCompatActivity() {
                 viewBinding.settingsButton.isEnabled = true
                 viewBinding.dirEdittext.isEnabled = true
                 viewBinding.subdirEdittext.isEnabled = true
-                viewBinding.externalSensorsButton.isEnabled = true
                 viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.red_700)
                 viewBinding.startStopButton.setTextColor(getColorStateList(R.color.white))
                 angleDetectionService?.start(viewBinding.angleTextview)
