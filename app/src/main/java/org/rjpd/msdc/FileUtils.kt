@@ -25,6 +25,10 @@ const val FILE_HEADER_SENSOR_THREE = "timestamp_nano,datetime_utc,name,axis_x,ax
 const val FILE_HEADER_SENSOR_THREE_UNCALIBRATED = "timestamp_nano,datetime_utc,name,axis_x,axis_y,axis_z,delta_x,delta_y,delta_z,accuracy\n"
 const val FILE_HEADER_GPS = "datetime_utc,gps_interval,accuracy,latitude,longitude\n"
 const val FILE_HEADER_CONSUMPTION = "datetime_utc,battery_microamperes\n"
+const val FILE_HEADER_EXTERNAL_SENSOR = "datime_utc,sensor_value\n"
+const val FILE_HEADER_CELLULAR_NETWORK = "datetime_utc,cellular_network\n"
+const val FILE_HEADER_WIFI_NETWORK = "datetime_utc,wifi_network\n"
+
 val headerMap = mapOf(
     "one" to FILE_HEADER_SENSOR_ONE,
     "three" to FILE_HEADER_SENSOR_THREE,
@@ -131,17 +135,36 @@ fun listFiles(directory: File): MutableList<String> {
     return fileList
 }
 
-fun isFilesListValid(files: MutableList<String>): Boolean {
-    val validFilePatterns = listOf(".*sensors\\.three.*", ".*metadata\\.json", ".*\\.mp4")
+fun isFilesListValid(files: MutableList<String>, isAudioVideoMode: Boolean): Boolean {
+    val notFoundFiles = mutableListOf<String>()
+    val validFilePatterns = mapOf(
+        ".*sensors\\.one.*" to "Sensor One",
+        ".*sensors\\.three.*" to "Sensor Three",
+        ".sensors\\.three\\.uncalibrated.*" to "Sensor Three Uncalibrated",
+        ".*metadata\\.json" to "Metadata",
+        ".*\\.mp4" to "Video",
+        ".*wifi.*" to "Wifi Network",
+        ".*cell.*" to "Cellular Network",
+        ".*audio.*" to "Audio"
+    )
 
-    for (pattern in validFilePatterns) {
+    for ((pattern, name) in validFilePatterns) {
         val regex = Regex(pattern)
         val fileFound = files.any { regex.matches(it) }
 
         if (!fileFound) {
-            return false
+            notFoundFiles.add(name)
         }
     }
+
+    if (isAudioVideoMode && notFoundFiles.contains("Video")) {
+        return false
+    }
+
+    if (!isAudioVideoMode && notFoundFiles.contains("Audio")) {
+        return false
+    }
+
     return true
 }
 
@@ -199,7 +222,10 @@ fun detectFileHeader(fileContentType: String, filePostfix: String): String {
     return when (fileContentType) {
         "gps" -> FILE_HEADER_GPS
         "consumption" -> FILE_HEADER_CONSUMPTION
+        "external_sensor" -> FILE_HEADER_EXTERNAL_SENSOR
         "sensor" -> headerMap.getOrDefault(filePostfix, FILE_HEADER_SENSOR_ONE)
+        "wifi_network" -> FILE_HEADER_WIFI_NETWORK
+        "cellular_network" -> FILE_HEADER_CELLULAR_NETWORK
         else -> FILE_HEADER_SENSOR_ONE
     }
 }
@@ -309,6 +335,60 @@ fun writeConsumptionData(
     }
 }
 
+fun writeWifiNetworkData(
+    eventDateTimeUTC: DateTime,
+    wifiNetworkData: Any,
+    outputDir: String,
+    filename: String,
+) {
+    for (wifi in wifiNetworkData as List<*>) {
+        val line = "$eventDateTimeUTC,$wifi\n"
+
+        try {
+            val file = File(outputDir, "${filename}.wifi.csv")
+
+            if (!file.exists()) {
+                createFile(file, "wifi_network", "")
+            }
+
+            FileOutputStream(file, true).use { fos ->
+                OutputStreamWriter(fos).use { writer ->
+                    writer.write(line)
+                }
+            }
+        } catch (e: IOException) {
+            Timber.tag(TAG).d(e, "Error writing wifi data to file.")
+        }
+    }
+}
+
+fun writeCellularNetworkData(
+    eventDateTimeUTC: DateTime,
+    cellularNetworkData: Any,
+    outputDir: String,
+    filename: String,
+) {
+    for (cn in cellularNetworkData as List<*>) {
+        val line = "$eventDateTimeUTC,$cn\n"
+
+        try {
+            val file = File(outputDir, "${filename}.cell.csv")
+
+            if (!file.exists()) {
+                createFile(file, "cellular_network", "")
+            }
+
+            FileOutputStream(file, true).use { fos ->
+                OutputStreamWriter(fos).use { writer ->
+                    writer.write(line)
+                }
+            }
+        } catch (e: IOException) {
+            Timber.tag(TAG).d(e, "Error writing cellular network data to file.")
+        }
+    }
+}
+
 fun writeMetadataFile(
     preferencesData: MutableMap<String, *>,
     displayMetrics: DisplayMetrics,
@@ -316,8 +396,8 @@ fun writeMetadataFile(
     deviceStartAngle: String,
     buttonStartDateTime: DateTime,
     buttonStopDatetime: DateTime,
-    videoStartDateTime: DateTime,
-    videoStopDateTime: DateTime,
+    mediaStartDateTime: DateTime,
+    mediaStopDateTime: DateTime,
     outputDir: File
 ) {
     val datetimeFormatUTC = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
@@ -327,8 +407,8 @@ fun writeMetadataFile(
     metadata["time"] = mutableMapOf(
         "buttonStartDateTime" to buttonStartDateTime.toString(datetimeFormatUTC),
         "buttonStopDateTime" to buttonStopDatetime.toString(datetimeFormatUTC),
-        "videoStartDateTime" to videoStartDateTime.toString(datetimeFormatUTC),
-        "videoStopDateTime" to videoStopDateTime.toString(datetimeFormatUTC),
+        "mediaStartDateTime" to mediaStartDateTime.toString(datetimeFormatUTC),
+        "mediaStopDateTime" to mediaStopDateTime.toString(datetimeFormatUTC),
     )
 
     metadata["deviceStartAngle"] = deviceStartAngle
@@ -347,7 +427,7 @@ fun writeMetadataFile(
     )
 
     val metadataString = JSONObject((metadata as Map<*, *>?)!!).toString()
-    Timber.d(TAG, metadataString)
+    Timber.tag(TAG).d(metadataString)
 
     try {
         val file = File(outputDir, "metadata.json")

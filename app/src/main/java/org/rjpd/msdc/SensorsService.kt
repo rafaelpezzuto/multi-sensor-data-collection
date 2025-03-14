@@ -1,7 +1,10 @@
 package org.rjpd.msdc
 
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -23,12 +26,50 @@ class SensorsService : Service(), SensorEventListener {
 
     override fun onCreate() {
         super.onCreate()
-        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        createNotificationChannel()
+        sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        startForeground(NOTIFICATION_ID, createNotification())
         startSensors(intent)
-        return super.onStartCommand(intent, flags, startId)
+        return START_STICKY
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        sensorManager.unregisterListener(this)
+    }
+
+    override fun onBind(p0: Intent?): IBinder? {
+        return null
+    }
+
+    private fun createNotificationChannel() {
+        val serviceChannel = NotificationChannel(
+            CHANNEL_ID,
+            NOTIFICATION_TITLE,
+            NotificationManager.IMPORTANCE_DEFAULT
+        )
+        val manager = getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(serviceChannel)
+    }
+
+    private fun createNotification(): Notification {
+        val notificationIntent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            notificationIntent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
+
+        return Notification.Builder(this, CHANNEL_ID)
+            .setContentTitle(NOTIFICATION_TITLE)
+            .setContentText(NOTIFICATION_TEXT)
+            .setSmallIcon(android.R.drawable.ic_menu_compass)
+            .setContentIntent(pendingIntent)
+            .build()
     }
 
     private fun startSensors(intent: Intent?) {
@@ -77,15 +118,6 @@ class SensorsService : Service(), SensorEventListener {
         }
     }
 
-    override fun onBind(p0: Intent?): IBinder? {
-        return null
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        sensorManager.unregisterListener(this)
-    }
-
     override fun onSensorChanged(event: SensorEvent?) {
         if (event?.sensor?.type in supportedSensors) {
             val name = event?.sensor?.name
@@ -119,5 +151,9 @@ class SensorsService : Service(), SensorEventListener {
 
     companion object {
         private const val TAG = "SensorsService"
+        private const val CHANNEL_ID = "SensorsServiceChannel"
+        private const val NOTIFICATION_ID = 1
+        private const val NOTIFICATION_TITLE = "Sensors Service"
+        private const val NOTIFICATION_TEXT = "Collecting sensor data..."
     }
 }

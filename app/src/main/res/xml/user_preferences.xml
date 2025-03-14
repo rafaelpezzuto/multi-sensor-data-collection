@@ -2,25 +2,25 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <Preference
-        android:key="about"
-        android:title="@string/preference_about_us"
-        android:summary="@string/preference_about_information_summary" />
+        app:key="about"
+        app:title="@string/preference_about_us"
+        app:summary="@string/preference_about_information_summary" />
 
     <SwitchPreferenceCompat
-        android:key="zip"
-        android:title="@string/compact_title"
-        android:defaultValue="false"
-        android:singleLineTitle="false"
-        android:summaryOn="@string/compact_on"
-        android:summaryOff="@string/compact_off" />
+        app:key="zip"
+        app:title="@string/compact_title"
+        app:defaultValue="false"
+        app:singleLineTitle="false"
+        app:summaryOn="@string/compact_on"
+        app:summaryOff="@string/compact_off" />
 
-    <PreferenceCategory app:title="Camera settings" android:summary="@string/camera_category" >
+    <PreferenceCategory app:title="@string/camera_settings" app:summary="@string/camera_category" >
         <SwitchPreferenceCompat
-            android:key="camera_lens_facing_use_front"
-            android:title="@string/camera_lens_facing_use_front_title"
-            android:summaryOn="@string/camera_lens_facing_use_front_on"
-            android:summaryOff="@string/camera_lens_facing_use_front_off"
-            android:defaultValue="false" />
+            app:key="camera_lens_facing_use_front"
+            app:title="@string/camera_lens_facing_use_front_title"
+            app:summaryOn="@string/camera_lens_facing_use_front_on"
+            app:summaryOff="@string/camera_lens_facing_use_front_off"
+            app:defaultValue="false" />
 
         <ListPreference
             app:key="camera"
@@ -30,24 +30,49 @@
         </ListPreference>
 
         <Preference
-            android:key="camera_id"
-            android:title="@string/camera_id_title"
+            app:key="camera_id"
+            app:title="@string/camera_id_title"
             app:isPreferenceVisible="false" />
 
         <ListPreference
-            android:key="camera_resolution"
-            android:title="@string/camera_resolution_title"
-            android:entries="@array/camera_resolution"
-            android:entryValues="@array/camera_resolution_values"
-            android:defaultValue="3"
+            app:key="camera_resolution"
+            app:title="@string/camera_resolution_title"
+            app:entries="@array/camera_resolution"
+            app:entryValues="@array/camera_resolution_values"
+            app:defaultValue="3"
             app:summary="%s"
             app:isPreferenceVisible="true" />
 
         <Preference
-            android:key="camera_fps"
-            android:title="@string/camera_fps_title"
+            app:key="camera_fps"
+            app:title="@string/camera_fps_title"
             app:isPreferenceVisible="false" />
+    </PreferenceCategory>
 
+    <PreferenceCategory app:title="@string/audio_settings" app:summary="@string/audio_settings_summary">
+        <ListPreference
+            app:key="audio_sampling_rate"
+            app:title="@string/audio_sampling_rate"
+            app:entries="@array/audio_sampling_rate"
+            app:entryValues="@array/audio_sampling_rate_values"
+            app:defaultValue="44100"
+            app:summary="%s" />
+
+        <ListPreference
+            app:key="audio_channels"
+            app:title="@string/audio_channels"
+            app:entries="@array/audio_channels"
+            app:entryValues="@array/audio_channels_values"
+            app:defaultValue="2"
+            app:summary="%s" />
+
+        <ListPreference
+            app:key="audio_encoding_bit_rate"
+            app:title="@string/audio_encoding_bit_rate"
+            app:entries="@array/audio_encoding_bit_rate"
+            app:entryValues="@array/audio_encoding_bit_rate_values"
+            app:defaultValue="128000"
+            app:summary="%s" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/consumption">
@@ -56,7 +81,7 @@
             app:defaultValue="true"
             app:title="@string/battery_consumption"
             app:singleLineTitle="false"
-            android:summaryOn="@string/consumption_summary_on"
+            app:summaryOn="@string/consumption_summary_on"
             app:summaryOff="@string/consumption_summary_off" />
 
         <SeekBarPreference
@@ -68,72 +93,89 @@
             android:max="160"
             app:seekBarIncrement="1"
             app:showSeekBarValue="true"
-            app:defaultValue="1" />
-
+            app:defaultValue="15" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/sensors">
         <SwitchPreferenceCompat
             app:defaultValue="true"
-            app:key="light"
+            app:key="extra"
             app:summaryOff="@string/extra_off"
             app:summaryOn="@string/extra_on"
             app:title="@string/extra_title" />
 
         <SwitchPreferenceCompat
             app:defaultValue="true"
-            app:key="extra"
+            app:key="light"
             app:summaryOff="@string/light_off"
             app:summaryOn="@string/light_on"
             app:title="@string/light_title" />
 
-        <SwitchPreferenceCompat
+        <SwitchPreference
             app:key="sensors"
-            app:defaultValue="true"
-            app:title="@string/sensors_preference_category"
-            app:summary="@string/track_movement" />
+            app:title="@string/sensors_preference_category" />
 
         <ListPreference
-            android:dependency="sensors"
+            app:defaultValue="3"
             app:key="sensors_delay"
+            app:dependency="sensors"
             app:singleLineTitle="false"
             app:title="@string/sensors_sampling_rate"
-            android:entries="@array/sensors_delay"
-            android:entryValues="@array/sensors_delay_values"
-            android:defaultValue="3"
+            app:entries="@array/sensors_delay"
+            app:entryValues="@array/sensors_delay_values"
             app:summary="%s" />
 
         <SwitchPreferenceCompat
-            android:dependency="sensors"
             app:defaultValue="true"
             app:key="accelerometer"
+            app:dependency="sensors"
             app:summaryOff="@string/accelerometer_off"
             app:summaryOn="@string/accelerometer_on"
             app:title="@string/accelerometer_title" />
 
         <SwitchPreferenceCompat
-            android:dependency="sensors"
             app:defaultValue="true"
             app:key="gravity"
+            app:dependency="sensors"
             app:summaryOff="@string/gravity_off"
             app:summaryOn="@string/gravity_on"
             app:title="@string/gravity_title" />
 
         <SwitchPreferenceCompat
-            android:dependency="sensors"
             app:defaultValue="true"
             app:key="gyroscope"
+            app:dependency="sensors"
             app:summaryOff="@string/gyroscope_off"
             app:summaryOn="@string/gyroscope_on"
             app:title="@string/gyroscope_title" />
 
         <SwitchPreferenceCompat
-            android:dependency="sensors"
             app:defaultValue="true"
             app:key="magnetometer"
+            app:dependency="sensors"
             app:summaryOff="@string/magnetometer_off"
             app:summaryOn="@string/magnetometer_on"
             app:title="@string/magnetometer_title" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/network">
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="network"
+            app:title="@string/network_preference_title"
+            app:summaryOn="@string/network_preference_summary_on"
+            app:summaryOff="@string/network_preference_summary_off" />
+
+        <SeekBarPreference
+            app:dependency="network"
+            app:key="network_interval"
+            app:singleLineTitle="false"
+            app:title="@string/network_preference_interval_title"
+            app:min="1"
+            android:max="60"
+            app:seekBarIncrement="1"
+            app:showSeekBarValue="true"
+            app:defaultValue="15" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/geolocation_preference_category">

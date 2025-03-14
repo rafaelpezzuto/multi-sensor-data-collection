@@ -14,7 +14,7 @@ import kotlin.math.sqrt
 import kotlin.math.withSign
 import timber.log.Timber
 
-class AngleDetectionService(private val context: Context) {
+class DeviceAngleDetectorService(private val context: Context) {
     private lateinit var sensorManager: SensorManager
     private lateinit var sensorListener: SensorEventListener
     private lateinit var sensor: Sensor
