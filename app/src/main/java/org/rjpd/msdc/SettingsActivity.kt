@@ -13,6 +13,7 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 
+
 class SettingsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,7 +34,7 @@ class SettingsActivity : AppCompatActivity() {
             setPreferencesFromResource(R.xml.user_preferences, rootKey)
 
             val infoUtils = InfoUtils(requireContext())
-            requireContext().getSystemService(Context.CAMERA_SERVICE) as CameraManager
+            requireContext().getSystemService(CAMERA_SERVICE) as CameraManager
             setCameras(infoUtils)
 
             val aboutPreference = findPreference<Preference>("about")

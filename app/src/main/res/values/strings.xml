@@ -3,6 +3,8 @@
 
     <string name="start">Start</string>
     <string name="stop">Stop</string>
+    <string name="recording_mode_audio">Audio</string>
+    <string name="recording_mode_audio_video">Audio + Video</string>
     <string name="settings">Settings</string>
 
     <string name="title_activity_settings">Settings</string>
@@ -26,10 +28,17 @@
     <string name="magnetometer_on">Magnetometer sensor is enabled</string>
     <string name="magnetometer_off">Magnetometer sensor is disabled</string>
 
+    <string name="camera_settings">Camera settings</string>
     <string name="camera_category">Changing these settings will trigger an app restart</string>
     <string name="camera_lens_facing_use_front_title">Recording using the front camera"</string>
     <string name="camera_lens_facing_use_front_on">Front camera is selected</string>
     <string name="camera_lens_facing_use_front_off">Back camera is selected</string>
+
+    <string name="audio_settings">Audio settings</string>
+    <string name="audio_settings_summary">Choose an audio configuration</string>
+    <string name="audio_sampling_rate">Sampling rate</string>
+    <string name="audio_channels">Channels</string>
+    <string name="audio_encoding_bit_rate">Encoding bit rate</string>
 
     <string name="light_title">Light sensor</string>
     <string name="light_off">Light sensor is disabled</string>
@@ -40,41 +49,57 @@
     <string name="extra_on">Extra sensors are enabled</string>
 
     <string name="geolocation_preference_category">Geolocation</string>
-    <string name="gps_title">GPS tracking service</string>
-    <string name="gps_off">GPS tracking service is disabled</string>
-    <string name="gps_on">GPS tracking service is enabled</string>
-    <string name="gps_interval_title">Interval in seconds for updating GPS data</string>
+    <string name="gps_title">Geolocation tracker service</string>
+    <string name="gps_off">Geolocation tracker service is disabled</string>
+    <string name="gps_on">Geolocation tracker service is enabled</string>
+    <string name="gps_interval_title">Interval in seconds for updating geolocation data</string>
 
     <string name="sensors">Sensors</string>
     <string name="track_movement">Track movement</string>
+
     <string name="timer_zero">00:00:00</string>
+
     <string name="preference_about_us">About us</string>
     <string name="preference_about_information_summary">Application information</string>
-    <string name="about_app_description">MultiSensor Data Collection is a mobile app that seamlessly gathers data from various sensors, including GPS, camera, and audio, allowing you to create a comprehensive dataset locally and effortlessly transmit it to the cloud for further analysis and storage.\n\nAuthor: rafael.damaceno@ime.usp.br\n\nVersion number: 0.10.0.0\n\nPrivacy policy: https://github.com/rafaelpezzuto/multi-sensor-data-collection/blob/main/privacy-policy.md\n\nSource code: https://github.com/rafaelpezzuto/multi-sensor-data-collection</string>
+    <string name="about_app_description">MultiSensor Data Collection is a mobile app that collects data from various sensors, including the accelerometer, gyroscope, geolocation, video camera, microphone, battery consumption, and more. It enables the creation of a synchronized dataset locally.\n\nAuthor: rafael.damaceno@ime.usp.br\nVersion: 1.0.0\nPrivacy Policy: https://github.com/rafaelpezzuto/multi-sensor-data-collection/blob/main/privacy-policy.md\nSource Code: https://github.com/rafaelpezzuto/multi-sensor-data-collection\n\nThis app is part of SideSeeing, a computer vision and machine learning project focused on developing methods for Urban Informatics applications.\n\nVisit our website: https://sites.usp.br/sideseeing.
+    </string>
+
     <string name="about_app_close">Close</string>
+
     <string name="consumption_summary_on">Battery consumption monitor is enabled</string>
     <string name="consumption_summary_off">Battery consumption monitor is disabled</string>
     <string name="battery_consumption">Battery consumption</string>
     <string name="consumption">Consumption</string>
     <string name="battery_consumption_interval_title">Interval in seconds for updating battery consumption data</string>
 
-    <string name="external_sensors_category_title">External sensors</string>
-    <string name="external_sensors_preference_title">External sensors</string>
-    <string name="external_sensors_preference_summary_on">External sensors monitor is enabled</string>
-    <string name="external_sensors_preference_summary_off">External sensors monitor is disabled</string>
-    <string name="external_sensors_preference_interval_title">Interval in seconds for updating  external sensors data</string>
+    <string name="network">Network</string>
+    <string name="network_preference_title">Network</string>
+    <string name="network_preference_summary_on">Networks detection service is enabled</string>
+    <string name="network_preference_summary_off">Networks detection service is disabled</string>
+    <string name="network_preference_interval_title">Interval in seconds for updating network data</string>
+
+    <string name="recording_status_stopped">Stopped</string>
+    <string name="recording_status_recording">Recording</string>
 
     <string name="status"/>
-    <string name="status_success">Success</string>
-    <string name="status_success_detail">%1$s files have been saved</string>
-    <string name="status_error">Error</string>>
-    <string name="status_error_detail">Data is missing as only %1$s files have been saved</string>
+    <string name="status_organizing_data">Organizing data, please wait…</string>
+    <string name="status_move_video_file">Moving video file, please wait…</string>
+    <string name="status_move_other_files">Moving other files, please wait…</string>
+    <string name="status_compressing_data">Compressing data, please wait…</string>
+    <string name="status_success">Operation completed successfully. %1$s files have been saved.</string>
+    <string name="status_error">Something went wrong. An audio or video file is missing.</string>
+
+    <string name="output_dir_title">Output</string>
+    <string name="dir_title">Directory</string>
+    <string name="subdir_title">Subdirectory</string>
+    <string name="recording_mode_title">Recording mode</string>
+
     <string name="camera_configuration_title">Choose a camera configuration</string>
     <string name="camera_id_title">Camera ID</string>
     <string name="camera_resolution_title">Camera resolution</string>
     <string name="camera_fps_title">Camera FPS</string>
+
     <string name="degree_zero">00.00°</string>
-    <string name="external_sensors_button_title">USB</string>
     <string name="compact_on">ZIP generation for each collection is enabled</string>
     <string name="compact_off">ZIP generation for each collection is disabled</string>
     <string name="compact_title">Compact data</string>

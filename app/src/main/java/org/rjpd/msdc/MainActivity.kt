@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.ContentValues
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -15,7 +16,6 @@ import android.view.OrientationEventListener
 import android.view.Surface
 import android.view.WindowManager
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
@@ -27,7 +27,6 @@ import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
 import androidx.camera.video.VideoRecordEvent
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.preference.PreferenceManager
@@ -59,11 +58,15 @@ class MainActivity : AppCompatActivity() {
     private var preview: Preview? = null
     private var recording: Recording? = null
 
-    private lateinit var intentConsumptionService: Intent
-    private lateinit var intentLocationTrackingService: Intent
     private lateinit var intentSensorsService: Intent
+    private lateinit var intentGeolocationTrackerService: Intent
+    private lateinit var intentBatteryMonitorService: Intent
+    private lateinit var intentWiFiNetworkScanService: Intent
+    private lateinit var intentCellularNetworkScanService: Intent
+    private lateinit var intentAudioRecorderService: Intent
     private lateinit var intentSettings: Intent
-    private lateinit var intentExternalSensorsService: Intent
+
+    private lateinit var services: List<Pair<Intent, String>>
 
     private lateinit var systemDataDirectory: File
     private lateinit var systemDataInstancePath: File
@@ -73,14 +76,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tmpFilename: String
     private lateinit var buttonStartDateTime: DateTime
     private lateinit var buttonStopDateTime: DateTime
-    private lateinit var videoStartDateTime: DateTime
-    private lateinit var videoEndDateTime: DateTime
+    private lateinit var mediaStartDateTime: DateTime
+    private lateinit var mediaStopDateTime: DateTime
 
-    private lateinit var angleDetectionService: AngleDetectionService
+    private lateinit var deviceAngleDetectorService: DeviceAngleDetectorService
 
-    @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (!allPermissionsGranted()) {
+            requestPermissions(REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
+        }
 
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
@@ -99,39 +105,54 @@ class MainActivity : AppCompatActivity() {
         infoUtils = InfoUtils(this)
         timeUtils = TimeUtils(Handler(Looper.getMainLooper()), viewBinding.clockTextview)
 
-        intentSensorsService = Intent(this@MainActivity, SensorsService::class.java)
-        intentLocationTrackingService = Intent(this@MainActivity, LocationTrackingService::class.java)
         intentSettings = Intent(this@MainActivity, SettingsActivity::class.java)
-        intentConsumptionService = Intent(this@MainActivity, ConsumptionService::class.java)
-        intentExternalSensorsService = Intent(this@MainActivity, ExternalSensorsService::class.java)
+
+        intentSensorsService = Intent(this@MainActivity, SensorsService::class.java)
+        intentGeolocationTrackerService = Intent(this@MainActivity, GeolocationTrackerService::class.java)
+        intentBatteryMonitorService = Intent(this@MainActivity, BatteryMonitorService::class.java)
+        intentWiFiNetworkScanService = Intent(this@MainActivity, WiFiNetworkScanService::class.java)
+        intentCellularNetworkScanService = Intent(this@MainActivity, CellularNetworkScanService::class.java)
+
+        intentAudioRecorderService = Intent(this@MainActivity, AudioRecorderService::class.java)
+
+        services = listOf(
+            intentSensorsService to "sensors",
+            intentGeolocationTrackerService to "gps",
+            intentBatteryMonitorService to "consumption",
+            intentWiFiNetworkScanService to "wifi_network",
+            intentCellularNetworkScanService to "cell_network",
+        )
 
         try {
-            angleDetectionService = AngleDetectionService(this)
-            angleDetectionService.create()
-            angleDetectionService.start(viewBinding.angleTextview)
+            deviceAngleDetectorService = DeviceAngleDetectorService(this)
+            deviceAngleDetectorService.create()
+            deviceAngleDetectorService.start(viewBinding.angleTextview)
         } catch (_: java.lang.NullPointerException) {
-            Timber.tag(TAG).d("Angle Detection Service is not supported on this device.")
+            Timber.tag(TAG).d("Device Angle Detector Service is not supported on this device.")
         }
 
-        if (allPermissionsGranted()){
-            startCamera()
-        } else {
-            ActivityCompat.requestPermissions(
-                this,
-                REQUIRED_PERMISSIONS,
-                REQUEST_CODE_PERMISSIONS
-            )
+        viewBinding.recordingModeGroup.setOnCheckedChangeListener { _, checkedId ->
+            when (checkedId) {
+                R.id.radio_audio_video -> {
+                    viewBinding.radioAudioVideo.isChecked = true
+                    viewBinding.radioAudio.isChecked = false
+                    startCamera()
+
+                }
+                R.id.radio_audio -> {
+                    viewBinding.radioAudioVideo.isChecked = false
+                    viewBinding.radioAudio.isChecked = true
+                    stopCamera()
+                }
+            }
         }
 
         viewBinding.startStopButton.setOnCheckedChangeListener {_, isChecked ->
             if (isChecked) {
-                viewBinding.settingsButton.isEnabled = false
-                viewBinding.dirEdittext.isEnabled = false
-                viewBinding.subdirEdittext.isEnabled = false
-                viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.purple_200)
-                angleDetectionService?.stop()
+                lockScreenOrientation()
                 startDataCollecting()
             } else {
+                unlockScreenOrientation()
                 stopDataCollecting()
             }
         }
@@ -140,17 +161,23 @@ class MainActivity : AppCompatActivity() {
             startActivity(intentSettings)
         }
 
-        cameraExecutor = Executors.newSingleThreadExecutor()
-    }
+        if (viewBinding.radioAudioVideo.isChecked) {
+            startCamera()
+            cameraExecutor = Executors.newSingleThreadExecutor()
+        }
 
-    override fun onStart() {
-        super.onStart()
         orientationEventListener.enable()
     }
 
-    override fun onStop() {
-        super.onStop()
+    override fun onDestroy() {
+        super.onDestroy()
+        cameraExecutor.shutdown()
         orientationEventListener.disable()
+        deviceAngleDetectorService?.stop()
+
+        for ((intent, _) in services) {
+            stopService(intent)
+        }
     }
 
     private val orientationEventListener by lazy {
@@ -169,35 +196,29 @@ class MainActivity : AppCompatActivity() {
 
                 videoCapture?.targetRotation = rotation
                 preview?.targetRotation = rotation
-
-                Timber.tag(TAG).d("A rotation was detected: $rotation")
-                angleDetectionService?.setDevicePosition(rotation)
+                deviceAngleDetectorService.setDevicePosition(rotation)
             }
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        cameraExecutor.shutdown()
-        orientationEventListener.disable()
-        angleDetectionService?.stop()
-        stopService(intentLocationTrackingService)
-        stopService(intentSensorsService)
-    }
+   private fun lockScreenOrientation() {
+       val rotation = (getSystemService(WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
+       requestedOrientation = when (rotation) {
+           Surface.ROTATION_0 -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+           Surface.ROTATION_90 -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+           Surface.ROTATION_180 -> ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT
+           Surface.ROTATION_270 -> ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE
+           else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+       }
+   }
 
-    override fun onPause() {
-        super.onPause()
-        Timber.tag(TAG).d("A pause has been detected.")
-
-        viewBinding.startStopButton.isEnabled = true
-        viewBinding.startStopButton.text = getText(R.string.start)
-        viewBinding.startStopButton.isChecked = false
-        viewBinding.settingsButton.isEnabled = true
-        viewBinding.dirEdittext.isEnabled = true
-        viewBinding.subdirEdittext.isEnabled = true
-    }
+   private fun unlockScreenOrientation() {
+       requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+   }
 
     private fun startCamera() {
+        viewBinding.viewFinder.visibility = android.view.View.VISIBLE
+
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
         cameraProviderFuture.addListener({
@@ -206,7 +227,7 @@ class MainActivity : AppCompatActivity() {
             preview = Preview.Builder()
                 .build()
                 .also {
-                    it.setSurfaceProvider(viewBinding.viewFinder.surfaceProvider)
+                    it.surfaceProvider = viewBinding.viewFinder.surfaceProvider
                 }
 
             val camQuality = infoUtils.stringToCamQuality(
@@ -243,6 +264,19 @@ class MainActivity : AppCompatActivity() {
         }, ContextCompat.getMainExecutor(this))
     }
 
+    private fun stopCamera() {
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+
+        cameraProviderFuture.addListener({
+            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+            cameraProvider.unbindAll()
+        }, ContextCompat.getMainExecutor(this))
+
+        cameraExecutor.shutdown()
+        preview?.surfaceProvider = null
+        viewBinding.viewFinder.visibility = android.view.View.INVISIBLE
+    }
+
     private fun startVideoRecording(filename: String) {
         val videoCapture = this.videoCapture ?: return
 
@@ -276,13 +310,13 @@ class MainActivity : AppCompatActivity() {
             .start(ContextCompat.getMainExecutor(this)) { recordEvent ->
                 when(recordEvent) {
                     is VideoRecordEvent.Start -> {
-                        videoStartDateTime = TimeUtils.getDateTimeUTC(System.currentTimeMillis())
-                        Timber.tag(TAG).d("The video camera recording has been initialized at $videoStartDateTime.")
+                        mediaStartDateTime = TimeUtils.getDateTimeUTC(System.currentTimeMillis())
+                        Timber.tag(TAG).d("Data capture started at $mediaStartDateTime.")
                     }
                     is VideoRecordEvent.Finalize -> {
                         if (!recordEvent.hasError()) {
-                            videoEndDateTime = TimeUtils.getDateTimeUTC(System.currentTimeMillis())
-                            Timber.tag(TAG).d("Data capture succeeded at $videoEndDateTime: ${recordEvent.outputResults.outputUri}.")
+                            mediaStopDateTime = TimeUtils.getDateTimeUTC(System.currentTimeMillis())
+                            Timber.tag(TAG).d("Data capture succeeded at $mediaStopDateTime: ${recordEvent.outputResults.outputUri}.")
                         } else {
                             recording?.close()
                             recording = null
@@ -295,9 +329,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startDataCollecting() {
-        timeUtils.startTimer()
+        disableInterfaceElements()
 
-        viewBinding.statusTextview.text = getString(R.string.status)
+        timeUtils.startTimer()
 
         val currentTimeMillis = System.currentTimeMillis()
         buttonStartDateTime = TimeUtils.getDateTimeUTC(currentTimeMillis)
@@ -312,40 +346,35 @@ class MainActivity : AppCompatActivity() {
 
         systemDataInstancePath = createSubDirectory(systemDataDirectory.absolutePath, tmpFilename)
 
-        intentSensorsService.putExtra("outputDirectory", systemDataInstancePath.absolutePath)
-        intentSensorsService.putExtra("filename", tmpFilename)
-        intentLocationTrackingService.putExtra("outputDirectory", systemDataInstancePath.absolutePath)
-        intentLocationTrackingService.putExtra("filename", tmpFilename)
-        intentConsumptionService.putExtra("outputDirectory", systemDataInstancePath.absolutePath)
-        intentConsumptionService.putExtra("filename", tmpFilename)
-        intentExternalSensorsService.putExtra("outputDirectory", systemDataInstancePath.absolutePath)
-        intentExternalSensorsService.putExtra("filename", tmpFilename)
-
-        if (sharedPreferences.getBoolean("sensors", true)) {
-            startService(intentSensorsService)
+        services.forEach { (intent, name) ->
+            if (sharedPreferences.getBoolean(name, true)) {
+                intent.putExtra("outputDirectory", systemDataInstancePath.absolutePath)
+                intent.putExtra("filename", tmpFilename)
+                startForegroundService(intent)
+            }
         }
 
-        if (sharedPreferences.getBoolean("gps", true)) {
-            startService(intentLocationTrackingService)
-        }
+        if (viewBinding.radioAudioVideo.isChecked) {
+           startVideoRecording(tmpFilename)
+        } else {
+            intentAudioRecorderService.putExtra("outputDirectory", systemDataInstancePath.absolutePath)
+            intentAudioRecorderService.putExtra("filename", tmpFilename)
 
-        if (sharedPreferences.getBoolean("consumption", true)) {
-            startService(intentConsumptionService)
-        }
+            mediaStartDateTime = TimeUtils.getDateTimeUTC(System.currentTimeMillis())
 
-        if (sharedPreferences.getBoolean("external_sensors", false)) {
-            startService(intentExternalSensorsService)
-        }
+            intentAudioRecorderService.putExtra("audioSamplingRate", sharedPreferences.getString("audio_sampling_rate", "44100")!!.toInt())
+            intentAudioRecorderService.putExtra("audioChannels", sharedPreferences.getString("audio_channels", "2")!!.toInt())
+            intentAudioRecorderService.putExtra("audioEncodingBitRate", sharedPreferences.getString("audio_encoding_bit_rate", "128000")!!.toInt())
 
-        startVideoRecording(tmpFilename)
+            intentAudioRecorderService.action = AudioRecorderService.ACTION_START_RECORDING
+            startForegroundService(intentAudioRecorderService)
+        }
     }
 
     private fun finishCollectionCheck(isValid: Boolean, filesSize:Int, deleteDirectory:Boolean, directory:File) {
         if (isValid) {
             viewBinding.statusTextview.text = buildString {
-                append(getString(R.string.status_success))
-                append("\n")
-                append(getString(R.string.status_success_detail, "$filesSize"))
+                append(getString(R.string.status_success, "$filesSize"))
             }
 
             if (deleteDirectory) {
@@ -355,8 +384,6 @@ class MainActivity : AppCompatActivity() {
         } else {
             viewBinding.statusTextview.text = buildString {
                 append(getString(R.string.status_error))
-                append("\n")
-                append(getString(R.string.status_error_detail, "$filesSize"))
             }
         }
     }
@@ -365,50 +392,58 @@ class MainActivity : AppCompatActivity() {
         timeUtils.stopTimer()
         buttonStopDateTime = TimeUtils.getDateTimeUTC(System.currentTimeMillis())
 
-        try {
-            stopService(intentSensorsService)
-            stopService(intentLocationTrackingService)
-            stopService(intentConsumptionService)
-            stopService(intentExternalSensorsService)
-        } catch (e: Exception) {
-            Timber.tag(TAG).d("Is was not possible to stop the SensorsService.")
+        services.forEach { (intent, name) ->
+            if (sharedPreferences.getBoolean(name, true)) {
+                stopService(intent)
+            }
         }
 
-        try {
+        if (viewBinding.radioAudioVideo.isChecked) {
             recording?.stop()
             recording = null
-        } catch (e: Exception) {
-            Timber.tag(TAG).d("It was not possible to stop the Recording.")
+        } else {
+            intentAudioRecorderService.action = AudioRecorderService.ACTION_STOP_RECORDING
+            startService(intentAudioRecorderService)
+
+            mediaStopDateTime = TimeUtils.getDateTimeUTC(System.currentTimeMillis())
         }
 
-        Toast.makeText(
-            this,
-            "Organizing data...",
-            Toast.LENGTH_SHORT
-        ).show()
+        viewBinding.recordingTextview.text = getString(R.string.recording_status_stopped)
+        viewBinding.statusTextview.visibility = android.view.View.VISIBLE
+        viewBinding.statusTextview.text = getString(R.string.status_organizing_data)
 
         CoroutineScope(Dispatchers.Main).launch {
-            while (!mediaDataDirectoryCollecting.resolve("${tmpFilename}.video.mp4").exists()) {
-                delay(500)
+            if (viewBinding.radioAudioVideo.isChecked) {
+                while (!mediaDataDirectoryCollecting.resolve("${tmpFilename}.video.mp4").exists()) {
+                    delay(500)
+                }
+                val moveJobVideo = async(Dispatchers.IO) {
+                    moveContent(
+                        mediaDataDirectoryCollecting.resolve("${tmpFilename}.video.mp4"),
+                        userDataInstancePath
+                    )
+                }
+
+                val moveJobVideoResult = moveJobVideo.await()
+                if (moveJobVideoResult) {
+                    viewBinding.statusTextview.text = getString(R.string.status_move_video_file)
+                }
             }
 
             val moveJob = async(Dispatchers.IO) {
                 moveContent(systemDataInstancePath, userDataInstancePath)
-                moveContent(mediaDataDirectoryCollecting.resolve("${tmpFilename}.video.mp4"), userDataInstancePath)
             }
 
             val moveJobResult = moveJob.await()
 
             if (moveJobResult) {
-                Toast.makeText(
-                    this@MainActivity,
-                    "Done",
-                    Toast.LENGTH_SHORT
-                ).show()
+                viewBinding.statusTextview.text = getString(R.string.status_move_other_files)
 
                 generateMetadata()
 
                 if (sharedPreferences.getBoolean("zip", false)) {
+                    viewBinding.statusTextview.text = getString(R.string.status_compressing_data)
+
                     val zipTargetFilename = getZipTargetFilename(userDataInstancePath)
 
                     val zipJob = async(Dispatchers.IO) {
@@ -420,7 +455,7 @@ class MainActivity : AppCompatActivity() {
                     if (zipJobResult) {
                         Timber.tag(TAG).d("Checking zip file.")
                         val files = listCompressedFiles(zipTargetFilename)
-                        val isValidFilesList = isFilesListValid(files)
+                        val isValidFilesList = isFilesListValid(files, viewBinding.radioAudioVideo.isChecked)
                         finishCollectionCheck(isValidFilesList, files.size, true, userDataInstancePath)
                     } else {
                         Timber.tag(TAG).d("The zip job is not ready.")
@@ -428,24 +463,40 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     Timber.tag(TAG).d("Checking directory.")
                     val files = listFiles(userDataInstancePath)
-                    val isValidFilesList = isFilesListValid(files)
+                    val isValidFilesList = isFilesListValid(files, viewBinding.radioAudioVideo.isChecked)
                     finishCollectionCheck(isValidFilesList, files.size, false, userDataInstancePath)
                 }
-                viewBinding.startStopButton.isEnabled = true
-                viewBinding.settingsButton.isEnabled = true
-                viewBinding.dirEdittext.isEnabled = true
-                viewBinding.subdirEdittext.isEnabled = true
-                viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.red_700)
-                viewBinding.startStopButton.setTextColor(getColorStateList(R.color.white))
-                angleDetectionService?.start(viewBinding.angleTextview)
+
+                enableInterfaceElements()
+
             } else {
                 Timber.tag(TAG).d("The move job is not ready.")
             }
         }
     }
 
+    private fun disableInterfaceElements(){
+        deviceAngleDetectorService?.stop()
+
+        viewBinding.settingsButton.isEnabled = false
+        viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.purple_200)
+        viewBinding.outputAndRecordingModeSettingsLinearLayout.visibility = android.view.View.INVISIBLE
+
+        viewBinding.recordingTextview.text = getString(R.string.recording_status_recording)
+    }
+
+    private fun enableInterfaceElements() {
+        deviceAngleDetectorService?.start(viewBinding.angleTextview)
+
+        viewBinding.settingsButton.isEnabled = true
+        viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.red_700)
+        viewBinding.startStopButton.setTextColor(getColorStateList(R.color.white))
+        viewBinding.startStopButton.isEnabled = true
+        viewBinding.outputAndRecordingModeSettingsLinearLayout.visibility = android.view.View.VISIBLE
+    }
+
     private fun generateMetadata() {
-        Timber.tag(TAG).d("Generating metadata.")
+        Timber.tag(TAG).d("Generating metadata...")
         writeMetadataFile(
             sharedPreferences.all,
             resources.displayMetrics,
@@ -453,14 +504,14 @@ class MainActivity : AppCompatActivity() {
             viewBinding.angleTextview.text as String,
             buttonStartDateTime,
             buttonStopDateTime,
-            videoStartDateTime,
-            videoEndDateTime,
+            mediaStartDateTime,
+            mediaStopDateTime,
             userDataInstancePath
         )
     }
 
-    private fun zipData (sourceFolder: File, targetZipFilename: String): Boolean {
-        Timber.tag(TAG).d("Compacting data.")
+    private fun zipData(sourceFolder: File, targetZipFilename: String): Boolean {
+        Timber.tag(TAG).d("Compacting data...")
         return try {
             zipEverything(sourceFolder, targetZipFilename)
             true
@@ -506,17 +557,25 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "MultiSensorDataCollection"
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
-        private const val REQUEST_CODE_PERMISSIONS = 10
+        private const val REQUEST_CODE_PERMISSIONS = 33
         private val REQUIRED_PERMISSIONS =
             mutableListOf (
-                Manifest.permission.CAMERA,
-                Manifest.permission.RECORD_AUDIO,
                 Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.WAKE_LOCK,
+                Manifest.permission.ACCESS_WIFI_STATE,
+                Manifest.permission.CAMERA,
+                Manifest.permission.CHANGE_WIFI_STATE,
+                Manifest.permission.RECORD_AUDIO,
+                Manifest.permission.READ_PHONE_STATE
             ).apply {
                 if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
                     add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    add(Manifest.permission.HIGH_SAMPLING_RATE_SENSORS)
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    add(Manifest.permission.POST_NOTIFICATIONS)
                 }
             }.toTypedArray()
     }

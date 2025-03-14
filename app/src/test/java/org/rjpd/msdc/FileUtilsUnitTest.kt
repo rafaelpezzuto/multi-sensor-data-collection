@@ -3,6 +3,7 @@ package org.rjpd.msdc
 import org.junit.Test
 import org.junit.Assert.*
 
+
 class FileUtilsUnitTest {
     @Test
     fun generateInstanceNameNoSpace_isCorrect() {
