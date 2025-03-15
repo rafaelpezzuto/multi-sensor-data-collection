@@ -330,6 +330,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startDataCollecting() {
+        lockScreenOrientation()
         disableInterfaceElements()
 
         timeUtils.startTimer()
@@ -468,6 +469,7 @@ class MainActivity : AppCompatActivity() {
                     finishCollectionCheck(isValidFilesList, files.size, false, userDataInstancePath)
                 }
 
+                unlockScreenOrientation()
                 enableInterfaceElements()
 
             } else {
