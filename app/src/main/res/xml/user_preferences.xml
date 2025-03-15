@@ -93,7 +93,7 @@
             android:max="160"
             app:seekBarIncrement="1"
             app:showSeekBarValue="true"
-            app:defaultValue="15" />
+            app:defaultValue="30" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/sensors">
@@ -175,7 +175,7 @@
             android:max="60"
             app:seekBarIncrement="1"
             app:showSeekBarValue="true"
-            app:defaultValue="15" />
+            app:defaultValue="30" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/geolocation_preference_category">

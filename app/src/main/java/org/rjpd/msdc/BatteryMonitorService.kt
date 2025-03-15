@@ -5,7 +5,6 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.os.BatteryManager
 import android.os.IBinder
@@ -14,6 +13,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import timber.log.Timber
+
 
 class BatteryMonitorService : Service() {
     private lateinit var scheduledExecutor: ScheduledExecutorService
@@ -72,10 +72,10 @@ class BatteryMonitorService : Service() {
     }
 
     private fun startMonitoring(intent: Intent?) {
-        isMonitoring = true
-
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-        val consumptionInterval = sharedPreferences.getInt("consumption_interval", 15).toLong()
+        val consumptionInterval = sharedPreferences.getInt("consumption_interval", 30)
+
+        isMonitoring = true
 
         outputDir = intent?.extras!!.getString("outputDirectory", "")
         filename = intent.extras!!.getString("filename", "")
@@ -90,7 +90,7 @@ class BatteryMonitorService : Service() {
             writeConsumptionData(currentDateTime, batteryStatus, outputDir, filename)
             Timber.tag(TAG).d("$currentDateTime,$batteryStatus")
 
-        }, 0, consumptionInterval, TimeUnit.SECONDS)
+        }, 0, consumptionInterval.toLong(), TimeUnit.SECONDS)
     }
 
     private fun stopMonitoring() {

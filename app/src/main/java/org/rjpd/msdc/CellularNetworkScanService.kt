@@ -13,6 +13,7 @@ import android.os.Looper
 import android.telephony.CellInfo
 import android.telephony.TelephonyManager
 import androidx.annotation.RequiresPermission
+import androidx.preference.PreferenceManager
 import timber.log.Timber
 
 
@@ -21,7 +22,6 @@ class CellularNetworkScanService : Service() {
     private var isMonitoring = false
 
     private val handler = Handler(Looper.getMainLooper())
-    private val intervalMillis = 30000L
 
     private var filename = ""
     private var outputDir = ""
@@ -77,6 +77,9 @@ class CellularNetworkScanService : Service() {
     }
 
     private fun startScanning(intent: Intent?) {
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        val intervalMillis = sharedPreferences.getInt("network_interval", 30) * 1000
+
         outputDir = intent?.extras!!.getString("outputDirectory", "")
         filename = intent.extras!!.getString("filename", "")
 
@@ -88,7 +91,7 @@ class CellularNetworkScanService : Service() {
 
                 writeCellularNetworkData(currentDateTime, cellInfoList, outputDir, filename)
                 Timber.tag(TAG).d("Cellular networks found: $cellInfoList")
-                handler.postDelayed(this, intervalMillis)
+                handler.postDelayed(this, intervalMillis.toLong())
             }
         })
     }

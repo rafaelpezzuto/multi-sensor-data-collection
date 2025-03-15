@@ -11,6 +11,7 @@ import android.net.wifi.WifiManager
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import androidx.preference.PreferenceManager
 import timber.log.Timber
 
 
@@ -73,6 +74,9 @@ class WiFiNetworkScanService : Service() {
     }
 
     private fun startScanning(intent: Intent?) {
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        val intervalMillis = sharedPreferences.getInt("network_interval", 30) * 1000
+
         outputDir = intent?.extras!!.getString("outputDirectory", "")
         filename = intent.extras!!.getString("filename", "")
 
@@ -92,7 +96,7 @@ class WiFiNetworkScanService : Service() {
                 } else {
                     Timber.tag(TAG).d("Permission for accessing Wi-Fi scan results is not granted.")
                 }
-                handler.postDelayed(this, intervalMillis)
+                handler.postDelayed(this, intervalMillis.toLong())
             }
         })
     }
