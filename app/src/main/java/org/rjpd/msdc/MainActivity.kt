@@ -168,6 +168,30 @@ class MainActivity : AppCompatActivity() {
         }
 
         orientationEventListener.enable()
+        saveInstanceState(savedInstanceState)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString("dirEdittext", viewBinding.dirEdittext.text.toString())
+        outState.putString("subdirEdittext", viewBinding.subdirEdittext.text.toString())
+        outState.putString("status", viewBinding.statusTextview.text.toString())
+        outState.putBoolean("statusTextview", viewBinding.statusTextview.isVisible)
+        outState.putBoolean("radioAudioVideo", viewBinding.radioAudioVideo.isChecked)
+        outState.putBoolean("radioAudio", viewBinding.radioAudio.isChecked)
+        outState.putBoolean("startStopButton", viewBinding.startStopButton.isChecked)
+    }
+
+    fun saveInstanceState(savedInstanceState: Bundle?) {
+        if (savedInstanceState != null) {
+            viewBinding.dirEdittext.setText(savedInstanceState.getString("dirEdittext"))
+            viewBinding.subdirEdittext.setText(savedInstanceState.getString("subdirEdittext"))
+            viewBinding.statusTextview.text = savedInstanceState.getString("status")
+            viewBinding.statusTextview.visibility = if (savedInstanceState.getBoolean("statusTextview")) android.view.View.VISIBLE else android.view.View.INVISIBLE
+            viewBinding.radioAudioVideo.isChecked = savedInstanceState.getBoolean("radioAudioVideo")
+            viewBinding.radioAudio.isChecked = savedInstanceState.getBoolean("radioAudio")
+            viewBinding.startStopButton.isChecked = savedInstanceState.getBoolean("startStopButton")
+        }
     }
 
     override fun onDestroy() {
