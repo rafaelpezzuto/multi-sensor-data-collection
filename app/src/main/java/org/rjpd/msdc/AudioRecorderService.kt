@@ -96,6 +96,7 @@ class AudioRecorderService: Service() {
             recorder!!.release()
             recorder = null
         }
+        stopForeground(STOP_FOREGROUND_REMOVE)
     }
 
     override fun onBind(intent: Intent?): IBinder? {
