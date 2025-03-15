@@ -45,6 +45,8 @@ import kotlinx.coroutines.launch
 import org.joda.time.DateTime
 import org.rjpd.msdc.databinding.ActivityMainBinding
 import timber.log.Timber
+import kotlin.toString
+import androidx.core.view.isVisible
 
 
 class MainActivity : AppCompatActivity() {
@@ -134,12 +136,13 @@ class MainActivity : AppCompatActivity() {
         viewBinding.recordingModeGroup.setOnCheckedChangeListener { _, checkedId ->
             when (checkedId) {
                 R.id.radio_audio_video -> {
+                    viewBinding.microphone.visibility = android.view.View.INVISIBLE
                     viewBinding.radioAudioVideo.isChecked = true
                     viewBinding.radioAudio.isChecked = false
                     startCamera()
-
                 }
                 R.id.radio_audio -> {
+                    viewBinding.microphone.visibility = android.view.View.VISIBLE
                     viewBinding.radioAudioVideo.isChecked = false
                     viewBinding.radioAudio.isChecked = true
                     stopCamera()
@@ -149,10 +152,8 @@ class MainActivity : AppCompatActivity() {
 
         viewBinding.startStopButton.setOnCheckedChangeListener {_, isChecked ->
             if (isChecked) {
-                lockScreenOrientation()
                 startDataCollecting()
             } else {
-                unlockScreenOrientation()
                 stopDataCollecting()
             }
         }
@@ -483,6 +484,8 @@ class MainActivity : AppCompatActivity() {
         viewBinding.outputAndRecordingModeSettingsLinearLayout.visibility = android.view.View.INVISIBLE
 
         viewBinding.recordingTextview.text = getString(R.string.recording_status_recording)
+        viewBinding.statusTextview.text = getString(R.string.status)
+        viewBinding.statusTextview.visibility = android.view.View.INVISIBLE
     }
 
     private fun enableInterfaceElements() {
@@ -493,6 +496,7 @@ class MainActivity : AppCompatActivity() {
         viewBinding.startStopButton.setTextColor(getColorStateList(R.color.white))
         viewBinding.startStopButton.isEnabled = true
         viewBinding.outputAndRecordingModeSettingsLinearLayout.visibility = android.view.View.VISIBLE
+        viewBinding.statusTextview.visibility = android.view.View.VISIBLE
     }
 
     private fun generateMetadata() {

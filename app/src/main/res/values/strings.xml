@@ -57,11 +57,13 @@
     <string name="sensors">Sensors</string>
     <string name="track_movement">Track movement</string>
 
+    <string name="microphone">Microphone</string>
+
     <string name="timer_zero">00:00:00</string>
 
     <string name="preference_about_us">About us</string>
     <string name="preference_about_information_summary">Application information</string>
-    <string name="about_app_description">MultiSensor Data Collection is a mobile app that collects data from various sensors, including the accelerometer, gyroscope, geolocation, video camera, microphone, battery consumption, and more. It enables the creation of a synchronized dataset locally.\n\nAuthor: rafael.damaceno@ime.usp.br\nVersion: 1.0.0\nPrivacy Policy: https://github.com/rafaelpezzuto/multi-sensor-data-collection/blob/main/privacy-policy.md\nSource Code: https://github.com/rafaelpezzuto/multi-sensor-data-collection\n\nThis app is part of SideSeeing, a computer vision and machine learning project focused on developing methods for Urban Informatics applications.\n\nVisit our website: https://sites.usp.br/sideseeing.
+    <string name="about_app_description">MultiSensor Data Collection is a mobile app that collects data from various sensors, including the accelerometer, gyroscope, geolocation, video camera, microphone, battery consumption, and more. It enables the creation of a synchronized dataset locally.\n\nAuthor: rafael.damaceno@ime.usp.br\nVersion: 1.1.0\nPrivacy Policy: https://github.com/rafaelpezzuto/multi-sensor-data-collection/blob/main/privacy-policy.md\nSource Code: https://github.com/rafaelpezzuto/multi-sensor-data-collection\n\nThis app is part of SideSeeing, a computer vision and machine learning project focused on developing methods for Urban Informatics applications.\n\nVisit our website: https://sites.usp.br/sideseeing.
     </string>
 
     <string name="about_app_close">Close</string>

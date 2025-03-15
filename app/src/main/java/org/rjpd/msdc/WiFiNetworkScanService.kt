@@ -20,7 +20,6 @@ class WiFiNetworkScanService : Service() {
     private var isMonitoring = false
 
     private val handler = Handler(Looper.getMainLooper())
-    private val intervalMillis = 30000L
 
     private var filename = ""
     private var outputDir = ""

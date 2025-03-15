@@ -13,6 +13,20 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <ImageView
+        android:id="@+id/microphone"
+        android:contentDescription="@string/microphone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/background_dark"
+        android:src="@android:drawable/ic_btn_speak_now"
+        android:scaleType="centerInside"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:visibility="invisible" />
+
     <TextView
         android:id="@+id/clock_textview"
         android:fontFamily="monospace"
@@ -27,8 +41,7 @@
         android:layout_marginTop="25dp"
         android:text="@string/timer_zero"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/recording_textview"
