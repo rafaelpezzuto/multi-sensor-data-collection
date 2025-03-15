@@ -1,6 +1,5 @@
 package org.rjpd.msdc
 
-import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -10,7 +9,6 @@ import android.content.Intent
 import android.media.MediaRecorder
 import android.os.Build
 import android.os.IBinder
-import androidx.annotation.RequiresApi
 import timber.log.Timber
 
 
@@ -61,7 +59,6 @@ class AudioRecorderService: Service() {
             .build()
     }
 
-    @SuppressLint("NewApi")
     fun startRecording(intent: Intent?) {
         outputDir = intent?.extras!!.getString("outputDirectory", "")
         filename = intent.extras!!.getString("filename", "")
@@ -70,7 +67,12 @@ class AudioRecorderService: Service() {
         var audioChannels = intent.extras!!.getInt("audioChannels", 2)
         var audioEncodingBitRate = intent.extras!!.getInt("audioEncodingBitRate", 128000)
 
-        recorder = MediaRecorder(applicationContext)
+        recorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            MediaRecorder(applicationContext)
+        } else {
+            MediaRecorder()
+        }
+
         recorder?.setAudioSource(MediaRecorder.AudioSource.MIC)
         recorder?.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
         recorder?.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
