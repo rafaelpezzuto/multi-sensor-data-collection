@@ -10,7 +10,7 @@ MultiSensor Data Collection is a mobile app that seamlessly gathers data from va
 
 ## Screenshots
 
-| ![main_screen](https://github.com/user-attachments/assets/fb3e3a0a-6fbb-4d87-9c72-f73c8e22cefa) | ![settings_screen_camera_resolution](https://github.com/user-attachments/assets/92e02ca8-d9c4-462d-b03c-7fdef09ea1d8) |
+| ![main screen](https://github.com/user-attachments/assets/a4dc21fc-626e-49ce-a106-c1f6020453ed) | ![settings_screen_camera_resolution](https://github.com/user-attachments/assets/92e02ca8-d9c4-462d-b03c-7fdef09ea1d8) |
 |:---:|:---:|
 | **Main Screen** | **Camera Resolution Settings** |
 
