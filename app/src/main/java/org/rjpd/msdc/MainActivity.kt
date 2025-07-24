@@ -334,8 +334,94 @@ class MainActivity : AppCompatActivity() {
             return null
         }
     }
+
+    @OptIn(ExperimentalCamera2Interop::class)
+    private fun setAeLock(lock: Boolean, manualExposureValue: Int = 0) {
+        val cameraControl = this.cameraControl ?: return
+
+        val camera2CameraControl = Camera2CameraControl.from(cameraControl)
+
+        val captureRequestOptions = CaptureRequestOptions.Builder()
+            .setCaptureRequestOption(CaptureRequest.CONTROL_AE_LOCK, lock)
+            .setCaptureRequestOption(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION, manualExposureValue)
+            .build()
+
+        camera2CameraControl.setCaptureRequestOptions(captureRequestOptions)
+            .addListener({
+                Timber.tag(TAG).d("AE Lock set to: $lock")
+
+                isExposureLocked = lock
+
+                if (lock) {
+                    runOnUiThread {
+                        viewBinding.exposureLockImage.setImageResource(R.drawable.ic_lock_closed)
+                    }
+                } else {
+                    runOnUiThread {
+                        viewBinding.exposureLockImage.setImageResource(R.drawable.ic_lock_open)
+                    }
+                }
+                if (!isAutoExposureEnabled){
+                    val ev = getExposureIndexFromProgress(manualExposureValue)
+                    "EV: $ev".also { viewBinding.compensationValueTextView.text = it }
+                }
+
+                viewBinding.statusTextview.text = ""
+                viewBinding.statusTextview.visibility = android.view.View.INVISIBLE
+            }, ContextCompat.getMainExecutor(this))
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
     private fun startCamera() {
         viewBinding.viewFinder.visibility = android.view.View.VISIBLE
+
+        // Set up the touch listener for the view finder to toggle exposure.
+        if (sharedPreferences.getBoolean("exposure_compensation_mode_touch", true)) {
+            viewBinding.viewFinder.setOnTouchListener { _, event ->
+                if (event.action == MotionEvent.ACTION_UP) {
+                    if (cameraControl == null || cameraInfo == null) return@setOnTouchListener false
+
+                    val meteringPointFactory = viewBinding.viewFinder.meteringPointFactory
+                    val point = meteringPointFactory.createPoint(event.x, event.y)
+
+                    if (isExposureLocked) {
+                        if (!isAutoExposureEnabled) {
+                            viewBinding.statusTextview.text = getString(R.string.unlocking_exposure)
+                            viewBinding.statusTextview.visibility = android.view.View.VISIBLE
+                        }
+                        unlockExposure()
+                    } else {
+                        if (!isAutoExposureEnabled) {
+                            viewBinding.statusTextview.text = getString(R.string.locking_exposure)
+                            viewBinding.statusTextview.visibility = android.view.View.VISIBLE
+                        }
+                        val action = FocusMeteringAction.Builder(
+                            point,
+                            FocusMeteringAction.FLAG_AF or FocusMeteringAction.FLAG_AE
+                        )
+                            .disableAutoCancel()
+                            .setAutoCancelDuration(10, TimeUnit.SECONDS)
+                            .build()
+
+                        val future = cameraControl?.startFocusAndMetering(action)
+
+                        future?.addListener({
+                            try {
+                                if (!isAutoExposureEnabled) {
+                                    future.get()
+                                    lockExposure()
+                                }
+                            } catch (e: InterruptedException) {
+                                Timber.tag(TAG).d(e, "Focus and Metering interrupted on touch.")
+                            } catch (e: Exception) {
+                                Timber.tag(TAG).d(e, "Error during Focus and Metering or locking exposure.")
+                            }
+                        }, ContextCompat.getMainExecutor(this))
+                    }
+                }
+                true
+            }
+        }
 
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
