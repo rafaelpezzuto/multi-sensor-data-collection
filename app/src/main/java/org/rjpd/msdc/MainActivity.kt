@@ -299,6 +299,41 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun lockExposure() {
+        if (recording != null) return
+        if (isExposureLocked) return
+
+        if (isAutoExposureEnabled) {
+            setAeLock(true)
+        } else {
+            setAeLock(true, viewBinding.compensationValueSeekBar.progress)
+        }
+        Timber.tag(TAG).d("Exposure lock requested.")
+    }
+
+    private fun unlockExposure() {
+        if (recording != null) return
+        if (!isExposureLocked) return
+
+        setAeLock(false)
+        Timber.tag(TAG).d("Exposure unlock requested.")
+    }
+
+    private fun getExposureIndexFromProgress(progress: Int): Float {
+        Timber.tag(TAG).d("Progress: $progress, Min: $compensationMinIndex, Max: $compensationMaxIndex, Step: $compensationStep")
+        return progress * compensationStep.numerator.toFloat() / compensationStep.denominator.toFloat()
+    }
+
+    private fun getCamera2ExposureCompensationRange(context: Context, cameraId: String): Range<Int>? {
+        val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        try {
+            val characteristics = cameraManager.getCameraCharacteristics(cameraId)
+            return characteristics.get(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE)
+        } catch (e: CameraAccessException) {
+            Timber.e(e, "Cannot access camera characteristics for camera ID: $cameraId")
+            return null
+        }
+    }
     private fun startCamera() {
         viewBinding.viewFinder.visibility = android.view.View.VISIBLE
 
