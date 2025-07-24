@@ -175,7 +175,94 @@
                 android:background="?attr/selectableItemBackground"
                 android:gravity="center" />
         </RadioGroup>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/camera_settings"
+            android:textAlignment="textStart"
+            android:textStyle="bold"
+            android:textAllCaps="true"
+            android:textSize="14sp"
+            android:paddingTop="10dp"
+            android:textColor="@color/red_a100" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/auto_exposure_switch"
+            android:checked="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/red_a100"
+            android:paddingTop="5dp"
+            android:paddingStart="5dp"
+            android:text="@string/ae"
+            android:textOn="@string/ae_is_on"
+            android:textOff="@string/ae_is_off" />
+
+        <LinearLayout
+            android:id="@+id/exposure_lock_linear_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <TextView
+                android:paddingTop="5dp"
+                android:paddingStart="5dp"
+                android:layout_width="wrap_content"
+                android:textColor="@color/red_a100"
+                android:layout_height="wrap_content"
+                android:text="@string/exposure"
+                android:textAlignment="textStart" />
+
+            <ImageView
+                android:id="@+id/exposure_lock_image"
+                android:visibility="visible"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_lock_open"
+                android:contentDescription="@string/lock_exposure"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:elevation="2dp"
+                android:paddingStart="5dp"
+                android:scaleType="fitCenter"
+                android:layout_marginEnd="10dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/compensation_value_linear_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:layout_marginTop="5dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/compensation_value_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/ev_0_0"
+                android:textColor="@color/red_a100"
+                android:layout_marginStart="5dp" />
+
+        </LinearLayout>
+
     </LinearLayout>
+
+    <SeekBar
+        android:visibility="gone"
+        android:id="@+id/compensation_value_seek_bar"
+        android:min="-100"
+        android:max="100"
+        android:progress="0"
+        android:layout_marginHorizontal="10dp"
+        android:layout_marginBottom="10dp"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@id/main_buttons"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <TextView
         android:id="@+id/status_textview"
