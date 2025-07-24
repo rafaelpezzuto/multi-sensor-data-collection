@@ -272,6 +272,32 @@ class MainActivity : AppCompatActivity() {
 
     private fun unlockScreenOrientation() {
        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+    }
+
+    private fun disableExposureInterfaceElements() {
+        viewBinding.exposureLockImage.visibility = android.view.View.INVISIBLE
+        viewBinding.exposureLockLinearLayout.visibility = android.view.View.GONE
+        viewBinding.statusTextview.text = ""
+        viewBinding.statusTextview.visibility = android.view.View.INVISIBLE
+        viewBinding.compensationValueLinearLayout.visibility = android.view.View.GONE
+        viewBinding.compensationValueSeekBar.visibility = android.view.View.GONE
+
+        unlockExposure()
+    }
+
+    private fun enableExposureInterfaceElements() {
+        viewBinding.exposureLockImage.visibility = android.view.View.VISIBLE
+        viewBinding.exposureLockLinearLayout.visibility = android.view.View.VISIBLE
+        viewBinding.compensationValueLinearLayout.visibility = android.view.View.VISIBLE
+
+        if (!sharedPreferences.getBoolean("exposure_compensation_mode_touch", true)) {
+            viewBinding.compensationValueSeekBar.progress = 0
+            viewBinding.compensationValueSeekBar.visibility = android.view.View.VISIBLE
+            viewBinding.compensationValueTextView.visibility = android.view.View.VISIBLE
+        } else {
+            viewBinding.compensationValueTextView.visibility = android.view.View.GONE
+        }
+    }
 
     private fun startCamera() {
         viewBinding.viewFinder.visibility = android.view.View.VISIBLE
