@@ -185,6 +185,21 @@ class MainActivity : AppCompatActivity() {
             cameraExecutor = Executors.newSingleThreadExecutor()
         }
 
+        viewBinding.compensationValueSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                val ev = getExposureIndexFromProgress(progress)
+                "EV: $ev".also { viewBinding.compensationValueTextView.text = it }
+
+                setAeLock(true, progress)
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+            }
+        })
+
         orientationEventListener.enable()
         saveInstanceState(savedInstanceState)
     }
