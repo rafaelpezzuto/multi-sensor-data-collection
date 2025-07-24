@@ -43,6 +43,13 @@
             app:summary="%s"
             app:isPreferenceVisible="true" />
 
+        <SwitchPreferenceCompat
+            app:key="exposure_compensation_mode_touch"
+            app:title="@string/exposure_compensation_mode_title"
+            app:summaryOn="@string/exposure_compensation_mode_touch_selected"
+            app:summaryOff="@string/exposure_compensation_mode_slider_selected"
+            app:defaultValue="true" />
+
         <Preference
             app:key="camera_fps"
             app:title="@string/camera_fps_title"
