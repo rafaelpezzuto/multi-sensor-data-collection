@@ -29,6 +29,7 @@ import androidx.camera.video.VideoCapture
 import androidx.camera.video.VideoRecordEvent
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
+import androidx.core.view.isVisible
 import androidx.preference.PreferenceManager
 import java.io.File
 import java.io.FileNotFoundException
@@ -37,6 +38,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -45,8 +47,6 @@ import kotlinx.coroutines.launch
 import org.joda.time.DateTime
 import org.rjpd.msdc.databinding.ActivityMainBinding
 import timber.log.Timber
-import kotlin.toString
-import androidx.core.view.isVisible
 
 
 class MainActivity : AppCompatActivity() {
@@ -59,6 +59,14 @@ class MainActivity : AppCompatActivity() {
     private var videoCapture: VideoCapture<Recorder>? = null
     private var preview: Preview? = null
     private var recording: Recording? = null
+
+    private var cameraControl: CameraControl? = null
+    private var cameraInfo: CameraInfo? = null
+    private var isExposureLocked = false
+    private var isAutoExposureEnabled = true
+    private var compensationMinIndex: Int = -100
+    private var compensationMaxIndex: Int = +100
+    private var compensationStep: Rational = Rational(1, 10)
 
     private lateinit var intentSensorsService: Intent
     private lateinit var intentGeolocationTrackerService: Intent
@@ -150,7 +158,17 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        viewBinding.startStopButton.setOnCheckedChangeListener {_, isChecked ->
+        viewBinding.autoExposureSwitch.setOnCheckedChangeListener { _, isChecked ->
+            isAutoExposureEnabled = isChecked
+
+            if (isAutoExposureEnabled) {
+                disableExposureInterfaceElements()
+            } else {
+                enableExposureInterfaceElements()
+            }
+        }
+
+        viewBinding.startStopButton.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 startDataCollecting()
             } else {
