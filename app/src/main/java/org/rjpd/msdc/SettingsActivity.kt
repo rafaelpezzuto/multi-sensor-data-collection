@@ -1,6 +1,5 @@
 package org.rjpd.msdc
 
-import android.content.Context
 import android.content.Intent
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
@@ -50,6 +49,11 @@ class SettingsActivity : AppCompatActivity() {
             }
 
             findPreference<Preference>("camera_resolution")?.setOnPreferenceChangeListener { _, _ ->
+                restartActivity()
+                true
+            }
+
+            findPreference<Preference>("exposure_compensation_mode_touch")?.setOnPreferenceChangeListener { _, _ ->
                 restartActivity()
                 true
             }
