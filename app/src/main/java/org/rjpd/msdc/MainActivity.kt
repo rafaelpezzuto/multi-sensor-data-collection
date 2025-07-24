@@ -1,23 +1,40 @@
 package org.rjpd.msdc
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.ContentValues
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
+import android.hardware.camera2.CameraAccessException
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraManager
+import android.hardware.camera2.CaptureRequest
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
+import android.util.Range
+import android.util.Rational
+import android.view.MotionEvent
 import android.view.OrientationEventListener
 import android.view.Surface
 import android.view.WindowManager
+import android.widget.SeekBar
 import android.widget.Toast
+import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.camera2.interop.Camera2CameraControl
+import androidx.camera.camera2.interop.CaptureRequestOptions
+import androidx.camera.camera2.interop.ExperimentalCamera2Interop
+import androidx.camera.core.CameraControl
+import androidx.camera.core.CameraInfo
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.FallbackStrategy
@@ -456,12 +473,28 @@ class MainActivity : AppCompatActivity() {
             try {
                 cameraProvider.unbindAll()
 
-                cameraProvider.bindToLifecycle(
+                if (isExposureLocked) {
+                    unlockExposure()
+                }
+
+                val camera = cameraProvider.bindToLifecycle(
                     this,
                     cameraSelector,
                     preview,
                     videoCapture,
                 )
+
+                cameraControl = camera.cameraControl
+                cameraInfo = camera.cameraInfo
+
+                if (!sharedPreferences.getBoolean("exposure_compensation_mode_touch", true)) {
+                    compensationMinIndex = cameraInfo!!.exposureState.exposureCompensationRange.lower
+                    compensationMaxIndex = cameraInfo!!.exposureState.exposureCompensationRange.upper
+                    compensationStep = cameraInfo!!.exposureState.exposureCompensationStep
+                    viewBinding.compensationValueSeekBar.min = compensationMinIndex
+                    viewBinding.compensationValueSeekBar.max = compensationMaxIndex
+                }
+
             } catch (exc: Exception) {
                 Timber.tag(TAG).d(exc, "Use case binding failed.")
             }
@@ -469,6 +502,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun stopCamera() {
+        if (isExposureLocked) {
+            unlockExposure()
+        }
+
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
         cameraProviderFuture.addListener({
@@ -691,6 +728,10 @@ class MainActivity : AppCompatActivity() {
         viewBinding.recordingTextview.text = getString(R.string.recording_status_recording)
         viewBinding.statusTextview.text = getString(R.string.status)
         viewBinding.statusTextview.visibility = android.view.View.INVISIBLE
+
+        if (!sharedPreferences.getBoolean("exposure_compensation_mode_touch", false)) {
+            viewBinding.compensationValueSeekBar.visibility = android.view.View.INVISIBLE
+        }
     }
 
     private fun enableInterfaceElements() {
@@ -702,6 +743,10 @@ class MainActivity : AppCompatActivity() {
         viewBinding.startStopButton.isEnabled = true
         viewBinding.outputAndRecordingModeSettingsLinearLayout.visibility = android.view.View.VISIBLE
         viewBinding.statusTextview.visibility = android.view.View.VISIBLE
+
+        if (!sharedPreferences.getBoolean("exposure_compensation_mode_touch", false)) {
+            viewBinding.compensationValueSeekBar.visibility = android.view.View.VISIBLE
+        }
     }
 
     private fun generateMetadata() {
