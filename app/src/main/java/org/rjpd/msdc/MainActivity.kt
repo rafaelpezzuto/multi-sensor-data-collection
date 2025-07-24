@@ -259,7 +259,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-   private fun lockScreenOrientation() {
+    private fun lockScreenOrientation() {
        val rotation = (getSystemService(WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
        requestedOrientation = when (rotation) {
            Surface.ROTATION_0 -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
@@ -270,9 +270,8 @@ class MainActivity : AppCompatActivity() {
        }
    }
 
-   private fun unlockScreenOrientation() {
+    private fun unlockScreenOrientation() {
        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-   }
 
     private fun startCamera() {
         viewBinding.viewFinder.visibility = android.view.View.VISIBLE
