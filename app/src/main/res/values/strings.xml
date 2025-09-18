@@ -119,4 +119,5 @@
     <string name="ae">AE</string>
     <string name="ae_is_on">AE is on</string>
     <string name="ae_is_off">AE is off</string>
+    <string name="zoom_0_0">Zoom: 0.0</string>
 </resources>

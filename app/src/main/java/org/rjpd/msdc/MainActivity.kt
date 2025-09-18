@@ -113,6 +113,88 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var deviceAngleDetectorService: DeviceAngleDetectorService
 
+    private var wsClient: WebSocketClient? = null
+    private var isCameraReady = false
+    private var isWebSocketConnected = false
+    private val serverUrl = "ws://192.168.0.57:8000/offer/phone1"
+
+    private fun connectWebSocket() {
+        // Ensure you're not trying to connect if already connected or connecting
+        if (wsClient != null && (wsClient!!.isOpen)) {
+            Timber.tag(TAG).d("WebSocket is already connected or connecting.")
+            return
+        }
+
+        wsClient = object : WebSocketClient(URI(serverUrl)) {
+            override fun onOpen(handshakedata: ServerHandshake?) {
+                Timber.tag(TAG).d("WebSocket conectado")
+                isWebSocketConnected = true
+                // Now that the WebSocket is open, if the camera is also ready,
+                // you can be sure sending frames will likely succeed.
+            }
+
+            override fun onMessage(message: String?) {
+                Timber.tag(TAG).d("Mensagem do servidor: $message")
+            }
+
+            override fun onClose(code: Int, reason: String?, remote: Boolean) {
+                Timber.tag(TAG).d("WebSocket fechado: $reason")
+                isWebSocketConnected = false
+            }
+
+            override fun onError(ex: Exception?) {
+                Timber.tag(TAG).e(ex, "Erro no WebSocket")
+                isWebSocketConnected = false
+            }
+        }
+        Timber.tag(TAG).d("Attempting to connect WebSocket...")
+        try {
+            wsClient?.connect()
+        } catch (e: Exception) {
+            Timber.tag(TAG).e(e, "Erro ao conectar WebSocket")
+        }
+    }
+
+    private fun sendMessage(message: String) {
+        if (isWebSocketConnected && wsClient?.isOpen == true) { // Double check state
+            wsClient?.send(message)
+        } else {
+            Log.w("WebSocket", "Cannot send message: WebSocket is not connected.")
+            // Optionally, queue the message or notify the user
+        }
+    }
+
+    private fun sendFrame(image: Image) { // Assuming Image is actually ImageProxy from CameraX
+        if (!isWebSocketConnected || wsClient?.isOpen == false) {
+            Timber.tag(TAG).w("WebSocket not connected. Cannot send frame.")
+            connectWebSocket()
+            return // Don't try to send if not connected
+        }
+
+        val buffer = image.planes[0].buffer
+        val bytes = ByteArray(buffer.remaining())
+        buffer.get(bytes)
+
+        // Converter para bitmap
+        // IMPORTANT: Operations like YuvImage and compressToJpeg can be slow.
+        // Consider if they absolutely need to run for every frame or if you can optimize.
+        val yuvImage = android.graphics.YuvImage(bytes, ImageFormat.NV21, image.width, image.height, null)
+        val out = ByteArrayOutputStream()
+        yuvImage.compressToJpeg(android.graphics.Rect(0, 0, image.width, image.height), 50, out) // 50 is quite low quality, might be intentional
+        val jpegBytes = out.toByteArray()
+
+        // Enviar como Base64
+        val base64 = Base64.getEncoder().encodeToString(jpegBytes)
+
+        // Check again before sending, as the connection might drop between the top check and here
+        if (isWebSocketConnected && wsClient?.isOpen == true) {
+            wsClient?.send(base64)
+        } else {
+            Timber.tag(TAG).w("WebSocket disconnected before sending Base64 frame.")
+        }
+    }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -468,6 +550,19 @@ class MainActivity : AppCompatActivity() {
                 ).build()
             videoCapture = VideoCapture.withOutput(recorder)
 
+            // ImageAnalysis para enviar frames via WebSocket
+            val imageAnalysis = ImageAnalysis.Builder()
+                .setTargetResolution(Size(320, 240)) // resolução reduzida para não travar preview
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build()
+            imageAnalysis.setAnalyzer(cameraExecutor) { imageProxy ->
+                val image = imageProxy.image
+                if (image != null) {
+                    sendFrame(image) // envia frame reduzido via WS
+                }
+                imageProxy.close()
+            }
+
             val cameraSelector: CameraSelector =
                 if (sharedPreferences.getBoolean("camera_lens_facing_use_front", false)) {
                 CameraSelector.DEFAULT_FRONT_CAMERA
@@ -487,10 +582,12 @@ class MainActivity : AppCompatActivity() {
                     cameraSelector,
                     preview,
                     videoCapture,
+                    imageAnalysis,
                 )
 
                 cameraControl = camera.cameraControl
                 cameraInfo = camera.cameraInfo
+                isCameraReady = true
 
                 if (!sharedPreferences.getBoolean("exposure_compensation_mode_touch", true)) {
                     compensationMinIndex = cameraInfo!!.exposureState.exposureCompensationRange.lower
@@ -502,6 +599,7 @@ class MainActivity : AppCompatActivity() {
 
             } catch (exc: Exception) {
                 Timber.tag(TAG).d(exc, "Use case binding failed.")
+                isCameraReady = false
             }
         }, ContextCompat.getMainExecutor(this))
     }
