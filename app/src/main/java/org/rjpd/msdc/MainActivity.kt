@@ -34,7 +34,9 @@ import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraInfo
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.FocusMeteringAction
+import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.FallbackStrategy
@@ -286,6 +288,7 @@ class MainActivity : AppCompatActivity() {
 
         if (viewBinding.radioAudioVideo.isChecked) {
             startCamera()
+            connectWebSocket()
             cameraExecutor = Executors.newSingleThreadExecutor()
         }
 
@@ -297,11 +300,9 @@ class MainActivity : AppCompatActivity() {
                 setAeLock(true, progress)
             }
 
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {
-            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
 
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-            }
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
 
         orientationEventListener.enable()
@@ -333,6 +334,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        wsClient?.close()
         cameraExecutor.shutdown()
         orientationEventListener.disable()
         deviceAngleDetectorService?.stop()
@@ -428,17 +430,6 @@ class MainActivity : AppCompatActivity() {
         return progress * compensationStep.numerator.toFloat() / compensationStep.denominator.toFloat()
     }
 
-    private fun getCamera2ExposureCompensationRange(context: Context, cameraId: String): Range<Int>? {
-        val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-        try {
-            val characteristics = cameraManager.getCameraCharacteristics(cameraId)
-            return characteristics.get(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE)
-        } catch (e: CameraAccessException) {
-            Timber.e(e, "Cannot access camera characteristics for camera ID: $cameraId")
-            return null
-        }
-    }
-
     @OptIn(ExperimentalCamera2Interop::class)
     private fun setAeLock(lock: Boolean, manualExposureValue: Int = 0) {
         val cameraControl = this.cameraControl ?: return
@@ -475,6 +466,7 @@ class MainActivity : AppCompatActivity() {
             }, ContextCompat.getMainExecutor(this))
     }
 
+    @OptIn(ExperimentalGetImage::class)
     @SuppressLint("ClickableViewAccessibility")
     private fun startCamera() {
         viewBinding.viewFinder.visibility = android.view.View.VISIBLE
