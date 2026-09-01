@@ -10,7 +10,11 @@ import java.util.TimerTask
 import java.util.concurrent.TimeUnit
 
 
-class TimeUtils(private val mainHandler: Handler, private val clockView: TextView) {
+class TimeUtils(
+    private val mainHandler: Handler,
+    private val clockView: TextView,
+    private val onTick: (() -> Unit)? = null,
+) {
 
     private var startTime: Long = 0
     private var isRunning = false
@@ -53,6 +57,7 @@ class TimeUtils(private val mainHandler: Handler, private val clockView: TextVie
                     minutes,
                     formattedSeconds,
                 )
+                onTick?.invoke()
             }
         }
     }
