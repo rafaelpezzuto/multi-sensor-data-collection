@@ -250,7 +250,12 @@ class MainActivity : AppCompatActivity() {
     }
 
    private fun lockScreenOrientation() {
-       val rotation = (getSystemService(WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
+       val rotation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+           display?.rotation ?: Surface.ROTATION_0
+       } else {
+           @Suppress("DEPRECATION")
+           (getSystemService(WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
+       }
        requestedOrientation = when (rotation) {
            Surface.ROTATION_0 -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
            Surface.ROTATION_90 -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
@@ -434,8 +439,9 @@ class MainActivity : AppCompatActivity() {
         return "$initialPart, and $lastPart"
     }
 
-    private fun finishCollectionCheck(fileValidationResult: MutableMap<String, Any>, deleteDirectory:Boolean, directory:File) {
+    private fun finishCollectionCheck(fileValidationResult: MutableMap<String, Any>, deleteDirectory: Boolean, directory: File) {
         val isValid = fileValidationResult["isValid"] as Boolean
+        @Suppress("UNCHECKED_CAST")
         val foundFiles = fileValidationResult["foundFiles"] as ArrayList<String>
         val errorMessage = fileValidationResult["errorMessage"] as String
 
@@ -484,12 +490,12 @@ class MainActivity : AppCompatActivity() {
 
         CoroutineScope(Dispatchers.Main).launch {
             if (viewBinding.radioAudioVideo.isChecked) {
-                while (!mediaDataDirectoryCollecting.resolve("${tmpFilename}.video.mp4").exists()) {
+                while (!mediaDataDirectoryCollecting.resolve("$tmpFilename.video.mp4").exists()) {
                     delay(500)
                 }
                 val moveJobVideo = async(Dispatchers.IO) {
                     moveContent(
-                        mediaDataDirectoryCollecting.resolve("${tmpFilename}.video.mp4"),
+                        mediaDataDirectoryCollecting.resolve("$tmpFilename.video.mp4"),
                         userDataInstancePath
                     )
                 }
@@ -526,7 +532,7 @@ class MainActivity : AppCompatActivity() {
                         Timber.tag(TAG).d("Checking zip file.")
                         val files = listCompressedFiles(zipTargetFilename)
                         val fileValidationResult = isFilesListValid(files, viewBinding.radioAudioVideo.isChecked)
-                        finishCollectionCheck(fileValidationResult, true, userDataInstancePath)
+                        finishCollectionCheck(fileValidationResult, deleteDirectory = true, userDataInstancePath)
                     } else {
                         Timber.tag(TAG).d("The zip job is not ready.")
                     }
@@ -534,7 +540,7 @@ class MainActivity : AppCompatActivity() {
                     Timber.tag(TAG).d("Checking directory.")
                     val files = listFiles(userDataInstancePath)
                     val fileValidationResult = isFilesListValid(files, viewBinding.radioAudioVideo.isChecked)
-                    finishCollectionCheck(fileValidationResult,  false, userDataInstancePath)
+                    finishCollectionCheck(fileValidationResult, deleteDirectory = false, userDataInstancePath)
                 }
 
                 unlockScreenOrientation()
