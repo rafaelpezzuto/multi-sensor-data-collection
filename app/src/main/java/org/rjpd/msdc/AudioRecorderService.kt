@@ -63,13 +63,14 @@ class AudioRecorderService: Service() {
         outputDir = intent?.extras!!.getString("outputDirectory", "")
         filename = intent.extras!!.getString("filename", "")
 
-        var audioSamplingRate = intent.extras!!.getInt("audioSamplingRate", 44100)
-        var audioChannels = intent.extras!!.getInt("audioChannels", 2)
-        var audioEncodingBitRate = intent.extras!!.getInt("audioEncodingBitRate", 128000)
+        val audioSamplingRate = intent.extras!!.getInt("audioSamplingRate", 44100)
+        val audioChannels = intent.extras!!.getInt("audioChannels", 2)
+        val audioEncodingBitRate = intent.extras!!.getInt("audioEncodingBitRate", 128000)
 
         recorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             MediaRecorder(applicationContext)
         } else {
+            @Suppress("DEPRECATION")
             MediaRecorder()
         }
 
