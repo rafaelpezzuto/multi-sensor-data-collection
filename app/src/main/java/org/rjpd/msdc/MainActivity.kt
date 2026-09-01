@@ -17,6 +17,7 @@ import android.view.OrientationEventListener
 import android.view.Surface
 import android.view.WindowManager
 import android.widget.Toast
+import android.view.ScaleGestureDetector
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
@@ -305,12 +306,38 @@ class MainActivity : AppCompatActivity() {
             try {
                 cameraProvider.unbindAll()
 
-                cameraProvider.bindToLifecycle(
+                val camera = cameraProvider.bindToLifecycle(
                     this,
                     cameraSelector,
                     preview,
                     videoCapture,
                 )
+
+                var currentZoomRatio = 1f
+                val scaleGestureDetector = ScaleGestureDetector(this@MainActivity, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+                    override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
+                        currentZoomRatio = camera.cameraInfo.zoomState.value?.zoomRatio ?: 1f
+                        return true
+                    }
+
+                    override fun onScale(detector: ScaleGestureDetector): Boolean {
+                        val zoomState = camera.cameraInfo.zoomState.value
+                        val minZoom = zoomState?.minZoomRatio ?: 1f
+                        val maxZoom = zoomState?.maxZoomRatio ?: 1f
+                        currentZoomRatio = (currentZoomRatio * detector.scaleFactor).coerceIn(minZoom, maxZoom)
+                        camera.cameraControl.setZoomRatio(currentZoomRatio)
+                        Timber.tag(TAG).d("Zoom updated: $currentZoomRatio (range: $minZoom - $maxZoom)")
+                        return true
+                    }
+                })
+
+                viewBinding.viewFinder.setOnTouchListener { view, event ->
+                    scaleGestureDetector.onTouchEvent(event)
+                    if (event.action == android.view.MotionEvent.ACTION_UP) {
+                        view.performClick()
+                    }
+                    true
+                }
             } catch (exc: Exception) {
                 Timber.tag(TAG).d(exc, "Use case binding failed.")
             }
