@@ -1,12 +1,10 @@
 package org.rjpd.msdc
 
-import android.content.Context
 import android.content.Intent
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.os.Bundle
 import android.view.MenuItem
-import androidx.activity.OnBackPressedDispatcher
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.ListPreference
 import androidx.preference.Preference
@@ -97,7 +95,7 @@ class SettingsActivity : AppCompatActivity() {
                                 && it.lensFacing == CameraCharacteristics.LENS_FACING_BACK
                     }
                     cameraPreference?.setValueIndex(cameraIndex)
-                } catch (exc: Exception) {
+                } catch (_: Exception) {
                     cameraPreference?.setValueIndex(0)
                 }
             }
@@ -107,7 +105,7 @@ class SettingsActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             android.R.id.home -> {
-                OnBackPressedDispatcher().onBackPressed()
+                onBackPressedDispatcher.onBackPressed()
                 return true
             }
         }
