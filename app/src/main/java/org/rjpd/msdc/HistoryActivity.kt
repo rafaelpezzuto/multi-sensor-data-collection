@@ -33,14 +33,28 @@ class HistoryActivity : AppCompatActivity() {
             binding.historyRecyclerview.addItemDecoration(
                 DividerItemDecoration(this, DividerItemDecoration.VERTICAL)
             )
-            binding.historyRecyclerview.adapter = HistoryAdapter(datasets) { dataset ->
-                val intent = Intent(this, CollectionDetailActivity::class.java).apply {
-                    putExtra(CollectionDetailActivity.EXTRA_DATASET_PATH, dataset.path.absolutePath)
-                    putExtra(CollectionDetailActivity.EXTRA_DATASET_NAME, dataset.name)
-                    putExtra(CollectionDetailActivity.EXTRA_IS_ZIP, dataset.isZip)
+            binding.historyRecyclerview.adapter = HistoryAdapter(
+                datasets = datasets,
+                onItemClick = { dataset ->
+                    val intent = Intent(this, CollectionDetailActivity::class.java).apply {
+                        putExtra(CollectionDetailActivity.EXTRA_DATASET_PATH, dataset.path.absolutePath)
+                        putExtra(CollectionDetailActivity.EXTRA_DATASET_NAME, dataset.name)
+                        putExtra(CollectionDetailActivity.EXTRA_IS_ZIP, dataset.isZip)
+                    }
+                    startActivity(intent)
+                },
+                onMapClick = { dataset ->
+                    val previewDir = prepareDatasetPreview(this, dataset.path, dataset.isZip)
+                    val gpsFile = previewDir.walkTopDown().firstOrNull { it.name.endsWith("gps.csv") }
+                    if (gpsFile != null && gpsFile.exists()) {
+                        val intent = Intent(this, MapVisualizationActivity::class.java).apply {
+                            putExtra(MapVisualizationActivity.EXTRA_GPS_CSV_PATH, gpsFile.absolutePath)
+                            putExtra(MapVisualizationActivity.EXTRA_COLLECTION_NAME, dataset.name)
+                        }
+                        startActivity(intent)
+                    }
                 }
-                startActivity(intent)
-            }
+            )
         }
     }
 
