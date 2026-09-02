@@ -82,6 +82,13 @@
 
     <string name="recording_status_stopped">Stopped</string>
     <string name="recording_status_recording">Recording</string>
+    <string name="title_activity_collection_detail">Collection Details</string>
+    <string name="collection_summary_title">Summary</string>
+    <string name="collection_files_title">Files in Collection</string>
+    <string name="file_type_video">Video</string>
+    <string name="file_type_audio">Audio</string>
+    <string name="file_type_json">Metadata</string>
+    <string name="file_type_csv">Data Log</string>
     <string name="datasets">Data</string>
     <string name="title_activity_datasets">Saved Data</string>
     <string name="no_datasets_found">No saved data found</string>
