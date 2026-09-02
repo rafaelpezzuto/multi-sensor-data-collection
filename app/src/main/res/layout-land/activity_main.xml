@@ -5,7 +5,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     tools:context=".MainActivity">
 
     <androidx.camera.view.PreviewView
@@ -34,10 +33,10 @@
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:background="@drawable/bg_top_info_pill"
-        android:paddingHorizontal="12dp"
-        android:paddingVertical="6dp"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="4dp"
         android:layout_marginStart="12dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="10dp"
         android:elevation="4dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent">
@@ -47,7 +46,7 @@
             android:fontFamily="monospace"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:textStyle="bold"
             android:textColor="@color/white"
             android:text="@string/timer_zero" />
@@ -57,7 +56,7 @@
             android:fontFamily="monospace"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="13sp"
+            android:textSize="12sp"
             android:textStyle="bold"
             android:textColor="@color/teal_200"
             android:layout_marginStart="8dp"
@@ -71,9 +70,9 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:background="@drawable/bg_top_info_pill"
-        android:layout_marginTop="12dp"
-        android:paddingHorizontal="14dp"
-        android:paddingVertical="8dp"
+        android:layout_marginTop="10dp"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="6dp"
         android:layout_marginEnd="12dp"
         android:elevation="4dp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -88,9 +87,9 @@
 
             <ImageView
                 android:id="@+id/angle_icon_image_view"
-                android:layout_width="15dp"
-                android:layout_height="15dp"
-                android:layout_marginEnd="5dp"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_marginEnd="4dp"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_device_angle"
                 app:tint="@color/white" />
@@ -103,15 +102,15 @@
                 android:textIsSelectable="false"
                 android:textStyle="bold"
                 android:textColor="@color/white"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:text="@string/degree_zero" />
 
             <ImageView
                 android:id="@+id/gps_icon_image_view"
-                android:layout_width="15dp"
-                android:layout_height="15dp"
-                android:layout_marginStart="14dp"
-                android:layout_marginEnd="5dp"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="4dp"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_gps_marker"
                 app:tint="@color/white" />
@@ -124,7 +123,7 @@
                 android:textIsSelectable="false"
                 android:textStyle="bold"
                 android:textColor="@color/white"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:text="" />
         </LinearLayout>
 
@@ -134,13 +133,13 @@
             android:orientation="horizontal"
             android:gravity="center_vertical|end"
             android:layout_gravity="end"
-            android:layout_marginTop="3dp">
+            android:layout_marginTop="2dp">
 
             <ImageView
                 android:id="@+id/storage_icon_image_view"
-                android:layout_width="15dp"
-                android:layout_height="15dp"
-                android:layout_marginEnd="5dp"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_marginEnd="4dp"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_storage_memory"
                 app:tint="@color/white" />
@@ -153,7 +152,7 @@
                 android:textIsSelectable="false"
                 android:textStyle="bold"
                 android:textColor="@color/white"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:text="" />
         </LinearLayout>
 
@@ -165,8 +164,8 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:background="@drawable/bg_output_panel"
-        android:layout_marginTop="10dp"
-        android:padding="14dp"
+        android:layout_marginTop="6dp"
+        android:padding="10dp"
         android:elevation="4dp"
         app:layout_constraintEnd_toEndOf="@id/important_information_linear_layout"
         app:layout_constraintTop_toBottomOf="@id/important_information_linear_layout">
@@ -179,7 +178,7 @@
             android:textAlignment="textStart"
             android:textStyle="bold"
             android:textAllCaps="true"
-            android:textSize="13sp"
+            android:textSize="12sp"
             android:textColor="@color/teal_200" />
 
         <EditText
@@ -188,10 +187,10 @@
             android:hint="@string/dir_title"
             android:textColorHint="#B0E0F2F1"
             android:textAlignment="textStart"
-            android:textSize="13sp"
+            android:textSize="12sp"
             android:fontFamily="monospace"
-            android:layout_width="150dp"
-            android:layout_height="48dp"
+            android:layout_width="130dp"
+            android:layout_height="40dp"
             android:backgroundTint="@color/teal_200"
             android:textColor="@color/white"
             android:inputType="textCapCharacters"
@@ -203,10 +202,10 @@
             android:hint="@string/subdir_title"
             android:textColorHint="#B0E0F2F1"
             android:textAlignment="textStart"
-            android:textSize="13sp"
+            android:textSize="12sp"
             android:fontFamily="monospace"
-            android:layout_width="150dp"
-            android:layout_height="48dp"
+            android:layout_width="130dp"
+            android:layout_height="40dp"
             android:backgroundTint="@color/teal_200"
             android:textColor="@color/white"
             android:inputType="textCapCharacters"
@@ -217,7 +216,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginTop="10dp">
+            android:layout_marginTop="6dp">
 
             <TextView
                 android:id="@+id/recording_mode_title"
@@ -227,7 +226,7 @@
                 android:textAlignment="textStart"
                 android:textStyle="bold"
                 android:textAllCaps="true"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:textColor="@color/teal_200" />
 
             <RadioButton
@@ -236,7 +235,7 @@
                 android:buttonTint="@color/teal_200"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:text="@string/recording_mode_audio_video"
                 android:textColor="@color/white"
                 android:background="?attr/selectableItemBackground"
@@ -247,7 +246,7 @@
                 android:buttonTint="@color/teal_200"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:text="@string/recording_mode_audio"
                 android:textColor="@color/white"
                 android:background="?attr/selectableItemBackground"
@@ -260,8 +259,8 @@
         android:fontFamily="monospace"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:maxWidth="340dp"
-        android:layout_marginBottom="16dp"
+        android:maxWidth="380dp"
+        android:layout_marginBottom="12dp"
         android:textSize="12sp"
         android:textStyle="bold"
         android:textColor="@color/white"
@@ -269,8 +268,8 @@
         android:textAlignment="center"
         android:text=""
         android:visibility="invisible"
-        android:paddingHorizontal="20dp"
-        android:paddingVertical="10dp"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
         android:background="@drawable/bg_status_pill"
         android:elevation="8dp"
         app:layout_constraintBottom_toTopOf="@id/main_buttons"
@@ -282,8 +281,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginBottom="24dp"
-        android:padding="8dp"
+        android:layout_marginBottom="12dp"
+        android:padding="6dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
