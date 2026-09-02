@@ -82,6 +82,12 @@
 
     <string name="recording_status_stopped">Stopped</string>
     <string name="recording_status_recording">Recording</string>
+    <string name="datasets">Data</string>
+    <string name="title_activity_datasets">Saved Data</string>
+    <string name="no_datasets_found">No saved data found</string>
+    <string name="dataset_file_count_format">%1$d files</string>
+    <string name="dataset_type_zip">ZIP</string>
+    <string name="dataset_type_folder">Folder</string>
 
     <string name="status"/>
     <string name="status_organizing_data">Organizing data, please wait…</string>
