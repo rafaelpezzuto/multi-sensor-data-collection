@@ -463,154 +463,43 @@ fun writeMetadataFile(
     }
 }
 
-data class DatasetSummary(
-    val name: String,
-    val path: File,
-    val isZip: Boolean,
-    val sizeBytes: Long,
-    val formattedSize: String,
-    val lastModifiedMillis: Long,
-    val fileCount: Int,
-    val fileList: List<String>,
-    val metadataMap: Map<String, Any>?
+data class GpsPoint(
+    val datetimeUtc: String,
+    val gpsInterval: Long,
+    val accuracy: Float,
+    val latitude: Double,
+    val longitude: Double
 )
 
-fun scanCollectedDatasets(context: Context): List<DatasetSummary> {
-    val results = mutableListOf<DatasetSummary>()
-    val processedPaths = mutableSetOf<String>()
+fun parseGpsCsv(file: File): List<GpsPoint> {
+    val points = mutableListOf<GpsPoint>()
+    if (!file.exists() || !file.isFile) return points
 
-    val roots = listOfNotNull(
-        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)?.resolve("MultiSensorDC"),
-        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES)?.resolve("MultiSensorDC"),
-        context.getExternalFilesDir("MultiSensorDC")
-    )
-
-    for (root in roots) {
-        if (!root.exists() || !root.isDirectory) continue
-
-        root.walkTopDown().forEach { file ->
-            if (file.canonicalPath in processedPaths) return@forEach
-
-            if (file.isFile && file.extension.lowercase() == "zip") {
-                processedPaths.add(file.canonicalPath)
-                val size = file.length()
-                val formattedSize = Formatter.formatFileSize(context, size)
-                val fileNames = mutableListOf<String>()
-                var metadataJsonStr: String? = null
-
-                try {
-                    ZipFile(file).use { zip ->
-                        zip.entries().asSequence().forEach { entry ->
-                            fileNames.add(entry.name)
-                            if (entry.name.endsWith("metadata.json")) {
-                                zip.getInputStream(entry).bufferedReader().use { reader ->
-                                    metadataJsonStr = reader.readText()
-                                }
-                            }
-                        }
-                    }
-                } catch (e: Exception) {
-                    Timber.tag("FileUtils").e(e, "Error reading zip file: ${file.name}")
-                }
-
-                val metadataMap = parseJsonToMap(metadataJsonStr)
-
-                results.add(
-                    DatasetSummary(
-                        name = file.name,
-                        path = file,
-                        isZip = true,
-                        sizeBytes = size,
-                        formattedSize = formattedSize,
-                        lastModifiedMillis = file.lastModified(),
-                        fileCount = fileNames.size,
-                        fileList = fileNames,
-                        metadataMap = metadataMap
-                    )
-                )
-            } else if (file.isDirectory && file.resolve("metadata.json").exists()) {
-                processedPaths.add(file.canonicalPath)
-                val filesInside = file.walkTopDown().filter { it.isFile }.toList()
-                filesInside.forEach { processedPaths.add(it.canonicalPath) }
-
-                val size = filesInside.sumOf { it.length() }
-                val formattedSize = Formatter.formatFileSize(context, size)
-                val fileNames = filesInside.map { it.relativeTo(file).path }
-
-                var metadataJsonStr: String? = null
-                try {
-                    metadataJsonStr = file.resolve("metadata.json").readText()
-                } catch (e: Exception) {
-                    Timber.tag("FileUtils").e(e, "Error reading metadata file: ${file.name}")
-                }
-
-                val metadataMap = parseJsonToMap(metadataJsonStr)
-
-                results.add(
-                    DatasetSummary(
-                        name = file.name,
-                        path = file,
-                        isZip = false,
-                        sizeBytes = size,
-                        formattedSize = formattedSize,
-                        lastModifiedMillis = file.lastModified(),
-                        fileCount = fileNames.size,
-                        fileList = fileNames,
-                        metadataMap = metadataMap
-                    )
-                )
-            }
-        }
-    }
-
-    return results.sortedByDescending { it.lastModifiedMillis }
-}
-
-private fun parseJsonToMap(jsonStr: String?): Map<String, Any>? {
-    return jsonStr?.let {
-        try {
-            val jsonObject = JSONObject(it)
-            val map = mutableMapOf<String, Any>()
-            val keys = jsonObject.keys()
-            while (keys.hasNext()) {
-                val key = keys.next()
-                map[key] = jsonObject.get(key)
-            }
-            map
-        } catch (_: Exception) {
-            null
-        }
-    }
-}
-
-fun prepareDatasetPreview(context: Context, datasetPath: File, isZip: Boolean): File {
-    val cacheDir = File(context.cacheDir, "preview_cache/${datasetPath.nameWithoutExtension}")
-    if (!cacheDir.exists()) {
-        cacheDir.mkdirs()
-    }
-
-    if (isZip) {
-        try {
-            ZipFile(datasetPath).use { zip ->
-                zip.entries().asSequence().forEach { entry ->
-                    val outFile = File(cacheDir, entry.name)
-                    if (entry.isDirectory) {
-                        outFile.mkdirs()
-                    } else {
-                        outFile.parentFile?.mkdirs()
-                        zip.getInputStream(entry).use { input ->
-                            FileOutputStream(outFile).use { output ->
-                                input.copyTo(output)
-                            }
-                        }
+    try {
+        file.useLines { lines ->
+            lines.drop(1).forEach { line ->
+                val cols = line.split(",")
+                if (cols.size >= 5) {
+                    val lat = cols[3].trim().toDoubleOrNull()
+                    val lon = cols[4].trim().toDoubleOrNull()
+                    if (lat != null && lon != null) {
+                        points.add(
+                            GpsPoint(
+                                datetimeUtc = cols[0].trim(),
+                                gpsInterval = cols[1].trim().toLongOrNull() ?: 0L,
+                                accuracy = cols[2].trim().toFloatOrNull() ?: 0f,
+                                latitude = lat,
+                                longitude = lon
+                            )
+                        )
                     }
                 }
             }
-        } catch (e: Exception) {
-            Timber.tag("FileUtils").e(e, "Error extracting preview zip: ${datasetPath.name}")
         }
-        return cacheDir
-    } else {
-        return datasetPath
+    } catch (e: Exception) {
+        Timber.tag("FileUtils").e(e, "Error parsing GPS CSV file: ${file.name}")
     }
+
+    return points
+}
 }
