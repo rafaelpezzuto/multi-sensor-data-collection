@@ -4,4 +4,10 @@
     <color name="white">#FFFFFFFF</color>
     <color name="red_a100">#FF8A80</color>
     <color name="red_700">#D32F2F</color>
+
+    <!-- App Teal / Green Theme Palette -->
+    <color name="teal_200">#80CBC4</color>
+    <color name="teal_500">#009688</color>
+    <color name="teal_700">#00796B</color>
+    <color name="teal_a200">#64FFDA</color>
 </resources>

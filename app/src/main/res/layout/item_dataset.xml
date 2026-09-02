@@ -28,7 +28,7 @@
             android:id="@+id/dataset_type_badge_textview"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@color/red_700"
+            android:background="@color/teal_700"
             android:textColor="@color/white"
             android:textSize="11sp"
             android:textStyle="bold"
@@ -45,7 +45,7 @@
             android:src="@android:drawable/ic_dialog_map"
             android:contentDescription="@string/view_on_map"
             android:visibility="gone"
-            app:tint="@color/red_700" />
+            app:tint="@color/teal_700" />
     </LinearLayout>
 
     <TextView

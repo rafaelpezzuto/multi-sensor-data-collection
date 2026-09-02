@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.MultiSensorDataCollection" parent="android:Theme.Material.NoActionBar.Fullscreen" />
+    <style name="Theme.MultiSensorDataCollection" parent="android:Theme.Material.NoActionBar.Fullscreen">
+        <item name="android:colorPrimary">@color/teal_500</item>
+        <item name="android:colorAccent">@color/teal_200</item>
+    </style>
 </resources>
