@@ -216,11 +216,10 @@
 
     <LinearLayout
         android:id="@+id/main_buttons"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginBottom="40dp"
-        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="24dp"
         android:padding="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -229,10 +228,9 @@
 
         <ToggleButton
             android:id="@+id/start_stop_button"
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_weight="1"
-            android:layout_marginHorizontal="4dp"
+            android:layout_width="110dp"
+            android:layout_height="48dp"
+            android:layout_marginHorizontal="6dp"
             android:backgroundTint="@color/red_700"
             android:textColor="@color/white"
             android:elevation="2dp"
@@ -242,20 +240,18 @@
 
         <Button
             android:id="@+id/settings_button"
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_weight="1"
-            android:layout_marginHorizontal="4dp"
+            android:layout_width="110dp"
+            android:layout_height="48dp"
+            android:layout_marginHorizontal="6dp"
             android:elevation="2dp"
             android:text="@string/settings"
             android:textSize="13sp" />
 
         <Button
             android:id="@+id/history_button"
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_weight="1"
-            android:layout_marginHorizontal="4dp"
+            android:layout_width="110dp"
+            android:layout_height="48dp"
+            android:layout_marginHorizontal="6dp"
             android:elevation="2dp"
             android:text="@string/datasets"
             android:textSize="13sp" />

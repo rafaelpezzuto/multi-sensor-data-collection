@@ -1,9 +1,9 @@
 package org.rjpd.msdc
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -34,42 +34,14 @@ class HistoryActivity : AppCompatActivity() {
                 DividerItemDecoration(this, DividerItemDecoration.VERTICAL)
             )
             binding.historyRecyclerview.adapter = HistoryAdapter(datasets) { dataset ->
-                showDatasetSummaryDialog(dataset)
+                val intent = Intent(this, CollectionDetailActivity::class.java).apply {
+                    putExtra(CollectionDetailActivity.EXTRA_DATASET_PATH, dataset.path.absolutePath)
+                    putExtra(CollectionDetailActivity.EXTRA_DATASET_NAME, dataset.name)
+                    putExtra(CollectionDetailActivity.EXTRA_IS_ZIP, dataset.isZip)
+                }
+                startActivity(intent)
             }
         }
-    }
-
-    private fun showDatasetSummaryDialog(dataset: DatasetSummary) {
-        val details = buildString {
-            append("Name: ").append(dataset.name).append("\n")
-            append("Size: ").append(dataset.formattedSize).append("\n")
-            append("Path: ").append(dataset.path.absolutePath).append("\n\n")
-
-            if (dataset.metadataMap != null) {
-                append("--- Metadata Summary ---\n")
-                val timeMap = dataset.metadataMap["time"] as? Map<*, *>
-                if (timeMap != null) {
-                    append("Start Time: ").append(timeMap["buttonStartDateTime"] ?: "N/A").append("\n")
-                    append("Stop Time: ").append(timeMap["buttonStopDateTime"] ?: "N/A").append("\n")
-                }
-                val deviceMap = dataset.metadataMap["device"] as? Map<*, *>
-                if (deviceMap != null) {
-                    append("Device: ").append(deviceMap["manufacturer"] ?: "").append(" ").append(deviceMap["model"] ?: "").append("\n")
-                }
-                append("\n")
-            }
-
-            append("--- Files (").append(dataset.fileCount).append(") ---\n")
-            dataset.fileList.forEach { fileName ->
-                append("• ").append(fileName).append("\n")
-            }
-        }
-
-        AlertDialog.Builder(this)
-            .setTitle(dataset.name)
-            .setMessage(details)
-            .setPositiveButton("Close", null)
-            .show()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
