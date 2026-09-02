@@ -1,50 +1,54 @@
 # MultiSensor Data Collection
 
-[![Android Target SDK](https://img.shields.io/badge/Target%20SDK-36-brightgreen.svg)](https://developer.android.com)
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.4.10-blue.svg)](https://kotlinlang.org)
-[![Version](https://img.shields.io/badge/Version-1.4.0-teal.svg)](https://github.com/rafaelpezzuto/multi-sensor-data-collection/releases/tag/v1.4.0)
-
-**MultiSensor Data Collection** is an open-source Android application designed for high-precision, multi-sensor dataset acquisition. It seamlessly gathers and synchronizes data from various mobile sensors—including video camera, microphone, accelerometer, gyroscope, magnetometer, gravity, light, geolocation (GPS), battery consumption, and network signals—creating structured local datasets formatted for urban informatics, computer vision, and machine learning research.
+MultiSensor Data Collection is an open-source Android application designed for high-precision, multi-sensor dataset acquisition. The application synchronously records and structures local data from mobile sensors—including video camera, microphone, accelerometer, gyroscope, magnetometer, gravity, light, geolocation (GPS), battery consumption, and network signals—producing synchronized multimodal datasets for urban informatics, computer vision, and machine learning research.
 
 ---
 
-## 🌟 Key Features
+## Features
 
-- 📹 **Synchronized Video & Audio Recording**: Record high-definition video (SD, HD, FHD, 4K) using Jetpack CameraX with custom frame rates and audio configurations.
-- 🔍 **Camera Pinch-to-Zoom**: Dynamic gesture zoom control with min/max bounds and smooth zoom ratio feedback.
-- 🧭 **Multi-Sensor Logging**: High-frequency logging for motion sensors (accelerometer, gyroscope, magnetometer, gravity), light, pressure, and step counters.
-- 📍 **Geolocation & Interactive Map**: High-accuracy GPS tracking (`gps.csv`) paired with an in-app interactive map (OpenStreetMap / OSMDroid) featuring route polylines, start/end markers, and timestamp/accuracy info.
-- 📁 **Data History & In-App Preview**:
-  - **Saved Data List**: Browse all local collections (ZIP archives or folders) with file counts, sizes, and timestamps.
-  - **Video/Audio Player**: Full-screen media player with playback controls.
-  - **CSV Table Viewer**: Scrollable table inspector with highlighted headers for sensor CSV files.
-  - **Pretty-Printed JSON Viewer**: Formatted inspector for `metadata.json`.
-- 💾 **Real-Time Storage & Dynamic Time Estimation**: Live display of available disk space and dynamic estimated recording time based on active mode (Audio+Video or Audio) and camera resolution.
-- 🔋 **Battery & Network Monitoring**: Periodic logging of battery consumption metrics and Wi-Fi / Cellular network scans.
+- **Synchronized Video & Audio Recording**: High-definition video recording (SD, HD, FHD, 4K) via Jetpack CameraX with configurable frame rates, audio sampling rates, and channels.
+- **Camera Pinch-to-Zoom**: Dynamic gesture zoom control with bounded zoom ratios.
+- **Multi-Sensor Logging**: High-frequency logging for motion sensors (accelerometer, gyroscope, magnetometer, gravity), light, pressure, and step counters.
+- **Geolocation Tracking**: High-accuracy GPS tracking (`gps.csv`) paired with an in-app interactive map (OpenStreetMap) displaying route polylines, departure/arrival markers, and timestamp/accuracy metadata.
+- **Data History & In-App Inspection**:
+  - **Dataset List**: Local collection management for ZIP archives and uncompressed directories.
+  - **Media Player**: Full-screen video and audio player.
+  - **CSV Inspector**: Scrollable table view for sensor CSV files with highlighted headers.
+  - **JSON Inspector**: Formatted view for metadata JSON files.
+- **Real-Time Disk Space & Recording Estimation**: Live storage monitoring with dynamic recording time estimation based on selected resolution and audio/video mode.
+- **Battery & Network Diagnostics**: Periodic logging of battery consumption metrics and Wi-Fi / Cellular network scans.
 
 ---
 
-## 📱 Screenshots
+## Screenshots
 
-| ![Main Screen](https://github.com/user-attachments/assets/a4dc21fc-626e-49ce-a106-c1f6020453ed) | ![Camera Resolution Settings](https://github.com/user-attachments/assets/92e02ca8-d9c4-462d-b03c-7fdef09ea1d8) |
+| <img src="docs/screenshots/screen_main_idle.png" width="280" alt="Main Screen Idle" /> | <img src="docs/screenshots/screen_main_recording.png" width="280" alt="Main Screen Recording" /> |
 |:---:|:---:|
-| **Main Recording Screen** | **Camera Resolution Settings** |
+| **Main Interface (Idle)** | **Main Interface (Recording)** |
 
-| ![Sensor Settings](https://github.com/user-attachments/assets/2bf08d1d-4bcf-4853-9fdf-9ecbfcba1b76) | ![General Settings](https://github.com/user-attachments/assets/b96b5071-264e-4f0b-9632-9cc0476b282b) |
+| <img src="docs/screenshots/screen_settings.png" width="280" alt="Settings Screen" /> | <img src="docs/screenshots/screen_about.png" width="280" alt="About Screen" /> |
 |:---:|:---:|
-| **Sensor Sampling Frequency** | **General Settings** |
+| **Settings Screen** | **About Screen** |
+
+| <img src="docs/screenshots/screen_history.png" width="280" alt="Saved Data History" /> | <img src="docs/screenshots/screen_detail.png" width="280" alt="Collection Detail" /> |
+|:---:|:---:|
+| **Saved Data History** | **Collection Details** |
+
+| <img src="docs/screenshots/screen_csv_preview.png" width="280" alt="CSV Table Preview" /> |
+|:---:|
+| **CSV Data Inspection** |
 
 ---
 
-## 📂 Dataset Structure
+## Dataset Structure
 
-Each collection generates a synchronized dataset directory (or `.zip` archive) containing:
+Each collection run produces a structured dataset directory (or `.zip` archive) formatted as follows:
 
 ```text
 MultiSensorDC/<dataset_name>/
-├── video.mp4               # High-definition video recording
-├── audio.m4a               # Audio recording (when audio-only mode selected)
-├── metadata.json           # Device info, screen dimensions, sensor list, start/stop UTC times
+├── video.mp4               # Synchronized video stream
+├── audio.m4a               # Audio recording (in audio-only mode)
+├── metadata.json           # System metadata, sensor parameters, and UTC timestamps
 ├── accelerometer.csv       # timestamp_utc, timestamp_nanos, x, y, z
 ├── gyroscope.csv           # timestamp_utc, timestamp_nanos, x, y, z
 ├── magnetometer.csv        # timestamp_utc, timestamp_nanos, x, y, z
@@ -56,21 +60,20 @@ MultiSensorDC/<dataset_name>/
 
 ---
 
-## ⚙️ Building & Running
+## Building and Installation
 
-### Prerequisites
-- **Android Studio**: 2026.1+ or newer
+### Requirements
 - **JDK**: 21
 - **Android SDK**: Target SDK 36 (Android 15+), Min SDK 26 (Android 8.0+)
 - **Gradle**: 9.5+ with Version Catalog (`gradle/libs.versions.toml`)
 
-### Gradle Commands
+### Compilation Commands
 
 ```bash
 # Build Debug APK
 ./gradlew app:assembleDebug
 
-# Run Unit Tests
+# Execute Unit Tests
 ./gradlew app:testDebugUnitTest
 
 # Build Release App Bundle (AAB)
@@ -79,18 +82,18 @@ MultiSensorDC/<dataset_name>/
 
 ---
 
-## 🔬 About SideSeeing
+## Research Context: SideSeeing Project
 
-This application is part of the **SideSeeing Project**, led by researchers at the **Institute of Mathematics and Statistics of the University of São Paulo (IME-USP)**.
+This application is developed as part of the **SideSeeing Project** at the **Institute of Mathematics and Statistics of the University of São Paulo (IME-USP)**.
 
-The SideSeeing project aims to develop methods based on Computer Vision, Sensor Fusion, and Machine Learning for **Urban Informatics** applications, focusing on urban accessibility and infrastructure analysis.
+SideSeeing investigates computer vision, sensor fusion, and machine learning methods for Urban Informatics, focusing on urban accessibility, sidewalk quality, and infrastructure assessment.
 
-For more information, visit the official website: [SideSeeing](https://sites.usp.br/sideseeing)
+For further details regarding the research initiative, visit [SideSeeing Project](https://sites.usp.br/sideseeing).
 
 ---
 
-## 👥 Authors & Contributors
+## Authors and Citation
 
 - **Alyssa Florence** / IME-USP
-- **Rafael Jeferson Pezzuto Damaceno** ([@rafaelpezzuto](https://github.com/rafaelpezzuto)) / IME-USP — *rafael.pezzuto@gmail.com*
+- **Rafael Jeferson Pezzuto Damaceno** / IME-USP (*rafael.pezzuto@gmail.com*)
 - **Roberto Marcondes Cesar Jr.** / IME-USP
