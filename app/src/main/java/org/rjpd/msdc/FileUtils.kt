@@ -652,5 +652,5 @@ fun parseGpsCsv(file: File): List<GpsPoint> {
         Timber.tag("FileUtils").e(e, "Error parsing GPS CSV file: ${file.name}")
     }
 
-    return points
+    return points.sortedBy { it.datetimeUtc }
 }
