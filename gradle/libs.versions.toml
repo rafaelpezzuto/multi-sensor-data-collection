@@ -12,6 +12,7 @@ playIntegrity = "1.6.0"
 jodaTime = "2.14.2.1"
 timber = "5.0.1"
 usbSerial = "3.8.0"
+osmdroid = "6.1.20"
 junit = "4.13.2"
 androidxTestCore = "1.7.0"
 androidxTestRules = "1.7.0"
@@ -46,6 +47,7 @@ play-integrity = { module = "com.google.android.play:integrity", version.ref = "
 joda-time = { module = "net.danlew:android.joda", version.ref = "jodaTime" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 usb-serial = { module = "com.github.mik3y:usb-serial-for-android", version.ref = "usbSerial" }
+osmdroid-android = { module = "org.osmdroid:osmdroid-android", version.ref = "osmdroid" }
 
 junit = { module = "junit:junit", version.ref = "junit" }
 androidx-test-core = { module = "androidx.test:core", version.ref = "androidxTestCore" }

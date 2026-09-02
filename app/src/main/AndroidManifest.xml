@@ -71,6 +71,12 @@
             android:label="@string/title_activity_collection_detail"
             android:theme="@style/Theme.AppCompat.DayNight.NoActionBar" />
 
+        <activity
+            android:name=".MapVisualizationActivity"
+            android:exported="false"
+            android:label="@string/title_activity_map"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar" />
+
         <service
             android:name=".SensorsService"
             android:foregroundServiceType="health"

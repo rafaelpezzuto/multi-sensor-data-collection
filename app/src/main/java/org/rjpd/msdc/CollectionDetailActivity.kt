@@ -1,5 +1,6 @@
 package org.rjpd.msdc
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.text.format.Formatter
@@ -166,12 +167,22 @@ class CollectionDetailActivity : AppCompatActivity() {
             addView(horizontalScrollView)
         }
 
-        val dialog = AlertDialog.Builder(this)
+        val dialogBuilder = AlertDialog.Builder(this)
             .setTitle(item.name)
             .setView(verticalScrollView)
             .setPositiveButton("Close", null)
-            .create()
 
+        if (item.name.endsWith("gps.csv")) {
+            dialogBuilder.setNeutralButton(R.string.view_on_map) { _, _ ->
+                val intent = Intent(this, MapVisualizationActivity::class.java).apply {
+                    putExtra(MapVisualizationActivity.EXTRA_GPS_CSV_PATH, item.file.absolutePath)
+                    putExtra(MapVisualizationActivity.EXTRA_COLLECTION_NAME, item.name)
+                }
+                startActivity(intent)
+            }
+        }
+
+        val dialog = dialogBuilder.create()
         dialog.show()
         setDialogWindowSize(dialog)
     }

@@ -1,7 +1,9 @@
 package org.rjpd.msdc
 
+import android.content.Intent
 import android.text.format.DateFormat
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import org.rjpd.msdc.databinding.ItemDatasetBinding
@@ -9,7 +11,8 @@ import java.util.Date
 
 class HistoryAdapter(
     private val datasets: List<DatasetSummary>,
-    private val onItemClick: (DatasetSummary) -> Unit
+    private val onItemClick: (DatasetSummary) -> Unit,
+    private val onMapClick: ((DatasetSummary) -> Unit)? = null
 ) : RecyclerView.Adapter<HistoryAdapter.DatasetViewHolder>() {
 
     class DatasetViewHolder(val binding: ItemDatasetBinding) : RecyclerView.ViewHolder(binding.root)
@@ -31,6 +34,16 @@ class HistoryAdapter(
             holder.binding.datasetTypeBadgeTextview.text = holder.itemView.context.getString(R.string.dataset_type_zip)
         } else {
             holder.binding.datasetTypeBadgeTextview.text = holder.itemView.context.getString(R.string.dataset_type_folder)
+        }
+
+        val hasGps = dataset.fileList.any { it.endsWith("gps.csv") }
+        if (hasGps) {
+            holder.binding.mapButton.visibility = View.VISIBLE
+            holder.binding.mapButton.setOnClickListener {
+                onMapClick?.invoke(dataset)
+            }
+        } else {
+            holder.binding.mapButton.visibility = View.GONE
         }
 
         holder.itemView.setOnClickListener {

@@ -614,3 +614,43 @@ fun prepareDatasetPreview(context: Context, datasetPath: File, isZip: Boolean): 
         return datasetPath
     }
 }
+
+data class GpsPoint(
+    val datetimeUtc: String,
+    val gpsInterval: Long,
+    val accuracy: Float,
+    val latitude: Double,
+    val longitude: Double
+)
+
+fun parseGpsCsv(file: File): List<GpsPoint> {
+    val points = mutableListOf<GpsPoint>()
+    if (!file.exists() || !file.isFile) return points
+
+    try {
+        file.useLines { lines ->
+            lines.drop(1).forEach { line ->
+                val cols = line.split(",")
+                if (cols.size >= 5) {
+                    val lat = cols[3].trim().toDoubleOrNull()
+                    val lon = cols[4].trim().toDoubleOrNull()
+                    if (lat != null && lon != null) {
+                        points.add(
+                            GpsPoint(
+                                datetimeUtc = cols[0].trim(),
+                                gpsInterval = cols[1].trim().toLongOrNull() ?: 0L,
+                                accuracy = cols[2].trim().toFloatOrNull() ?: 0f,
+                                latitude = lat,
+                                longitude = lon
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    } catch (e: Exception) {
+        Timber.tag("FileUtils").e(e, "Error parsing GPS CSV file: ${file.name}")
+    }
+
+    return points
+}
