@@ -62,6 +62,7 @@ class MainActivity : AppCompatActivity() {
     private var videoCapture: VideoCapture<Recorder>? = null
     private var preview: Preview? = null
     private var recording: Recording? = null
+    private var isCollecting: Boolean = false
 
     private lateinit var intentSensorsService: Intent
     private lateinit var intentGeolocationTrackerService: Intent
@@ -164,13 +165,16 @@ class MainActivity : AppCompatActivity() {
                     stopCamera()
                 }
             }
+            updateMemoryIndicator()
         }
 
-        viewBinding.startStopButton.setOnCheckedChangeListener {_, isChecked ->
-            if (isChecked) {
-                startDataCollecting()
-            } else {
+        viewBinding.startStopButton.setOnClickListener {
+            if (isCollecting) {
+                isCollecting = false
                 stopDataCollecting()
+            } else {
+                isCollecting = true
+                startDataCollecting()
             }
         }
 
@@ -208,7 +212,7 @@ class MainActivity : AppCompatActivity() {
         outState.putBoolean("statusTextview", viewBinding.statusTextview.isVisible)
         outState.putBoolean("radioAudioVideo", viewBinding.radioAudioVideo.isChecked)
         outState.putBoolean("radioAudio", viewBinding.radioAudio.isChecked)
-        outState.putBoolean("startStopButton", viewBinding.startStopButton.isChecked)
+        outState.putBoolean("isCollecting", isCollecting)
     }
 
     fun saveInstanceState(savedInstanceState: Bundle?) {
@@ -219,7 +223,14 @@ class MainActivity : AppCompatActivity() {
             viewBinding.statusTextview.visibility = if (savedInstanceState.getBoolean("statusTextview")) android.view.View.VISIBLE else android.view.View.INVISIBLE
             viewBinding.radioAudioVideo.isChecked = savedInstanceState.getBoolean("radioAudioVideo")
             viewBinding.radioAudio.isChecked = savedInstanceState.getBoolean("radioAudio")
-            viewBinding.startStopButton.isChecked = savedInstanceState.getBoolean("startStopButton")
+            isCollecting = savedInstanceState.getBoolean("isCollecting")
+            if (isCollecting) {
+                viewBinding.startStopButton.setImageResource(R.drawable.ic_record_stop)
+                viewBinding.startStopButton.contentDescription = getString(R.string.stop)
+            } else {
+                viewBinding.startStopButton.setImageResource(R.drawable.ic_record_dot)
+                viewBinding.startStopButton.contentDescription = getString(R.string.start)
+            }
         }
     }
 
@@ -288,7 +299,13 @@ class MainActivity : AppCompatActivity() {
    }
 
     private fun updateMemoryIndicator() {
-        viewBinding.memoryTextview.text = getString(R.string.memory_free_format, infoUtils.getAvailableStorageSpace())
+        val isAudioOnly = viewBinding.radioAudio.isChecked
+        val cameraRes = sharedPreferences.getString("camera_resolution", "3")
+        val audioBitRate = sharedPreferences.getString("audio_encoding_bit_rate", "128000")
+        viewBinding.memoryTextview.text = getString(
+            R.string.memory_free_format,
+            infoUtils.getAvailableStorageSpaceFormatted(isAudioOnly, cameraRes, audioBitRate)
+        )
     }
 
     private fun startCamera() {
@@ -606,7 +623,10 @@ class MainActivity : AppCompatActivity() {
 
         viewBinding.settingsButton.isEnabled = false
         viewBinding.historyButton.isEnabled = false
-        viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.purple_200)
+        viewBinding.settingsButton.alpha = 0.5f
+        viewBinding.historyButton.alpha = 0.5f
+        viewBinding.startStopButton.setImageResource(R.drawable.ic_record_stop)
+        viewBinding.startStopButton.contentDescription = getString(R.string.stop)
         viewBinding.outputAndRecordingModeSettingsLinearLayout.visibility = android.view.View.INVISIBLE
 
         viewBinding.recordingTextview.text = getString(R.string.recording_status_recording)
@@ -622,9 +642,12 @@ class MainActivity : AppCompatActivity() {
 
         viewBinding.settingsButton.isEnabled = true
         viewBinding.historyButton.isEnabled = true
-        viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.red_700)
-        viewBinding.startStopButton.setTextColor(getColorStateList(R.color.white))
+        viewBinding.settingsButton.alpha = 1.0f
+        viewBinding.historyButton.alpha = 1.0f
         viewBinding.startStopButton.isEnabled = true
+        viewBinding.startStopButton.alpha = 1.0f
+        viewBinding.startStopButton.setImageResource(R.drawable.ic_record_dot)
+        viewBinding.startStopButton.contentDescription = getString(R.string.start)
         viewBinding.outputAndRecordingModeSettingsLinearLayout.visibility = android.view.View.VISIBLE
         viewBinding.statusTextview.visibility = android.view.View.VISIBLE
         updateGpsText()

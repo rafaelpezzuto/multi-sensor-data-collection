@@ -3,18 +3,28 @@
 
     <Preference
         app:key="about"
+        app:icon="@drawable/ic_about_info"
         app:title="@string/preference_about_us"
         app:summary="@string/preference_about_information_summary" />
 
-    <SwitchPreferenceCompat
-        app:key="zip"
+    <PreferenceCategory
         app:title="@string/compact_title"
-        app:defaultValue="false"
-        app:singleLineTitle="false"
-        app:summaryOn="@string/compact_on"
-        app:summaryOff="@string/compact_off" />
+        app:icon="@drawable/ic_zip_compact">
 
-    <PreferenceCategory app:title="@string/camera_settings" app:summary="@string/camera_category" >
+        <SwitchPreferenceCompat
+            app:key="zip"
+            app:title="@string/compact_title"
+            app:defaultValue="false"
+            app:singleLineTitle="false"
+            app:summaryOn="@string/compact_on"
+            app:summaryOff="@string/compact_off" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:title="@string/camera_settings"
+        app:icon="@drawable/ic_camera_settings"
+        app:summary="@string/camera_category" >
+
         <SwitchPreferenceCompat
             app:key="camera_lens_facing_use_front"
             app:title="@string/camera_lens_facing_use_front_title"
@@ -49,7 +59,11 @@
             app:isPreferenceVisible="false" />
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="@string/audio_settings" app:summary="@string/audio_settings_summary">
+    <PreferenceCategory
+        app:title="@string/audio_settings"
+        app:icon="@drawable/ic_audio_settings"
+        app:summary="@string/audio_settings_summary">
+
         <ListPreference
             app:key="audio_sampling_rate"
             app:title="@string/audio_sampling_rate"
@@ -75,7 +89,10 @@
             app:summary="%s" />
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="@string/consumption">
+    <PreferenceCategory
+        app:title="@string/consumption"
+        app:icon="@drawable/ic_battery_consumption">
+
         <SwitchPreferenceCompat
             app:key="consumption"
             app:defaultValue="true"
@@ -96,7 +113,10 @@
             app:defaultValue="1" />
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="@string/sensors">
+    <PreferenceCategory
+        app:title="@string/sensors"
+        app:icon="@drawable/ic_sensors_motion">
+
         <SwitchPreferenceCompat
             app:defaultValue="true"
             app:key="extra"
@@ -159,7 +179,10 @@
             app:title="@string/magnetometer_title" />
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="@string/network">
+    <PreferenceCategory
+        app:title="@string/network"
+        app:icon="@drawable/ic_network_signal">
+
         <SwitchPreferenceCompat
             app:defaultValue="true"
             app:key="network"
@@ -179,7 +202,10 @@
             app:defaultValue="1" />
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="@string/geolocation_preference_category">
+    <PreferenceCategory
+        app:title="@string/geolocation_preference_category"
+        app:icon="@drawable/ic_location_gps">
+
         <SwitchPreferenceCompat
             app:defaultValue="true"
             app:key="gps"

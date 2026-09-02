@@ -12,18 +12,69 @@ import android.text.format.Formatter
 import androidx.camera.video.Quality
 import timber.log.Timber
 
+import kotlin.math.roundToInt
+
 private const val TAG = "InfoUtils"
 
-class InfoUtils(private val context: Context) {
+class InfoUtils(context: Context) {
     private val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
-    fun getAvailableStorageSpace(): String {
+    fun getEstimatedRecordingMinutes(
+        availableBytes: Long,
+        isAudioOnly: Boolean,
+        cameraResolutionSetting: String?,
+        audioBitRateSetting: String?
+    ): String {
+        if (availableBytes <= 0) return "~0 min"
+
+        val audioBitRate = audioBitRateSetting?.toLongOrNull() ?: 128000L
+        val sensorOverheadBps = 50000L
+
+        val totalBitRateBps = if (isAudioOnly) {
+            audioBitRate + sensorOverheadBps
+        } else {
+            val videoBitRateBps = when (cameraResolutionSetting) {
+                "1" -> 2_500_000L
+                "2" -> 5_000_000L
+                "3" -> 12_000_000L
+                "4" -> 35_000_000L
+                else -> 12_000_000L
+            }
+            videoBitRateBps + audioBitRate + sensorOverheadBps
+        }
+
+        val bytesPerSecond = totalBitRateBps / 8.0
+        if (bytesPerSecond <= 0) return "N/A"
+
+        val remainingSeconds = (availableBytes / bytesPerSecond).toLong()
+        val remainingMinutes = remainingSeconds / 60
+
+        return if (remainingMinutes < 60) {
+            "~$remainingMinutes min"
+        } else {
+            val hours = remainingMinutes / 60
+            "~${hours}h"
+        }
+    }
+
+    fun getAvailableStorageSpaceFormatted(
+        isAudioOnly: Boolean,
+        cameraResolutionSetting: String?,
+        audioBitRateSetting: String?
+    ): String {
         return try {
             val path = Environment.getExternalStorageDirectory().path
             val statFs = StatFs(path)
             val availableBytes = statFs.availableBlocksLong * statFs.blockSizeLong
-            Formatter.formatFileSize(context, availableBytes)
+            val freeGb = (availableBytes / (1024.0 * 1024.0 * 1024.0)).roundToInt()
+            val timeEst = getEstimatedRecordingMinutes(
+                availableBytes,
+                isAudioOnly,
+                cameraResolutionSetting,
+                audioBitRateSetting
+            )
+            "$freeGb GB ($timeEst)"
         } catch (_: Exception) {
             "N/A"
         }
