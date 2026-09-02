@@ -82,6 +82,7 @@
 
     <string name="recording_status_stopped">Stopped</string>
     <string name="recording_status_recording">Recording</string>
+    <string name="memory_free_format">Free: %1$s</string>
     <string name="title_activity_collection_detail">Collection Details</string>
     <string name="collection_summary_title">Summary</string>
     <string name="collection_files_title">Files in Collection</string>
