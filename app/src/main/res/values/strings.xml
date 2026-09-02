@@ -95,6 +95,9 @@
     <string name="dataset_file_count_format">%1$d files</string>
     <string name="dataset_type_zip">ZIP</string>
     <string name="dataset_type_folder">Folder</string>
+    <string name="title_activity_map">GPS Route Map</string>
+    <string name="view_on_map">View Route on Map</string>
+    <string name="no_gps_points_found">No GPS coordinates recorded for this collection</string>
 
     <string name="status"/>
     <string name="status_organizing_data">Organizing data, please wait…</string>
