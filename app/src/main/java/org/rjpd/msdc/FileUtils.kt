@@ -419,7 +419,7 @@ fun writeMetadataFile(
     sensorsData: Map<String, Any>,
     deviceStartAngle: String,
     buttonStartDateTime: DateTime,
-    buttonStopDatetime: DateTime,
+    buttonStopDateTime: DateTime,
     mediaStartDateTime: DateTime,
     mediaStopDateTime: DateTime,
     outputDir: File
@@ -430,7 +430,7 @@ fun writeMetadataFile(
 
     metadata["time"] = mutableMapOf(
         "buttonStartDateTime" to buttonStartDateTime.toString(datetimeFormatUTC),
-        "buttonStopDateTime" to buttonStopDatetime.toString(datetimeFormatUTC),
+        "buttonStopDateTime" to buttonStopDateTime.toString(datetimeFormatUTC),
         "mediaStartDateTime" to mediaStartDateTime.toString(datetimeFormatUTC),
         "mediaStopDateTime" to mediaStopDateTime.toString(datetimeFormatUTC),
     )
