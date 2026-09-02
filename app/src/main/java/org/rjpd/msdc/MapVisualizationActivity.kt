@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.BoundingBox
@@ -22,10 +24,20 @@ class MapVisualizationActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val basePath = File(cacheDir, "osmdroid")
+        val tileCache = File(basePath, "tiles")
+        Configuration.getInstance().osmdroidBasePath = basePath
+        Configuration.getInstance().osmdroidTileCache = tileCache
         Configuration.getInstance().userAgentValue = packageName
 
         binding = ActivityMapVisualizationBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, windowInsets ->
+            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            binding.root.setPadding(insets.left, insets.top, insets.right, insets.bottom)
+            windowInsets
+        }
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
@@ -54,7 +66,7 @@ class MapVisualizationActivity : AppCompatActivity() {
 
         val line = Polyline().apply {
             setPoints(geoPoints)
-            outlinePaint.color = getColor(R.color.red_700)
+            outlinePaint.color = getColor(R.color.teal_700)
             outlinePaint.strokeWidth = 8f
         }
         mapView.overlays.add(line)
@@ -65,6 +77,7 @@ class MapVisualizationActivity : AppCompatActivity() {
             title = "Start Point"
             snippet = "Time: ${startPoint.datetimeUtc}\nAccuracy: ${startPoint.accuracy}m"
             setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+            createColoredMarkerDrawable(getColor(R.color.teal_700))?.let { icon = it }
         }
         mapView.overlays.add(startMarker)
 
@@ -75,14 +88,42 @@ class MapVisualizationActivity : AppCompatActivity() {
                 title = "End Point"
                 snippet = "Time: ${endPoint.datetimeUtc}\nAccuracy: ${endPoint.accuracy}m"
                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                createColoredMarkerDrawable(getColor(R.color.red_700))?.let { icon = it }
             }
             mapView.overlays.add(endMarker)
         }
 
-        val boundingBox = BoundingBox.fromGeoPoints(geoPoints)
+        val initialBox = BoundingBox.fromGeoPoints(geoPoints)
+        val minSpan = 0.008
+
+        val latCenter = initialBox.centerLatitude
+        val lonCenter = initialBox.centerLongitude
+
+        val latSpan = Math.max(initialBox.latitudeSpan, minSpan)
+        @Suppress("DEPRECATION")
+        val lonSpan = Math.max(initialBox.longitudeSpan, minSpan)
+
+        val paddedBox = BoundingBox(
+            latCenter + latSpan / 2.0,
+            lonCenter + lonSpan / 2.0,
+            latCenter - latSpan / 2.0,
+            lonCenter - lonSpan / 2.0
+        )
+
         mapView.post {
-            mapView.zoomToBoundingBox(boundingBox, true, 80)
+            mapView.zoomToBoundingBox(paddedBox, true, 80)
         }
+    }
+
+    private fun createColoredMarkerDrawable(color: Int): android.graphics.drawable.Drawable? {
+        val defaultDrawable = androidx.core.content.ContextCompat.getDrawable(
+            this,
+            org.osmdroid.library.R.drawable.marker_default
+        )?.mutate() ?: return null
+
+        val wrappedDrawable = androidx.core.graphics.drawable.DrawableCompat.wrap(defaultDrawable)
+        androidx.core.graphics.drawable.DrawableCompat.setTint(wrappedDrawable, color)
+        return wrappedDrawable
     }
 
     override fun onResume() {

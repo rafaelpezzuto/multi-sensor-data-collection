@@ -12,6 +12,8 @@ import android.widget.TextView
 import android.widget.VideoView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import org.json.JSONObject
@@ -26,6 +28,12 @@ class CollectionDetailActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityCollectionDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, windowInsets ->
+            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            binding.root.setPadding(insets.left, insets.top, insets.right, insets.bottom)
+            windowInsets
+        }
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
@@ -149,7 +157,7 @@ class CollectionDetailActivity : AppCompatActivity() {
                     setPadding(12, 8, 12, 8)
                     if (rowIndex == 0) {
                         setTypeface(typeface, android.graphics.Typeface.BOLD)
-                        setTextColor(getColor(R.color.red_700))
+                        setTextColor(getColor(R.color.teal_700))
                     } else {
                         setTextColor(getColor(android.R.color.tab_indicator_text))
                     }
@@ -296,8 +304,15 @@ class CollectionDetailActivity : AppCompatActivity() {
         dialog.window?.let { window ->
             val displayMetrics = resources.displayMetrics
             val width = (displayMetrics.widthPixels * 0.92).toInt()
-            val height = (displayMetrics.heightPixels * 0.85).toInt()
-            window.setLayout(width, height)
+            val maxHeight = (displayMetrics.heightPixels * 0.85).toInt()
+
+            window.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT)
+
+            window.decorView.post {
+                if (window.decorView.height > maxHeight) {
+                    window.setLayout(width, maxHeight)
+                }
+            }
         }
     }
 

@@ -19,6 +19,8 @@ import android.view.WindowManager
 import android.widget.Toast
 import android.view.ScaleGestureDetector
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -105,6 +107,13 @@ class MainActivity : AppCompatActivity() {
 
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)
+
+        ViewCompat.setOnApplyWindowInsetsListener(viewBinding.root) { _, windowInsets ->
+            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            viewBinding.root.setPadding(insets.left, insets.top, insets.right, insets.bottom)
+            windowInsets
+        }
+
         updateGpsText()
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
