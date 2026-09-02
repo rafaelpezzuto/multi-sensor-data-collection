@@ -82,6 +82,7 @@
 
     <string name="recording_status_stopped">Stopped</string>
     <string name="recording_status_recording">Recording</string>
+    <string name="memory_free_format">Free: %1$s</string>
     <string name="datasets">Data</string>
     <string name="title_activity_datasets">Saved Data</string>
     <string name="no_datasets_found">No saved data found</string>

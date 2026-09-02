@@ -93,6 +93,17 @@
             android:textSize="14sp"
             android:text="" />
 
+        <TextView
+            android:id="@+id/memory_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAlignment="textEnd"
+            android:textIsSelectable="false"
+            android:textStyle="bold"
+            android:textColor="@color/red_a100"
+            android:textSize="14sp"
+            android:text="" />
+
     </LinearLayout>
 
     <LinearLayout
