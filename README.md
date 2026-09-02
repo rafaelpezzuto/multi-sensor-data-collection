@@ -1,5 +1,9 @@
 # MultiSensor Data Collection
 
+[![Android Target SDK](https://img.shields.io/badge/Target%20SDK-36-brightgreen.svg)](https://developer.android.com)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.4.10-blue.svg)](https://kotlinlang.org)
+[![Version](https://img.shields.io/badge/Version-2.0.0-teal.svg)](https://github.com/rafaelpezzuto/multi-sensor-data-collection)
+
 MultiSensor Data Collection is an open-source Android application designed for high-precision, multi-sensor dataset acquisition. The application synchronously records and structures local data from mobile sensors—including video camera, microphone, accelerometer, gyroscope, magnetometer, gravity, light, geolocation (GPS), battery consumption, and network signals—producing synchronized multimodal datasets for urban informatics, computer vision, and machine learning research.
 
 ---
