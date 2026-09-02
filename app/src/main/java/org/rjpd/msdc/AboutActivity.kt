@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -21,6 +22,8 @@ class AboutActivity : AppCompatActivity() {
             view.setPadding(insets.left, insets.top, insets.right, insets.bottom)
             windowInsets
         }
+
+        findViewById<TextView>(R.id.version_textview)?.text = "Version ${BuildConfig.VERSION_NAME}"
 
         findViewById<LinearLayout>(R.id.sideseeing_card).setOnClickListener {
             openUrl("https://sites.usp.br/sideseeing")
