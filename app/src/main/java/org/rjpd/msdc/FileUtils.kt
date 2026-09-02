@@ -463,6 +463,158 @@ fun writeMetadataFile(
     }
 }
 
+data class DatasetSummary(
+    val name: String,
+    val path: File,
+    val isZip: Boolean,
+    val sizeBytes: Long,
+    val formattedSize: String,
+    val lastModifiedMillis: Long,
+    val fileCount: Int,
+    val fileList: List<String>,
+    val metadataMap: Map<String, Any>?
+)
+
+fun scanCollectedDatasets(context: Context): List<DatasetSummary> {
+    val results = mutableListOf<DatasetSummary>()
+    val processedPaths = mutableSetOf<String>()
+
+    val roots = listOfNotNull(
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)?.resolve("MultiSensorDC"),
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES)?.resolve("MultiSensorDC"),
+        context.getExternalFilesDir("MultiSensorDC")
+    )
+
+    for (root in roots) {
+        if (!root.exists() || !root.isDirectory) continue
+
+        root.walkTopDown().forEach { file ->
+            if (file.canonicalPath in processedPaths) return@forEach
+
+            if (file.isFile && file.extension.lowercase() == "zip") {
+                processedPaths.add(file.canonicalPath)
+                val size = file.length()
+                val formattedSize = Formatter.formatFileSize(context, size)
+                val fileNames = mutableListOf<String>()
+                var metadataJsonStr: String? = null
+
+                try {
+                    ZipFile(file).use { zip ->
+                        zip.entries().asSequence().forEach { entry ->
+                            fileNames.add(entry.name)
+                            if (entry.name.endsWith("metadata.json")) {
+                                zip.getInputStream(entry).bufferedReader().use { reader ->
+                                    metadataJsonStr = reader.readText()
+                                }
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    Timber.tag("FileUtils").e(e, "Error reading zip file: ${file.name}")
+                }
+
+                val metadataMap = parseJsonToMap(metadataJsonStr)
+
+                results.add(
+                    DatasetSummary(
+                        name = file.name,
+                        path = file,
+                        isZip = true,
+                        sizeBytes = size,
+                        formattedSize = formattedSize,
+                        lastModifiedMillis = file.lastModified(),
+                        fileCount = fileNames.size,
+                        fileList = fileNames,
+                        metadataMap = metadataMap
+                    )
+                )
+            } else if (file.isDirectory && file.resolve("metadata.json").exists()) {
+                processedPaths.add(file.canonicalPath)
+                val filesInside = file.walkTopDown().filter { it.isFile }.toList()
+                filesInside.forEach { processedPaths.add(it.canonicalPath) }
+
+                val size = filesInside.sumOf { it.length() }
+                val formattedSize = Formatter.formatFileSize(context, size)
+                val fileNames = filesInside.map { it.relativeTo(file).path }
+
+                var metadataJsonStr: String? = null
+                try {
+                    metadataJsonStr = file.resolve("metadata.json").readText()
+                } catch (e: Exception) {
+                    Timber.tag("FileUtils").e(e, "Error reading metadata file: ${file.name}")
+                }
+
+                val metadataMap = parseJsonToMap(metadataJsonStr)
+
+                results.add(
+                    DatasetSummary(
+                        name = file.name,
+                        path = file,
+                        isZip = false,
+                        sizeBytes = size,
+                        formattedSize = formattedSize,
+                        lastModifiedMillis = file.lastModified(),
+                        fileCount = fileNames.size,
+                        fileList = fileNames,
+                        metadataMap = metadataMap
+                    )
+                )
+            }
+        }
+    }
+
+    return results.sortedByDescending { it.lastModifiedMillis }
+}
+
+private fun parseJsonToMap(jsonStr: String?): Map<String, Any>? {
+    return jsonStr?.let {
+        try {
+            val jsonObject = JSONObject(it)
+            val map = mutableMapOf<String, Any>()
+            val keys = jsonObject.keys()
+            while (keys.hasNext()) {
+                val key = keys.next()
+                map[key] = jsonObject.get(key)
+            }
+            map
+        } catch (_: Exception) {
+            null
+        }
+    }
+}
+
+fun prepareDatasetPreview(context: Context, datasetPath: File, isZip: Boolean): File {
+    val cacheDir = File(context.cacheDir, "preview_cache/${datasetPath.nameWithoutExtension}")
+    if (!cacheDir.exists()) {
+        cacheDir.mkdirs()
+    }
+
+    if (isZip) {
+        try {
+            ZipFile(datasetPath).use { zip ->
+                zip.entries().asSequence().forEach { entry ->
+                    val outFile = File(cacheDir, entry.name)
+                    if (entry.isDirectory) {
+                        outFile.mkdirs()
+                    } else {
+                        outFile.parentFile?.mkdirs()
+                        zip.getInputStream(entry).use { input ->
+                            FileOutputStream(outFile).use { output ->
+                                input.copyTo(output)
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Timber.tag("FileUtils").e(e, "Error extracting preview zip: ${datasetPath.name}")
+        }
+        return cacheDir
+    } else {
+        return datasetPath
+    }
+}
+
 data class GpsPoint(
     val datetimeUtc: String,
     val gpsInterval: Long,
@@ -501,5 +653,4 @@ fun parseGpsCsv(file: File): List<GpsPoint> {
     }
 
     return points
-}
 }

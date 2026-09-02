@@ -60,7 +60,6 @@
         </activity>
 
         <activity
-        <activity
             android:name=".HistoryActivity"
             android:exported="false"
             android:label="@string/title_activity_datasets"
