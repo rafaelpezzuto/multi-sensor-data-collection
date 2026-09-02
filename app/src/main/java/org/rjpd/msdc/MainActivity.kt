@@ -109,7 +109,10 @@ class MainActivity : AppCompatActivity() {
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         infoUtils = InfoUtils(this)
-        timeUtils = TimeUtils(Handler(Looper.getMainLooper()), viewBinding.clockTextview)
+        timeUtils = TimeUtils(Handler(Looper.getMainLooper()), viewBinding.clockTextview) {
+            updateMemoryIndicator()
+        }
+        updateMemoryIndicator()
 
         intentSettings = Intent(this@MainActivity, SettingsActivity::class.java)
 
@@ -269,6 +272,10 @@ class MainActivity : AppCompatActivity() {
    private fun unlockScreenOrientation() {
        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
    }
+
+    private fun updateMemoryIndicator() {
+        viewBinding.memoryTextview.text = getString(R.string.memory_free_format, infoUtils.getAvailableStorageSpace())
+    }
 
     private fun startCamera() {
         viewBinding.viewFinder.visibility = android.view.View.VISIBLE

@@ -6,14 +6,28 @@ import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
+import android.os.Environment
+import android.os.StatFs
+import android.text.format.Formatter
 import androidx.camera.video.Quality
 import timber.log.Timber
 
 private const val TAG = "InfoUtils"
 
-class InfoUtils(context: Context) {
+class InfoUtils(private val context: Context) {
     private val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+
+    fun getAvailableStorageSpace(): String {
+        return try {
+            val path = Environment.getExternalStorageDirectory().path
+            val statFs = StatFs(path)
+            val availableBytes = statFs.availableBlocksLong * statFs.blockSizeLong
+            Formatter.formatFileSize(context, availableBytes)
+        } catch (_: Exception) {
+            "N/A"
+        }
+    }
 
     fun stringToCamQuality(camQuality: String?): Quality {
         return when(camQuality) {
