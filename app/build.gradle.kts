@@ -77,6 +77,7 @@ dependencies {
     implementation(libs.joda.time)
     implementation(libs.timber)
     implementation(libs.usb.serial)
+    implementation(libs.osmdroid.android)
 
     testImplementation(libs.junit)
 
