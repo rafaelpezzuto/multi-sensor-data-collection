@@ -1,35 +1,103 @@
 # MultiSensor Data Collection
 
-MultiSensor Data Collection is a mobile app that seamlessly gathers data from various sensors, including GPS, camera, and audio, allowing you to create a comprehensive dataset locally and effortlessly transmit it to the cloud for further analysis and storage.
+[![Android Target SDK](https://img.shields.io/badge/Target%20SDK-36-brightgreen.svg)](https://developer.android.com)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.4.10-blue.svg)](https://kotlinlang.org)
+[![Version](https://img.shields.io/badge/Version-2.0.0-teal.svg)](https://github.com/rafaelpezzuto/multi-sensor-data-collection)
 
-## Authors
+MultiSensor Data Collection is an open-source Android application designed for high-precision, multi-sensor dataset acquisition. The application synchronously records and structures local data from mobile sensors—including video camera, microphone, accelerometer, gyroscope, magnetometer, gravity, light, geolocation (GPS), battery consumption, and network signals—producing synchronized multimodal datasets for urban informatics, computer vision, and machine learning research.
 
-- Alyssa Florence / IME-USP
-- Rafael Jeferson Pezzuto Damaceno / IME-USP
-- Roberto Marcondes Cesar Jr. / IME-USP
+---
+
+## Features
+
+- **Synchronized Video & Audio Recording**: High-definition video recording (SD, HD, FHD, 4K) via Jetpack CameraX with configurable frame rates, audio sampling rates, and channels.
+- **Camera Pinch-to-Zoom**: Dynamic gesture zoom control with bounded zoom ratios.
+- **Multi-Sensor Logging**: High-frequency logging for motion sensors (accelerometer, gyroscope, magnetometer, gravity), light, pressure, and step counters.
+- **Geolocation Tracking**: High-accuracy GPS tracking (`gps.csv`) paired with an in-app interactive map (OpenStreetMap) displaying route polylines, departure/arrival markers, and timestamp/accuracy metadata.
+- **Data History & In-App Inspection**:
+  - **Dataset List**: Local collection management for ZIP archives and uncompressed directories.
+  - **Media Player**: Full-screen video and audio player.
+  - **CSV Inspector**: Scrollable table view for sensor CSV files with highlighted headers.
+  - **JSON Inspector**: Formatted view for metadata JSON files.
+- **Real-Time Disk Space & Recording Estimation**: Live storage monitoring with dynamic recording time estimation based on selected resolution and audio/video mode.
+- **Battery & Network Diagnostics**: Periodic logging of battery consumption metrics and Wi-Fi / Cellular network scans.
+
+---
 
 ## Screenshots
 
-| ![main screen](https://github.com/user-attachments/assets/a4dc21fc-626e-49ce-a106-c1f6020453ed) | ![settings_screen_camera_resolution](https://github.com/user-attachments/assets/92e02ca8-d9c4-462d-b03c-7fdef09ea1d8) |
+| <img src="docs/screenshots/screen_main_idle.png" width="280" alt="Main Screen Idle" /> | <img src="docs/screenshots/screen_main_recording.png" width="280" alt="Main Screen Recording" /> |
 |:---:|:---:|
-| **Main Screen** | **Camera Resolution Settings** |
+| **Main Interface (Idle)** | **Main Interface (Recording)** |
 
-| ![settings_screen_sensor_frequency](https://github.com/user-attachments/assets/2bf08d1d-4bcf-4853-9fdf-9ecbfcba1b76) | ![settings_screen](https://github.com/user-attachments/assets/b96b5071-264e-4f0b-9632-9cc0476b282b) |
+| <img src="docs/screenshots/screen_settings.png" width="280" alt="Settings Screen" /> | <img src="docs/screenshots/screen_about.png" width="280" alt="About Screen" /> |
 |:---:|:---:|
-| **Sensor Frequency Settings** | **General Settings** |
+| **Settings Screen** | **About Screen** |
 
-## Additional Information
-This MultiSensor Data Collection app, currently available for Android devices, is part of a larger project called SideSeeing.
+| <img src="docs/screenshots/screen_history.png" width="280" alt="Saved Data History" /> | <img src="docs/screenshots/screen_detail.png" width="280" alt="Collection Detail" /> |
+|:---:|:---:|
+| **Saved Data History** | **Collection Details** |
 
-The SideSeeing project aims to develop methods based on Computer Vision and Machine Learning for Urban Informatics applications. Its goal is to devise strategies for obtaining and analyzing data related to urban accessibility. The project is expected to consist of six modules:
+| <img src="docs/screenshots/screen_csv_preview.png" width="280" alt="CSV Table Preview" /> |
+|:---:|
+| **CSV Data Inspection** |
 
-- Collection and generation of multimodal datasets;
-- Preprocessing;
-- Labeling;
-- Visualization;
-- Application of artificial intelligence tasks; and
-- Analysis of information for decision-making.
+---
 
-As part of the initial module, the MultiSensor Data Collection app is currently in the testing phase and is available for internal tests only. This app is capable of generating multimodal datasets using video cameras and sensors such as accelerometers, gyroscopes, and magnetometers from mobile phones. Current efforts are focused on collecting data in regions of Brazil and the United States of America.
+## Dataset Structure
 
-For more details about the project, visit [SideSeeing](https://sites.usp.br/sideseeing).
+Each collection run produces a structured dataset directory (or `.zip` archive) formatted as follows:
+
+```text
+MultiSensorDC/<dataset_name>/
+├── video.mp4               # Synchronized video stream
+├── audio.m4a               # Audio recording (in audio-only mode)
+├── metadata.json           # System metadata, sensor parameters, and UTC timestamps
+├── accelerometer.csv       # timestamp_utc, timestamp_nanos, x, y, z
+├── gyroscope.csv           # timestamp_utc, timestamp_nanos, x, y, z
+├── magnetometer.csv        # timestamp_utc, timestamp_nanos, x, y, z
+├── gravity.csv             # timestamp_utc, timestamp_nanos, x, y, z
+├── gps.csv                 # datetime_utc, gps_interval, accuracy, latitude, longitude
+├── battery.csv             # timestamp_utc, battery_level, temperature, voltage
+└── network.csv             # timestamp_utc, wifi_ssid, bssid, rssi, cellular_info
+```
+
+---
+
+## Building and Installation
+
+### Requirements
+- **JDK**: 21
+- **Android SDK**: Target SDK 36 (Android 15+), Min SDK 26 (Android 8.0+)
+- **Gradle**: 9.5+ with Version Catalog (`gradle/libs.versions.toml`)
+
+### Compilation Commands
+
+```bash
+# Build Debug APK
+./gradlew app:assembleDebug
+
+# Execute Unit Tests
+./gradlew app:testDebugUnitTest
+
+# Build Release App Bundle (AAB)
+./gradlew app:bundleRelease
+```
+
+---
+
+## Research Context: SideSeeing Project
+
+This application is developed as part of the **SideSeeing Project** at the **Institute of Mathematics and Statistics of the University of São Paulo (IME-USP)**.
+
+SideSeeing investigates computer vision, sensor fusion, and machine learning methods for Urban Informatics, focusing on urban accessibility, sidewalk quality, and infrastructure assessment.
+
+For further details regarding the research initiative, visit [SideSeeing Project](https://sites.usp.br/sideseeing).
+
+---
+
+## Authors and Citation
+
+- **Alyssa Florence** / IME-USP
+- **Rafael Jeferson Pezzuto Damaceno** / IME-USP (*rafael.pezzuto@gmail.com*)
+- **Roberto Marcondes Cesar Jr.** / IME-USP
