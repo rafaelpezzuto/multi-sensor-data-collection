@@ -66,11 +66,19 @@ fun moveContent(sourceDirOrFile: File, destDir: File): Boolean {
             if (file.isDirectory) {
                 moveContent(file, File(destDir, file.name))
             } else {
-                file.renameTo(removeDateFromFilename(destDir, file.name))
+                val destFile = removeDateFromFilename(destDir, file.name)
+                if (!file.renameTo(destFile)) {
+                    file.copyTo(destFile, overwrite = true)
+                    file.delete()
+                }
             }
         }
     } else {
-        sourceDirOrFile.renameTo(removeDateFromFilename(destDir, sourceDirOrFile.name))
+        val destFile = removeDateFromFilename(destDir, sourceDirOrFile.name)
+        if (!sourceDirOrFile.renameTo(destFile)) {
+            sourceDirOrFile.copyTo(destFile, overwrite = true)
+            sourceDirOrFile.delete()
+        }
     }
 
     return true
@@ -572,5 +580,37 @@ private fun parseJsonToMap(jsonStr: String?): Map<String, Any>? {
         } catch (_: Exception) {
             null
         }
+    }
+}
+
+fun prepareDatasetPreview(context: Context, datasetPath: File, isZip: Boolean): File {
+    val cacheDir = File(context.cacheDir, "preview_cache/${datasetPath.nameWithoutExtension}")
+    if (!cacheDir.exists()) {
+        cacheDir.mkdirs()
+    }
+
+    if (isZip) {
+        try {
+            ZipFile(datasetPath).use { zip ->
+                zip.entries().asSequence().forEach { entry ->
+                    val outFile = File(cacheDir, entry.name)
+                    if (entry.isDirectory) {
+                        outFile.mkdirs()
+                    } else {
+                        outFile.parentFile?.mkdirs()
+                        zip.getInputStream(entry).use { input ->
+                            FileOutputStream(outFile).use { output ->
+                                input.copyTo(output)
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Timber.tag("FileUtils").e(e, "Error extracting preview zip: ${datasetPath.name}")
+        }
+        return cacheDir
+    } else {
+        return datasetPath
     }
 }
