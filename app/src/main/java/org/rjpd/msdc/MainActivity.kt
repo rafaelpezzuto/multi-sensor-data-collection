@@ -169,6 +169,11 @@ class MainActivity : AppCompatActivity() {
             startActivity(intentSettings)
         }
 
+        val intentHistory = Intent(this@MainActivity, HistoryActivity::class.java)
+        viewBinding.historyButton.setOnClickListener {
+            startActivity(intentHistory)
+        }
+
         if (viewBinding.radioAudioVideo.isChecked) {
             startCamera()
             cameraExecutor = Executors.newSingleThreadExecutor()
@@ -591,6 +596,7 @@ class MainActivity : AppCompatActivity() {
         deviceAngleDetectorService.stop()
 
         viewBinding.settingsButton.isEnabled = false
+        viewBinding.historyButton.isEnabled = false
         viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.purple_200)
         viewBinding.outputAndRecordingModeSettingsLinearLayout.visibility = android.view.View.INVISIBLE
 
@@ -606,6 +612,7 @@ class MainActivity : AppCompatActivity() {
         deviceAngleDetectorService.start(viewBinding.angleTextview)
 
         viewBinding.settingsButton.isEnabled = true
+        viewBinding.historyButton.isEnabled = true
         viewBinding.startStopButton.backgroundTintList = getColorStateList(R.color.red_700)
         viewBinding.startStopButton.setTextColor(getColorStateList(R.color.white))
         viewBinding.startStopButton.isEnabled = true
