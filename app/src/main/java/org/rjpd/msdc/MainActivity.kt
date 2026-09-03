@@ -69,6 +69,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var intentBatteryMonitorService: Intent
     private lateinit var intentWiFiNetworkScanService: Intent
     private lateinit var intentCellularNetworkScanService: Intent
+    private val statusHandler = Handler(Looper.getMainLooper())
     private lateinit var intentAudioRecorderService: Intent
     private lateinit var intentSettings: Intent
 
@@ -527,6 +528,12 @@ class MainActivity : AppCompatActivity() {
                 append(errorMessage)
             }
         }
+
+        viewBinding.statusTextview.visibility = android.view.View.VISIBLE
+        statusHandler.removeCallbacksAndMessages(null)
+        statusHandler.postDelayed({
+            viewBinding.statusTextview.visibility = android.view.View.INVISIBLE
+        }, 5000)
     }
 
     private fun stopDataCollecting() {
@@ -650,6 +657,10 @@ class MainActivity : AppCompatActivity() {
         viewBinding.startStopButton.contentDescription = getString(R.string.start)
         viewBinding.outputAndRecordingModeSettingsLinearLayout.visibility = android.view.View.VISIBLE
         viewBinding.statusTextview.visibility = android.view.View.VISIBLE
+        statusHandler.removeCallbacksAndMessages(null)
+        statusHandler.postDelayed({
+            viewBinding.statusTextview.visibility = android.view.View.INVISIBLE
+        }, 5000)
         updateGpsText()
     }
 
@@ -664,7 +675,9 @@ class MainActivity : AppCompatActivity() {
             buttonStopDateTime,
             mediaStartDateTime,
             mediaStopDateTime,
-            userDataInstancePath
+            userDataInstancePath,
+            directory = viewBinding.dirEdittext.text.toString(),
+            subdirectory = viewBinding.subdirEdittext.text.toString()
         )
     }
 

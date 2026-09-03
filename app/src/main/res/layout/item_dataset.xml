@@ -7,8 +7,9 @@
     android:clickable="true"
     android:focusable="true"
     android:orientation="vertical"
-    android:paddingHorizontal="16dp"
-    android:paddingVertical="12dp">
+    android:paddingStart="44dp"
+    android:paddingEnd="16dp"
+    android:paddingVertical="10dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -16,13 +17,46 @@
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
+        <ImageView
+            android:id="@+id/dataset_item_icon_imageview"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginEnd="8dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_route_signpost"
+            app:tint="@color/teal_700" />
+
         <TextView
             android:id="@+id/dataset_name_textview"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:fontFamily="monospace"
             android:textColor="?android:attr/textColorPrimary"
-            android:textSize="16sp" />
+            android:textSize="13sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="4dp">
+
+        <TextView
+            android:id="@+id/dataset_new_badge_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@color/red_700"
+            android:textColor="@color/white"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:text="NEW"
+            android:paddingHorizontal="5dp"
+            android:paddingVertical="1dp"
+            android:layout_marginEnd="6dp"
+            android:visibility="gone" />
 
         <TextView
             android:id="@+id/dataset_type_badge_textview"
@@ -30,38 +64,68 @@
             android:layout_height="wrap_content"
             android:background="@color/teal_700"
             android:textColor="@color/white"
-            android:textSize="11sp"
+            android:textSize="10sp"
             android:textStyle="bold"
-            android:paddingHorizontal="6dp"
-            android:paddingVertical="2dp"
-            android:layout_marginStart="8dp" />
+            android:paddingHorizontal="5dp"
+            android:paddingVertical="1dp"
+            android:layout_marginEnd="6dp" />
+
+        <TextView
+            android:id="@+id/dataset_size_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/dataset_date_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end|center_vertical"
+        android:layout_marginTop="6dp">
 
         <ImageButton
             android:id="@+id/map_button"
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:layout_marginStart="8dp"
+            android:padding="5dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_dialog_map"
+            android:src="@drawable/ic_map_location"
             android:contentDescription="@string/view_on_map"
             android:visibility="gone"
             app:tint="@color/teal_700" />
+
+        <ImageButton
+            android:id="@+id/share_button"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="8dp"
+            android:padding="5dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_cloud_upload"
+            android:contentDescription="@string/share_dataset_action"
+            app:tint="@color/teal_700" />
+
+        <ImageButton
+            android:id="@+id/delete_button"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="8dp"
+            android:padding="5dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_delete_trash"
+            android:contentDescription="Delete collection"
+            app:tint="@color/teal_700" />
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/dataset_size_textview"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:textColor="?android:attr/textColorSecondary"
-        android:textSize="14sp" />
-
-    <TextView
-        android:id="@+id/dataset_date_textview"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:textColor="?android:attr/textColorSecondary"
-        android:textSize="12sp" />
 
 </LinearLayout>
