@@ -821,14 +821,52 @@ fun shareDatasetFile(context: Context, file: File) {
 }
 
 fun deleteDatasetFileOrFolder(file: File): Boolean {
+    if (!file.exists()) return true
+
     return try {
         if (file.isDirectory) {
             file.deleteRecursively()
         } else {
             file.delete()
         }
+
+        if (!file.exists()) {
+            cleanUpEmptyParentDirectories(file.parentFile)
+            return true
+        }
+
+        if (file.isDirectory) {
+            file.walkBottomUp().forEach { child ->
+                try {
+                    child.delete()
+                } catch (_: Exception) {}
+            }
+            file.delete()
+        }
+
+        cleanUpEmptyParentDirectories(file.parentFile)
+
+        val isDeleted = !file.exists()
+        if (!isDeleted) {
+            Timber.tag("FileUtils").e("Failed to delete file/folder: ${file.absolutePath}")
+        }
+        isDeleted
     } catch (e: Exception) {
         Timber.tag("FileUtils").e(e, "Error deleting dataset: ${file.name}")
-        false
+        !file.exists()
+    }
+}
+
+private fun cleanUpEmptyParentDirectories(dir: File?) {
+    var current = dir
+    while (current != null && current.isDirectory && current.name != "MultiSensorDC") {
+        val children = current.listFiles()
+        if (children != null && children.isEmpty()) {
+            val parent = current.parentFile
+            current.delete()
+            current = parent
+        } else {
+            break
+        }
     }
 }
