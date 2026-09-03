@@ -63,7 +63,7 @@
 
     <string name="preference_about_us">About us</string>
     <string name="preference_about_information_summary">Application information</string>
-    <string name="about_app_description">MultiSensor Data Collection is a mobile app that collects data from various sensors, including the accelerometer, gyroscope, geolocation, video camera, microphone, battery consumption, and more. It enables the creation of a synchronized dataset locally.\n\nAuthor: rafael.pezzuto@gmail.com\nVersion: 2.0.0\nPrivacy Policy: https://github.com/rafaelpezzuto/multi-sensor-data-collection/blob/main/privacy-policy.md\nSource Code: https://github.com/rafaelpezzuto/multi-sensor-data-collection\n\nThis app is part of SideSeeing, a computer vision and machine learning project focused on developing methods for Urban Informatics applications.\n\nVisit our website: https://sites.usp.br/sideseeing.
+    <string name="about_app_description">MultiSensor Data Collection is a mobile app that collects data from various sensors, including the accelerometer, gyroscope, geolocation, video camera, microphone, battery consumption, and more. It enables the creation of a synchronized dataset locally.\n\nAuthor: rafael.pezzuto@gmail.com\nVersion: 2.1.0\nPrivacy Policy: https://github.com/rafaelpezzuto/multi-sensor-data-collection/blob/main/privacy-policy.md\nSource Code: https://github.com/rafaelpezzuto/multi-sensor-data-collection\n\nThis app is part of SideSeeing, a computer vision and machine learning project focused on developing methods for Urban Informatics applications.\n\nVisit our website: https://sites.usp.br/sideseeing.
     </string>
 
     <string name="about_app_close">Close</string>
@@ -124,4 +124,12 @@
 
     <string name="gps_is_off">OFF</string>
     <string name="gps_is_on">ON</string>
+
+    <string name="share_dataset_title">Export / Upload Dataset</string>
+    <string name="share_dataset_action">Share / Upload</string>
+    <string name="cloud_upload_category">Cloud / Server Upload</string>
+    <string name="custom_upload_url_title">Custom Upload Server URL</string>
+    <string name="custom_upload_url_summary">HTTP/S POST endpoint for direct dataset upload</string>
+    <string name="custom_upload_token_title">Server API Token</string>
+    <string name="custom_upload_token_summary">Optional authorization bearer token for custom server</string>
 </resources>

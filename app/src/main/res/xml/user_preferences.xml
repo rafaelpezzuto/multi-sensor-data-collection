@@ -21,6 +21,23 @@
     </PreferenceCategory>
 
     <PreferenceCategory
+        app:title="@string/cloud_upload_category"
+        app:icon="@drawable/ic_cloud_upload">
+
+        <EditTextPreference
+            app:key="custom_upload_url"
+            app:title="@string/custom_upload_url_title"
+            app:summary="@string/custom_upload_url_summary"
+            app:dialogTitle="@string/custom_upload_url_title" />
+
+        <EditTextPreference
+            app:key="custom_upload_token"
+            app:title="@string/custom_upload_token_title"
+            app:summary="@string/custom_upload_token_summary"
+            app:dialogTitle="@string/custom_upload_token_title" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
         app:title="@string/camera_settings"
         app:icon="@drawable/ic_camera_settings"
         app:summary="@string/camera_category" >

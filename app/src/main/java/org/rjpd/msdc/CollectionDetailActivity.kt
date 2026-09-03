@@ -3,7 +3,10 @@ package org.rjpd.msdc
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.text.format.DateFormat
 import android.text.format.Formatter
+import java.util.Date
+import org.joda.time.DateTime
 import android.view.MenuItem
 import android.view.ViewGroup
 import android.widget.MediaController
@@ -23,6 +26,7 @@ import java.io.File
 class CollectionDetailActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityCollectionDetailBinding
+    private var datasetFile: File? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,6 +42,7 @@ class CollectionDetailActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         val datasetPath = intent.getStringExtra(EXTRA_DATASET_PATH)?.let { File(it) }
+        datasetFile = datasetPath
         val datasetName = intent.getStringExtra(EXTRA_DATASET_NAME) ?: datasetPath?.name ?: ""
         val isZip = intent.getBooleanExtra(EXTRA_IS_ZIP, true)
 
@@ -65,25 +70,45 @@ class CollectionDetailActivity : AppCompatActivity() {
             } catch (_: Exception) {}
         }
 
-        val details = buildString {
-            append("Type: ").append(if (datasetPath.extension.lowercase() == "zip") "ZIP Archive" else "Directory").append("\n")
-            append("Size: ").append(formattedSize).append(" (").append(files.size).append(" files)\n")
+        val metadataMap = parseJsonToMap(metadataStr)
+        val durationStr = formatCollectionDuration(metadataMap)
 
-            if (!metadataStr.isNullOrBlank()) {
-                try {
-                    val json = JSONObject(metadataStr)
-                    val time = json.optJSONObject("time")
-                    if (time != null) {
-                        append("Start: ").append(time.optString("buttonStartDateTime", "N/A")).append("\n")
-                        append("Stop: ").append(time.optString("buttonStopDateTime", "N/A")).append("\n")
-                    }
-                    val device = json.optJSONObject("device")
-                    if (device != null) {
-                        append("Device: ").append(device.optString("manufacturer", "")).append(" ").append(device.optString("model", "")).append("\n")
-                    }
-                } catch (_: Exception) {}
+        val localDateTimeStr = try {
+            @Suppress("UNCHECKED_CAST")
+            val timeMap = metadataMap?.get("time") as? Map<String, Any>
+            val startStr = timeMap?.get("buttonStartDateTime")?.toString()
+            if (startStr != null) {
+                val dt = DateTime.parse(startStr)
+                DateFormat.getDateFormat(this).format(Date(dt.millis)) + " " +
+                        DateFormat.getTimeFormat(this).format(Date(dt.millis))
+            } else null
+        } catch (_: Exception) {
+            null
+        }
+
+        val deviceModel = try {
+            @Suppress("UNCHECKED_CAST")
+            val deviceMap = metadataMap?.get("device") as? Map<String, Any>
+            val manufacturer = deviceMap?.get("manufacturer")?.toString() ?: ""
+            val model = deviceMap?.get("model")?.toString() ?: ""
+            "$manufacturer $model".trim()
+        } catch (_: Exception) {
+            ""
+        }
+
+        val details = buildString {
+            append("Type: ").append(if (datasetPath.extension.lowercase() == "zip") "ZIP Archive" else "Directory/Folder").append("\n")
+            append("Size: ").append(formattedSize).append(" (").append(files.size).append(" files)\n")
+            if (!durationStr.isNullOrEmpty()) {
+                append("Total Duration: ").append(durationStr).append("\n")
             }
-            append("Location: ").append(datasetPath.parent ?: "")
+            if (!localDateTimeStr.isNullOrEmpty()) {
+                append("Date: ").append(localDateTimeStr).append("\n")
+            }
+            if (deviceModel.isNotEmpty()) {
+                append("Device: ").append(deviceModel).append("\n")
+            }
+            append("Location: ").append(datasetPath.parent ?: datasetPath.path)
         }
 
         binding.summaryTitleTextview.text = datasetName
@@ -258,6 +283,9 @@ class CollectionDetailActivity : AppCompatActivity() {
             .setTitle(item.name)
             .setView(scrollView)
             .setPositiveButton("Close", null)
+            .setNeutralButton(R.string.share_dataset_action) { _, _ ->
+                shareDatasetFile(this, item.file)
+            }
             .create()
 
         dialog.show()
@@ -294,6 +322,9 @@ class CollectionDetailActivity : AppCompatActivity() {
             .setTitle(item.name)
             .setView(scrollView)
             .setPositiveButton("Close", null)
+            .setNeutralButton(R.string.share_dataset_action) { _, _ ->
+                shareDatasetFile(this, item.file)
+            }
             .create()
 
         dialog.show()
@@ -316,9 +347,17 @@ class CollectionDetailActivity : AppCompatActivity() {
         }
     }
 
+    override fun onCreateOptionsMenu(menu: android.view.Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_collection_detail, menu)
+        return true
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == android.R.id.home) {
             onBackPressedDispatcher.onBackPressed()
+            return true
+        } else if (item.itemId == R.id.action_share) {
+            datasetFile?.let { shareDatasetFile(this, it) }
             return true
         }
         return super.onOptionsItemSelected(item)

@@ -2,7 +2,7 @@
 
 [![Android Target SDK](https://img.shields.io/badge/Target%20SDK-36-brightgreen.svg)](https://developer.android.com)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.4.10-blue.svg)](https://kotlinlang.org)
-[![Version](https://img.shields.io/badge/Version-2.0.0-teal.svg)](https://github.com/rafaelpezzuto/multi-sensor-data-collection)
+[![Version](https://img.shields.io/badge/Version-2.1.0-teal.svg)](https://github.com/rafaelpezzuto/multi-sensor-data-collection)
 
 MultiSensor Data Collection is an open-source Android application designed for high-precision, multi-sensor dataset acquisition. The application synchronously records and structures local data from mobile sensors—including video camera, microphone, accelerometer, gyroscope, magnetometer, gravity, light, geolocation (GPS), battery consumption, and network signals—producing synchronized multimodal datasets for urban informatics, computer vision, and machine learning research.
 
@@ -26,19 +26,19 @@ MultiSensor Data Collection is an open-source Android application designed for h
 
 ## Screenshots
 
-| <img src="docs/screenshots/screen_main_idle.png" width="280" alt="Main Screen Idle" /> | <img src="docs/screenshots/screen_main_recording.png" width="280" alt="Main Screen Recording" /> |
+| <img src="docs/screenshots/screen_main_idle.png" width="280" alt="Main Screen" /> | <img src="docs/screenshots/screen_settings.png" width="280" alt="Settings Screen" /> |
 |:---:|:---:|
-| **Main Interface (Idle)** | **Main Interface (Recording)** |
+| **Main Recording Screen** | **Settings Screen** |
 
-| <img src="docs/screenshots/screen_settings.png" width="280" alt="Settings Screen" /> | <img src="docs/screenshots/screen_about.png" width="280" alt="About Screen" /> |
+| <img src="docs/screenshots/screen_about.png" width="280" alt="About Screen" /> | <img src="docs/screenshots/screen_history.png" width="280" alt="Saved Data History" /> |
 |:---:|:---:|
-| **Settings Screen** | **About Screen** |
+| **About Screen** | **Saved Data History** |
 
-| <img src="docs/screenshots/screen_history.png" width="280" alt="Saved Data History" /> | <img src="docs/screenshots/screen_detail.png" width="280" alt="Collection Detail" /> |
+| <img src="docs/screenshots/screen_detail.png" width="280" alt="Collection Detail" /> | <img src="docs/screenshots/screen_route.png" width="280" alt="GPS Route Map" /> |
 |:---:|:---:|
-| **Saved Data History** | **Collection Details** |
+| **Collection Details** | **GPS Route Map Visualization** |
 
-| <img src="docs/screenshots/screen_csv_preview.png" width="280" alt="CSV Table Preview" /> |
+| <img src="docs/screenshots/screen_csv_preview.png" width="280" alt="CSV Inspection" /> |
 |:---:|
 | **CSV Data Inspection** |
 

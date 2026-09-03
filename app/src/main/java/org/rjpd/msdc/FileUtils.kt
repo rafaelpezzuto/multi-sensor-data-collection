@@ -1,7 +1,10 @@
 package org.rjpd.msdc
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
+import androidx.core.content.FileProvider
 import android.os.Environment
 import android.text.format.Formatter
 import android.util.DisplayMetrics
@@ -422,11 +425,15 @@ fun writeMetadataFile(
     buttonStopDateTime: DateTime,
     mediaStartDateTime: DateTime,
     mediaStopDateTime: DateTime,
-    outputDir: File
+    outputDir: File,
+    directory: String = "",
+    subdirectory: String = ""
 ) {
     val datetimeFormatUTC = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
     val metadata = mutableMapOf<String, Any>()
     metadata["preferences"] = preferencesData.toMutableMap()
+    metadata["directory"] = directory.trim()
+    metadata["subdirectory"] = subdirectory.trim()
 
     metadata["time"] = mutableMapOf(
         "buttonStartDateTime" to buttonStartDateTime.toString(datetimeFormatUTC),
@@ -472,8 +479,23 @@ data class DatasetSummary(
     val lastModifiedMillis: Long,
     val fileCount: Int,
     val fileList: List<String>,
-    val metadataMap: Map<String, Any>?
-)
+    val metadataMap: Map<String, Any>?,
+    val directory: String = "",
+    val subdirectory: String = "",
+    val formattedDuration: String? = null,
+    val durationMillis: Long = 0L
+) {
+    fun getGroupCategoryLabel(): String {
+        val dir = directory.trim()
+        val subdir = subdirectory.trim()
+        return when {
+            dir.isNotEmpty() && subdir.isNotEmpty() -> "$dir / $subdir"
+            dir.isNotEmpty() -> dir
+            subdir.isNotEmpty() -> subdir
+            else -> "Default"
+        }
+    }
+}
 
 fun scanCollectedDatasets(context: Context): List<DatasetSummary> {
     val results = mutableListOf<DatasetSummary>()
@@ -514,6 +536,9 @@ fun scanCollectedDatasets(context: Context): List<DatasetSummary> {
                 }
 
                 val metadataMap = parseJsonToMap(metadataJsonStr)
+                val (dir, subdir) = extractDirAndSubdir(file, root, metadataMap)
+                val durationMs = getCollectionDurationMillis(metadataMap)
+                val durationStr = if (durationMs > 0) formatDurationMillis(durationMs) else null
 
                 results.add(
                     DatasetSummary(
@@ -525,7 +550,11 @@ fun scanCollectedDatasets(context: Context): List<DatasetSummary> {
                         lastModifiedMillis = file.lastModified(),
                         fileCount = fileNames.size,
                         fileList = fileNames,
-                        metadataMap = metadataMap
+                        metadataMap = metadataMap,
+                        directory = dir,
+                        subdirectory = subdir,
+                        formattedDuration = durationStr,
+                        durationMillis = durationMs
                     )
                 )
             } else if (file.isDirectory && file.resolve("metadata.json").exists()) {
@@ -545,6 +574,9 @@ fun scanCollectedDatasets(context: Context): List<DatasetSummary> {
                 }
 
                 val metadataMap = parseJsonToMap(metadataJsonStr)
+                val (dir, subdir) = extractDirAndSubdir(file, root, metadataMap)
+                val durationMs = getCollectionDurationMillis(metadataMap)
+                val durationStr = if (durationMs > 0) formatDurationMillis(durationMs) else null
 
                 results.add(
                     DatasetSummary(
@@ -556,7 +588,11 @@ fun scanCollectedDatasets(context: Context): List<DatasetSummary> {
                         lastModifiedMillis = file.lastModified(),
                         fileCount = fileNames.size,
                         fileList = fileNames,
-                        metadataMap = metadataMap
+                        metadataMap = metadataMap,
+                        directory = dir,
+                        subdirectory = subdir,
+                        formattedDuration = durationStr,
+                        durationMillis = durationMs
                     )
                 )
             }
@@ -566,21 +602,94 @@ fun scanCollectedDatasets(context: Context): List<DatasetSummary> {
     return results.sortedByDescending { it.lastModifiedMillis }
 }
 
-private fun parseJsonToMap(jsonStr: String?): Map<String, Any>? {
+private fun extractDirAndSubdir(file: File, root: File, metadataMap: Map<String, Any>?): Pair<String, String> {
+    var dir = metadataMap?.get("directory")?.toString()?.trim()
+        ?: metadataMap?.get("dirEdittext")?.toString()?.trim()
+        ?: ""
+    var subdir = metadataMap?.get("subdirectory")?.toString()?.trim()
+        ?: metadataMap?.get("subdirEdittext")?.toString()?.trim()
+        ?: ""
+
+    if (dir.isEmpty()) {
+        val relativeParent = file.relativeToOrNull(root)?.parent
+        if (relativeParent != null && relativeParent != ".") {
+            dir = relativeParent.replace("\\", "/")
+        }
+    }
+
+    if (subdir.isEmpty()) {
+        val filename = file.nameWithoutExtension
+        val timestampIndex = filename.indexOf("-20")
+        if (timestampIndex > 0) {
+            subdir = filename.substring(0, timestampIndex)
+        }
+    }
+
+    return Pair(dir, subdir)
+}
+
+fun getCollectionDurationMillis(metadataMap: Map<String, Any>?): Long {
+    if (metadataMap == null) return 0L
+
+    return try {
+        @Suppress("UNCHECKED_CAST")
+        val timeMap = metadataMap["time"] as? Map<String, Any> ?: return 0L
+        val startStr = timeMap["buttonStartDateTime"]?.toString() ?: return 0L
+        val stopStr = timeMap["buttonStopDateTime"]?.toString() ?: return 0L
+
+        val startMillis = DateTime.parse(startStr).millis
+        val stopMillis = DateTime.parse(stopStr).millis
+        val duration = stopMillis - startMillis
+        if (duration > 0) duration else 0L
+    } catch (_: Exception) {
+        0L
+    }
+}
+
+fun formatDurationMillis(durationMillis: Long): String {
+    if (durationMillis <= 0) return "00:00"
+
+    val seconds = (durationMillis / 1000) % 60
+    val minutes = (durationMillis / (1000 * 60)) % 60
+    val hours = durationMillis / (1000 * 60 * 60)
+
+    return if (hours > 0) {
+        String.format(Locale.US, "%02d:%02d:%02d", hours, minutes, seconds)
+    } else {
+        String.format(Locale.US, "%02d:%02d", minutes, seconds)
+    }
+}
+
+fun formatCollectionDuration(metadataMap: Map<String, Any>?): String? {
+    val durationMillis = getCollectionDurationMillis(metadataMap)
+    if (durationMillis <= 0) return null
+    return formatDurationMillis(durationMillis)
+}
+
+fun parseJsonToMap(jsonStr: String?): Map<String, Any>? {
     return jsonStr?.let {
         try {
             val jsonObject = JSONObject(it)
-            val map = mutableMapOf<String, Any>()
-            val keys = jsonObject.keys()
-            while (keys.hasNext()) {
-                val key = keys.next()
-                map[key] = jsonObject.get(key)
-            }
-            map
+            jsonObjectToMap(jsonObject)
         } catch (_: Exception) {
             null
         }
     }
+}
+
+private fun jsonObjectToMap(jsonObject: JSONObject): Map<String, Any> {
+    val map = mutableMapOf<String, Any>()
+    val keys = jsonObject.keys()
+    while (keys.hasNext()) {
+        val key = keys.next()
+        val value = jsonObject.get(key)
+        if (value is JSONObject) {
+            map[key] = jsonObjectToMap(value)
+        } else {
+            map[key] = value
+        }
+    }
+    return map
 }
 
 fun prepareDatasetPreview(context: Context, datasetPath: File, isZip: Boolean): File {
@@ -653,4 +762,73 @@ fun parseGpsCsv(file: File): List<GpsPoint> {
     }
 
     return points.sortedBy { it.datetimeUtc }
+}
+
+fun prepareDatasetZipForUpload(context: Context, file: File): File? {
+    if (!file.exists()) return null
+
+    return if (file.isFile) {
+        file
+    } else if (file.isDirectory) {
+        try {
+            val cacheZip = File(context.cacheDir, "upload_cache/${file.name}.zip")
+            cacheZip.parentFile?.mkdirs()
+
+            ZipOutputStream(FileOutputStream(cacheZip)).use { zipOut ->
+                file.walkTopDown().filter { it.isFile }.forEach { child ->
+                    val relativePath = child.relativeTo(file).path
+                    zipOut.putNextEntry(ZipEntry(relativePath))
+                    child.inputStream().use { input ->
+                        input.copyTo(zipOut)
+                    }
+                    zipOut.closeEntry()
+                }
+            }
+            cacheZip
+        } catch (e: Exception) {
+            Timber.tag("FileUtils").e(e, "Error zipping folder for upload: ${file.name}")
+            null
+        }
+    } else {
+        null
+    }
+}
+
+fun shareDatasetFile(context: Context, file: File) {
+    if (!file.exists()) return
+
+    val targetFile = prepareDatasetZipForUpload(context, file) ?: return
+
+    try {
+        val uri: Uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            targetFile
+        )
+
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = if (targetFile.extension.lowercase() == "zip") "application/zip" else "*/*"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+        val chooser = Intent.createChooser(intent, context.getString(R.string.share_dataset_title))
+        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(chooser)
+    } catch (e: Exception) {
+        Timber.tag("FileUtils").e(e, "Error sharing dataset file: ${file.name}")
+    }
+}
+
+fun deleteDatasetFileOrFolder(file: File): Boolean {
+    return try {
+        if (file.isDirectory) {
+            file.deleteRecursively()
+        } else {
+            file.delete()
+        }
+    } catch (e: Exception) {
+        Timber.tag("FileUtils").e(e, "Error deleting dataset: ${file.name}")
+        false
+    }
 }
