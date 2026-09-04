@@ -10,4 +10,9 @@
     <color name="teal_500">#009688</color>
     <color name="teal_700">#00796B</color>
     <color name="teal_a200">#64FFDA</color>
+
+    <!-- Dynamic Theme Responsive Colors -->
+    <color name="icon_tint">#00796B</color>
+    <color name="badge_bg">#00796B</color>
+    <color name="unsynced_orange">#F57C00</color>
 </resources>

@@ -25,6 +25,7 @@ import timber.log.Timber
 import java.io.OutputStreamWriter
 
 private const val TAG = "FileUtils"
+private const val UPLOAD_CACHE_DIR = "upload_cache"
 private val datePattern = Pattern.compile("(\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-\\d{3}\\.)\\w+\\.\\w+")
 const val FILE_HEADER_SENSOR_ONE = "timestamp_nano,datetime_utc,name,axis_x,accuracy\n"
 const val FILE_HEADER_SENSOR_THREE = "timestamp_nano,datetime_utc,name,axis_x,axis_y,axis_z,accuracy\n"
@@ -484,18 +485,7 @@ data class DatasetSummary(
     val subdirectory: String = "",
     val formattedDuration: String? = null,
     val durationMillis: Long = 0L
-) {
-    fun getGroupCategoryLabel(): String {
-        val dir = directory.trim()
-        val subdir = subdirectory.trim()
-        return when {
-            dir.isNotEmpty() && subdir.isNotEmpty() -> "$dir / $subdir"
-            dir.isNotEmpty() -> dir
-            subdir.isNotEmpty() -> subdir
-            else -> "Default"
-        }
-    }
-}
+)
 
 fun scanCollectedDatasets(context: Context): List<DatasetSummary> {
     val results = mutableListOf<DatasetSummary>()
@@ -532,7 +522,7 @@ fun scanCollectedDatasets(context: Context): List<DatasetSummary> {
                         }
                     }
                 } catch (e: Exception) {
-                    Timber.tag("FileUtils").e(e, "Error reading zip file: ${file.name}")
+                    Timber.tag(TAG).e(e, "Error reading zip file: ${file.name}")
                 }
 
                 val metadataMap = parseJsonToMap(metadataJsonStr)
@@ -570,7 +560,7 @@ fun scanCollectedDatasets(context: Context): List<DatasetSummary> {
                 try {
                     metadataJsonStr = file.resolve("metadata.json").readText()
                 } catch (e: Exception) {
-                    Timber.tag("FileUtils").e(e, "Error reading metadata file: ${file.name}")
+                    Timber.tag(TAG).e(e, "Error reading metadata file: ${file.name}")
                 }
 
                 val metadataMap = parseJsonToMap(metadataJsonStr)
@@ -602,13 +592,17 @@ fun scanCollectedDatasets(context: Context): List<DatasetSummary> {
     return results.sortedByDescending { it.lastModifiedMillis }
 }
 
-private fun extractDirAndSubdir(file: File, root: File, metadataMap: Map<String, Any>?): Pair<String, String> {
+fun extractDirAndSubdir(file: File, root: File, metadataMap: Map<String, Any>?): Pair<String, String> {
     var dir = metadataMap?.get("directory")?.toString()?.trim()
         ?: metadataMap?.get("dirEdittext")?.toString()?.trim()
         ?: ""
     var subdir = metadataMap?.get("subdirectory")?.toString()?.trim()
         ?: metadataMap?.get("subdirEdittext")?.toString()?.trim()
         ?: ""
+
+    val hasExplicitMetadata = metadataMap != null &&
+        (metadataMap.containsKey("directory") || metadataMap.containsKey("dirEdittext") ||
+         metadataMap.containsKey("subdirectory") || metadataMap.containsKey("subdirEdittext"))
 
     if (dir.isEmpty()) {
         val relativeParent = file.relativeToOrNull(root)?.parent
@@ -617,12 +611,21 @@ private fun extractDirAndSubdir(file: File, root: File, metadataMap: Map<String,
         }
     }
 
-    if (subdir.isEmpty()) {
+    if (!hasExplicitMetadata) {
         val filename = file.nameWithoutExtension
         val timestampIndex = filename.indexOf("-20")
         if (timestampIndex > 0) {
-            subdir = filename.substring(0, timestampIndex)
+            val prefix = filename.substring(0, timestampIndex)
+            if (dir.isEmpty()) {
+                dir = prefix
+            } else if (!generateInstanceName(prefix).equals(generateInstanceName(dir), ignoreCase = true)) {
+                subdir = prefix
+            }
         }
+    }
+
+    if (dir.isNotEmpty() && generateInstanceName(subdir).equals(generateInstanceName(dir), ignoreCase = true)) {
+        subdir = ""
     }
 
     return Pair(dir, subdir)
@@ -716,7 +719,7 @@ fun prepareDatasetPreview(context: Context, datasetPath: File, isZip: Boolean): 
                 }
             }
         } catch (e: Exception) {
-            Timber.tag("FileUtils").e(e, "Error extracting preview zip: ${datasetPath.name}")
+            Timber.tag(TAG).e(e, "Error extracting preview zip: ${datasetPath.name}")
         }
         return cacheDir
     } else {
@@ -758,22 +761,29 @@ fun parseGpsCsv(file: File): List<GpsPoint> {
             }
         }
     } catch (e: Exception) {
-        Timber.tag("FileUtils").e(e, "Error parsing GPS CSV file: ${file.name}")
+        Timber.tag(TAG).e(e, "Error parsing GPS CSV file: ${file.name}")
     }
 
     return points.sortedBy { it.datetimeUtc }
 }
 
-fun prepareDatasetZipForUpload(context: Context, file: File): File? {
-    if (!file.exists()) return null
+fun getExportFilename(dataset: DatasetSummary): String {
+    val baseName = if (dataset.path.name.endsWith(".zip", ignoreCase = true)) {
+        dataset.path.nameWithoutExtension
+    } else {
+        dataset.path.name
+    }
 
-    return if (file.isFile) {
-        file
-    } else if (file.isDirectory) {
+    return "$baseName.zip"
+}
+
+fun shareDatasetFile(context: Context, file: File) {
+    if (!file.exists()) return
+
+    val targetFile = if (file.isDirectory) {
         try {
-            val cacheZip = File(context.cacheDir, "upload_cache/${file.name}.zip")
+            val cacheZip = File(context.cacheDir, "$UPLOAD_CACHE_DIR/${file.name}.zip")
             cacheZip.parentFile?.mkdirs()
-
             ZipOutputStream(FileOutputStream(cacheZip)).use { zipOut ->
                 file.walkTopDown().filter { it.isFile }.forEach { child ->
                     val relativePath = child.relativeTo(file).path
@@ -786,18 +796,12 @@ fun prepareDatasetZipForUpload(context: Context, file: File): File? {
             }
             cacheZip
         } catch (e: Exception) {
-            Timber.tag("FileUtils").e(e, "Error zipping folder for upload: ${file.name}")
-            null
+            Timber.tag(TAG).e(e, "Error zipping dataset directory for sharing: ${file.name}")
+            return
         }
     } else {
-        null
+        file
     }
-}
-
-fun shareDatasetFile(context: Context, file: File) {
-    if (!file.exists()) return
-
-    val targetFile = prepareDatasetZipForUpload(context, file) ?: return
 
     try {
         val uri: Uri = FileProvider.getUriForFile(
@@ -816,44 +820,108 @@ fun shareDatasetFile(context: Context, file: File) {
         chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(chooser)
     } catch (e: Exception) {
-        Timber.tag("FileUtils").e(e, "Error sharing dataset file: ${file.name}")
+        Timber.tag(TAG).e(e, "Error sharing dataset file: ${file.name}")
     }
 }
 
-fun deleteDatasetFileOrFolder(file: File): Boolean {
+class RecoverableDeleteException(val intentSender: android.content.IntentSender) : Exception()
+
+fun deleteDatasetFileOrFolder(context: Context, file: File): Boolean {
     if (!file.exists()) return true
 
-    return try {
+    try {
         if (file.isDirectory) {
             file.deleteRecursively()
         } else {
             file.delete()
         }
+    } catch (e: Exception) {
+        Timber.tag(TAG).e(e, "Standard delete failed for ${file.name}")
+    }
 
-        if (!file.exists()) {
-            cleanUpEmptyParentDirectories(file.parentFile)
-            return true
-        }
+    if (!file.exists()) {
+        cleanUpEmptyParentDirectories(file.parentFile)
+        return true
+    }
 
-        if (file.isDirectory) {
-            file.walkBottomUp().forEach { child ->
+    try {
+        deleteViaMediaStore(context, file)
+    } catch (e: RecoverableDeleteException) {
+        throw e
+    } catch (e: Exception) {
+        Timber.tag(TAG).e(e, "MediaStore delete failed for ${file.name}")
+    }
+
+    if (!file.exists()) {
+        cleanUpEmptyParentDirectories(file.parentFile)
+        return true
+    }
+
+    try {
+        java.nio.file.Files.walk(file.toPath())
+            .sorted(Comparator.reverseOrder())
+            .forEach { path ->
                 try {
-                    child.delete()
+                    java.nio.file.Files.deleteIfExists(path)
                 } catch (_: Exception) {}
             }
-            file.delete()
-        }
-
-        cleanUpEmptyParentDirectories(file.parentFile)
-
-        val isDeleted = !file.exists()
-        if (!isDeleted) {
-            Timber.tag("FileUtils").e("Failed to delete file/folder: ${file.absolutePath}")
-        }
-        isDeleted
     } catch (e: Exception) {
-        Timber.tag("FileUtils").e(e, "Error deleting dataset: ${file.name}")
-        !file.exists()
+        Timber.tag(TAG).e(e, "NIO delete failed for ${file.name}")
+    }
+
+    cleanUpEmptyParentDirectories(file.parentFile)
+
+    val isDeleted = !file.exists()
+    if (!isDeleted) {
+        Timber.tag(TAG).e("Failed to delete file/folder: ${file.absolutePath}")
+    }
+    return isDeleted
+}
+
+private fun deleteViaMediaStore(context: Context, file: File) {
+    val resolver = context.contentResolver
+    val projection = arrayOf(android.provider.MediaStore.MediaColumns._ID)
+    val selection = "${android.provider.MediaStore.MediaColumns.DATA} = ?"
+    val selectionArgs = arrayOf(file.absolutePath)
+
+    val uris = mutableListOf(
+        android.provider.MediaStore.Files.getContentUri("external"),
+        android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+    )
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        uris.add(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI)
+    }
+
+    for (baseUri in uris) {
+        try {
+            resolver.query(baseUri, projection, selection, selectionArgs, null)?.use { cursor ->
+                while (cursor.moveToNext()) {
+                    val id = cursor.getLong(cursor.getColumnIndexOrThrow(android.provider.MediaStore.MediaColumns._ID))
+                    val deleteUri = android.content.ContentUris.withAppendedId(baseUri, id)
+                    try {
+                        resolver.delete(deleteUri, null, null)
+                    } catch (e: SecurityException) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && e is android.app.RecoverableSecurityException) {
+                            throw RecoverableDeleteException(e.userAction.actionIntent.intentSender)
+                        }
+                    }
+                }
+            }
+        } catch (e: RecoverableDeleteException) {
+            throw e
+        } catch (_: Exception) {}
+    }
+
+    if (file.isDirectory) {
+        val dirSelection = "${android.provider.MediaStore.MediaColumns.DATA} LIKE ?"
+        val dirSelectionArgs = arrayOf("${file.absolutePath}/%")
+        for (baseUri in uris) {
+            try {
+                resolver.delete(baseUri, dirSelection, dirSelectionArgs)
+            } catch (e: RecoverableDeleteException) {
+                throw e
+            } catch (_: Exception) {}
+        }
     }
 }
 

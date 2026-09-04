@@ -5,6 +5,7 @@ import android.text.format.Formatter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import org.rjpd.msdc.databinding.ItemDatasetBinding
 import org.rjpd.msdc.databinding.ItemDatasetGroupHeaderBinding
@@ -32,17 +33,37 @@ sealed class HistoryListItem {
 class HistoryAdapter(
     private val directoryGroups: List<DirectoryGroup>,
     private val viewedDatasetNames: Set<String> = emptySet(),
+    syncedDatasetNames: Set<String> = emptySet(),
     private val onItemClick: (DatasetSummary) -> Unit,
     private val onMapClick: ((DatasetSummary) -> Unit)? = null,
+    private val onSyncClick: ((DatasetSummary) -> Unit)? = null,
     private val onShareClick: ((DatasetSummary) -> Unit)? = null,
     private val onDeleteClick: ((DatasetSummary) -> Unit)? = null,
     private val onGroupToggle: (() -> Unit)? = null
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
+    private val syncedDatasetNames = syncedDatasetNames.toMutableSet()
     private val displayItems = mutableListOf<HistoryListItem>()
 
     init {
         rebuildDisplayItems()
+    }
+
+    fun markDatasetSynced(datasetName: String) {
+        if (syncedDatasetNames.add(datasetName)) {
+            val index = displayItems.indexOfFirst { it is HistoryListItem.DatasetCard && it.dataset.name == datasetName }
+            if (index != -1) {
+                notifyItemChanged(index)
+            }
+        }
+    }
+
+    fun updateSyncedDatasetNames(newSyncedNames: Set<String>) {
+        if (syncedDatasetNames != newSyncedNames) {
+            syncedDatasetNames.clear()
+            syncedDatasetNames.addAll(newSyncedNames)
+            notifyDataSetChanged()
+        }
     }
 
     private fun rebuildDisplayItems() {
@@ -50,8 +71,12 @@ class HistoryAdapter(
         for (dirGroup in directoryGroups) {
             displayItems.add(HistoryListItem.DirectoryHeader(dirGroup))
             if (dirGroup.isExpanded) {
-                val hasSingleMatchingSubdir = dirGroup.subdirectories.size == 1 &&
-                        dirGroup.subdirectories[0].subdirectoryName == dirGroup.directoryName
+                val hasSingleMatchingSubdir = dirGroup.subdirectories.size == 1 && run {
+                    val subName = dirGroup.subdirectories[0].subdirectoryName
+                    subName.equals(dirGroup.directoryName, ignoreCase = true) ||
+                    subName.equals("Default", ignoreCase = true) ||
+                    subName.isEmpty()
+                }
 
                 if (hasSingleMatchingSubdir) {
                     for (dataset in dirGroup.subdirectories[0].datasets) {
@@ -164,6 +189,15 @@ class HistoryAdapter(
         fun bind(dataset: DatasetSummary) {
             binding.datasetNameTextview.text = dataset.name
 
+            val isSynced = syncedDatasetNames.contains(dataset.name)
+            if (isSynced) {
+                binding.syncButton.setImageResource(R.drawable.ic_cloud_done)
+                binding.syncButton.setColorFilter(ContextCompat.getColor(itemView.context, R.color.icon_tint))
+            } else {
+                binding.syncButton.setImageResource(R.drawable.ic_cloud_upload)
+                binding.syncButton.setColorFilter(ContextCompat.getColor(itemView.context, R.color.unsynced_orange))
+            }
+
             val isViewed = viewedDatasetNames.contains(dataset.name)
             if (!isViewed) {
                 binding.datasetNewBadgeTextview.visibility = View.VISIBLE
@@ -192,6 +226,10 @@ class HistoryAdapter(
                 }
             } else {
                 binding.mapButton.visibility = View.GONE
+            }
+
+            binding.syncButton.setOnClickListener {
+                onSyncClick?.invoke(dataset)
             }
 
             binding.shareButton.setOnClickListener {

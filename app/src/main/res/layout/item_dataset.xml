@@ -24,7 +24,7 @@
             android:layout_marginEnd="8dp"
             android:contentDescription="@null"
             android:src="@drawable/ic_route_signpost"
-            app:tint="@color/teal_700" />
+            app:tint="@color/icon_tint" />
 
         <TextView
             android:id="@+id/dataset_name_textview"
@@ -52,7 +52,7 @@
             android:textColor="@color/white"
             android:textSize="10sp"
             android:textStyle="bold"
-            android:text="NEW"
+            android:text="@string/dataset_badge_new"
             android:paddingHorizontal="5dp"
             android:paddingVertical="1dp"
             android:layout_marginEnd="6dp"
@@ -62,7 +62,7 @@
             android:id="@+id/dataset_type_badge_textview"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@color/teal_700"
+            android:background="@color/badge_bg"
             android:textColor="@color/white"
             android:textSize="10sp"
             android:textStyle="bold"
@@ -103,7 +103,18 @@
             android:src="@drawable/ic_map_location"
             android:contentDescription="@string/view_on_map"
             android:visibility="gone"
-            app:tint="@color/teal_700" />
+            app:tint="@color/icon_tint" />
+
+        <ImageButton
+            android:id="@+id/sync_button"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="8dp"
+            android:padding="5dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_cloud_upload"
+            android:contentDescription="@string/sync_dataset_action"
+            app:tint="@color/unsynced_orange" />
 
         <ImageButton
             android:id="@+id/share_button"
@@ -112,9 +123,9 @@
             android:layout_marginStart="8dp"
             android:padding="5dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_cloud_upload"
+            android:src="@drawable/ic_share"
             android:contentDescription="@string/share_dataset_action"
-            app:tint="@color/teal_700" />
+            app:tint="@color/icon_tint" />
 
         <ImageButton
             android:id="@+id/delete_button"
@@ -124,8 +135,8 @@
             android:padding="5dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_delete_trash"
-            android:contentDescription="Delete collection"
-            app:tint="@color/teal_700" />
+            android:contentDescription="@string/delete_collection_description"
+            app:tint="@color/icon_tint" />
     </LinearLayout>
 
 </LinearLayout>

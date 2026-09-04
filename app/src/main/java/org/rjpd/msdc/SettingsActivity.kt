@@ -2,18 +2,21 @@ package org.rjpd.msdc
 
 import android.content.Intent
 import android.hardware.camera2.CameraCharacteristics
-import android.hardware.camera2.CameraManager
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.documentfile.provider.DocumentFile
 import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 
+private const val PREF_CLOUD_STORAGE_FOLDER = "cloud_storage_folder"
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -38,11 +41,27 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     class SettingsFragment : PreferenceFragmentCompat() {
+
+        private val folderPickerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                val treeUri = result.data?.data
+                if (treeUri != null) {
+                    try {
+                        requireContext().contentResolver.takePersistableUriPermission(
+                            treeUri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        )
+                    } catch (_: Exception) {}
+                    CloudSyncManager.setSafStorageUri(requireContext(), treeUri)
+                    updateCloudFolderSummary()
+                }
+            }
+        }
+
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             setPreferencesFromResource(R.xml.user_preferences, rootKey)
 
             val infoUtils = InfoUtils(requireContext())
-            requireContext().getSystemService(CAMERA_SERVICE) as CameraManager
             setCameras(infoUtils)
 
             val aboutPreference = findPreference<Preference>("about")
@@ -60,6 +79,65 @@ class SettingsActivity : AppCompatActivity() {
             findPreference<Preference>("camera_resolution")?.setOnPreferenceChangeListener { _, _ ->
                 restartActivity()
                 true
+            }
+
+            findPreference<Preference>(PREF_CUSTOM_UPLOAD_URL)?.setOnPreferenceChangeListener { _, newValue ->
+                val newUrl = (newValue as? String)?.trim() ?: ""
+                val oldUrl = CloudSyncManager.getCustomUploadUrl(requireContext())
+                if (newUrl != oldUrl) {
+                    CloudSyncManager.clearSyncedDatasetNames(requireContext())
+                }
+                true
+            }
+
+            setupCloudStorageFolderPreference()
+        }
+
+        override fun onResume() {
+            super.onResume()
+            updateCloudFolderSummary()
+        }
+
+        private fun setupCloudStorageFolderPreference() {
+            val folderPref = findPreference<Preference>(PREF_CLOUD_STORAGE_FOLDER)
+            folderPref?.onPreferenceClickListener = Preference.OnPreferenceClickListener {
+                val treeUri = CloudSyncManager.getSafStorageUri(requireContext())
+                if (treeUri != null) {
+                    AlertDialog.Builder(requireContext())
+                        .setTitle(R.string.cloud_storage_folder_title)
+                        .setItems(arrayOf(getString(R.string.dialog_change_folder), getString(R.string.dialog_clear_folder))) { _, which ->
+                            if (which == 0) {
+                                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+                                }
+                                folderPickerLauncher.launch(intent)
+                            } else {
+                                CloudSyncManager.setSafStorageUri(requireContext(), null)
+                                updateCloudFolderSummary()
+                            }
+                        }
+                        .setNegativeButton(R.string.cancel, null)
+                        .show()
+                } else {
+                    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+                    }
+                    folderPickerLauncher.launch(intent)
+                }
+                true
+            }
+            updateCloudFolderSummary()
+        }
+
+        private fun updateCloudFolderSummary() {
+            val folderPref = findPreference<Preference>(PREF_CLOUD_STORAGE_FOLDER) ?: return
+            val treeUri = CloudSyncManager.getSafStorageUri(requireContext())
+            if (treeUri != null) {
+                val folderDoc = DocumentFile.fromTreeUri(requireContext(), treeUri)
+                val name = folderDoc?.name ?: treeUri.lastPathSegment ?: treeUri.toString()
+                folderPref.summary = "Selected: $name\n(Tap to change or remove)"
+            } else {
+                folderPref.summary = getString(R.string.cloud_storage_folder_not_set)
             }
         }
 

@@ -35,6 +35,11 @@
             app:title="@string/custom_upload_token_title"
             app:summary="@string/custom_upload_token_summary"
             app:dialogTitle="@string/custom_upload_token_title" />
+
+        <Preference
+            app:key="cloud_storage_folder"
+            app:title="@string/cloud_storage_folder_title"
+            app:summary="@string/cloud_storage_folder_not_set" />
     </PreferenceCategory>
 
     <PreferenceCategory

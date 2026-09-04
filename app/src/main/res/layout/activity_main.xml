@@ -284,6 +284,8 @@
         android:orientation="horizontal"
         android:layout_marginBottom="24dp"
         android:padding="8dp"
+        android:clipChildren="false"
+        android:clipToPadding="false"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -298,7 +300,6 @@
             android:src="@drawable/ic_folder_data"
             android:contentDescription="@string/title_activity_datasets"
             android:tooltipText="@string/title_activity_datasets"
-            android:elevation="4dp"
             app:tint="@color/white" />
 
         <ImageButton
@@ -310,7 +311,6 @@
             android:src="@drawable/ic_record_dot"
             android:contentDescription="@string/start"
             android:tooltipText="@string/start"
-            android:elevation="6dp"
             app:tint="@color/white" />
 
         <ImageButton
@@ -322,7 +322,6 @@
             android:src="@drawable/ic_settings_gear"
             android:contentDescription="@string/settings"
             android:tooltipText="@string/settings"
-            android:elevation="4dp"
             app:tint="@color/white" />
     </LinearLayout>
 

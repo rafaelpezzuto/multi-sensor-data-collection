@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark Mode Theme Overrides for High Contrast -->
+    <color name="icon_tint">#80CBC4</color>
+    <color name="badge_bg">#004D40</color>
+    <color name="unsynced_orange">#FFB74D</color>
+</resources>
