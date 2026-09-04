@@ -13,6 +13,8 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.OrientationEventListener
 import android.view.Surface
 import android.view.WindowManager
@@ -41,16 +43,18 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import org.joda.time.DateTime
 import org.rjpd.msdc.databinding.ActivityMainBinding
 import timber.log.Timber
 import androidx.core.view.isVisible
 
+private const val VIDEO_FINALIZE_TIMEOUT_MS = 10000L
 
 class MainActivity : AppCompatActivity() {
     private lateinit var viewBinding: ActivityMainBinding
@@ -63,6 +67,7 @@ class MainActivity : AppCompatActivity() {
     private var preview: Preview? = null
     private var recording: Recording? = null
     private var isCollecting: Boolean = false
+    private var videoFinalizeDeferred: CompletableDeferred<Unit>? = null
 
     private lateinit var intentSensorsService: Intent
     private lateinit var intentGeolocationTrackerService: Intent
@@ -119,6 +124,31 @@ class MainActivity : AppCompatActivity() {
         updateGpsText()
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+
+        val savedDir = sharedPreferences.getString("saved_dir_input", "") ?: ""
+        val savedSubdir = sharedPreferences.getString("saved_subdir_input", "") ?: ""
+        if (savedDir.isNotEmpty()) {
+            viewBinding.dirEdittext.setText(savedDir)
+        }
+        if (savedSubdir.isNotEmpty()) {
+            viewBinding.subdirEdittext.setText(savedSubdir)
+        }
+
+        viewBinding.dirEdittext.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                sharedPreferences.edit().putString("saved_dir_input", s?.toString() ?: "").apply()
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        viewBinding.subdirEdittext.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                sharedPreferences.edit().putString("saved_subdir_input", s?.toString() ?: "").apply()
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
         infoUtils = InfoUtils(this)
         timeUtils = TimeUtils(Handler(Looper.getMainLooper()), viewBinding.clockTextview) {
             updateMemoryIndicator()
@@ -433,15 +463,17 @@ class MainActivity : AppCompatActivity() {
                         Timber.tag(TAG).d("Data capture started at $mediaStartDateTime.")
                     }
                     is VideoRecordEvent.Finalize -> {
+                        mediaStopDateTime = TimeUtils.getDateTimeUTC(System.currentTimeMillis())
+
                         if (!recordEvent.hasError()) {
-                            mediaStopDateTime = TimeUtils.getDateTimeUTC(System.currentTimeMillis())
                             Timber.tag(TAG).d("Data capture succeeded at $mediaStopDateTime: ${recordEvent.outputResults.outputUri}.")
                         } else {
                             recording?.close()
                             recording = null
                             Timber.tag(TAG).e("Video capture ends with error: ${recordEvent.error}")
                         }
-                        viewBinding.startStopButton.isEnabled = false
+
+                        videoFinalizeDeferred?.complete(Unit)
                     }
                 }
             }
@@ -521,7 +553,11 @@ class MainActivity : AppCompatActivity() {
 
             if (deleteDirectory) {
                 Timber.tag(TAG).d("Deleting unzipped data.")
-                directory.deleteRecursively()
+                try {
+                    deleteDatasetFileOrFolder(this, directory)
+                } catch (e: Exception) {
+                    Timber.tag(TAG).e(e, "Error deleting unzipped directory after zip")
+                }
             }
         } else {
             viewBinding.statusTextview.text = buildString {
@@ -546,7 +582,12 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        if (viewBinding.radioAudioVideo.isChecked) {
+        viewBinding.startStopButton.isEnabled = false
+        viewBinding.startStopButton.alpha = 0.5f
+
+        val isVideoMode = viewBinding.radioAudioVideo.isChecked
+        if (isVideoMode) {
+            videoFinalizeDeferred = CompletableDeferred()
             recording?.stop()
             recording = null
         } else {
@@ -561,20 +602,32 @@ class MainActivity : AppCompatActivity() {
         viewBinding.statusTextview.text = getString(R.string.status_organizing_data)
 
         CoroutineScope(Dispatchers.Main).launch {
-            if (viewBinding.radioAudioVideo.isChecked) {
-                while (!mediaDataDirectoryCollecting.resolve("$tmpFilename.video.mp4").exists()) {
-                    delay(500)
-                }
-                val moveJobVideo = async(Dispatchers.IO) {
-                    moveContent(
-                        mediaDataDirectoryCollecting.resolve("$tmpFilename.video.mp4"),
-                        userDataInstancePath
-                    )
+            if (isVideoMode) {
+                try {
+                    withTimeout(VIDEO_FINALIZE_TIMEOUT_MS) {
+                        videoFinalizeDeferred?.await()
+                    }
+                } catch (e: Exception) {
+                    Timber.tag(TAG).e(e, "Timeout or error waiting for video finalize")
+                    if (!::mediaStopDateTime.isInitialized) {
+                        mediaStopDateTime = TimeUtils.getDateTimeUTC(System.currentTimeMillis())
+                    }
+                } finally {
+                    videoFinalizeDeferred = null
                 }
 
-                val moveJobVideoResult = moveJobVideo.await()
-                if (moveJobVideoResult) {
-                    viewBinding.statusTextview.text = getString(R.string.status_move_video_file)
+                val videoFile = mediaDataDirectoryCollecting.resolve("$tmpFilename.video.mp4")
+                if (videoFile.exists()) {
+                    val moveJobVideo = async(Dispatchers.IO) {
+                        moveContent(videoFile, userDataInstancePath)
+                    }
+
+                    val moveJobVideoResult = moveJobVideo.await()
+                    if (moveJobVideoResult) {
+                        viewBinding.statusTextview.text = getString(R.string.status_move_video_file)
+                    }
+                } else {
+                    Timber.tag(TAG).w("Video file does not exist to move: ${videoFile.absolutePath}")
                 }
             }
 
@@ -620,6 +673,8 @@ class MainActivity : AppCompatActivity() {
 
             } else {
                 Timber.tag(TAG).d("The move job is not ready.")
+                unlockScreenOrientation()
+                enableInterfaceElements()
             }
         }
     }
@@ -666,15 +721,22 @@ class MainActivity : AppCompatActivity() {
 
     private fun generateMetadata() {
         Timber.tag(TAG).d("Generating metadata...")
+
+        val now = TimeUtils.getDateTimeUTC(System.currentTimeMillis())
+        val btnStart = if (::buttonStartDateTime.isInitialized) buttonStartDateTime else now
+        val btnStop = if (::buttonStopDateTime.isInitialized) buttonStopDateTime else now
+        val medStart = if (::mediaStartDateTime.isInitialized) mediaStartDateTime else btnStart
+        val medStop = if (::mediaStopDateTime.isInitialized) mediaStopDateTime else btnStop
+
         writeMetadataFile(
             sharedPreferences.all,
             resources.displayMetrics,
             infoUtils.getAvailableSensors(),
             viewBinding.angleTextview.text as String,
-            buttonStartDateTime,
-            buttonStopDateTime,
-            mediaStartDateTime,
-            mediaStopDateTime,
+            btnStart,
+            btnStop,
+            medStart,
+            medStop,
             userDataInstancePath,
             directory = viewBinding.dirEdittext.text.toString(),
             subdirectory = viewBinding.subdirEdittext.text.toString()
