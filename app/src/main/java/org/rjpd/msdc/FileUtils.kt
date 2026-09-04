@@ -592,13 +592,17 @@ fun scanCollectedDatasets(context: Context): List<DatasetSummary> {
     return results.sortedByDescending { it.lastModifiedMillis }
 }
 
-private fun extractDirAndSubdir(file: File, root: File, metadataMap: Map<String, Any>?): Pair<String, String> {
+fun extractDirAndSubdir(file: File, root: File, metadataMap: Map<String, Any>?): Pair<String, String> {
     var dir = metadataMap?.get("directory")?.toString()?.trim()
         ?: metadataMap?.get("dirEdittext")?.toString()?.trim()
         ?: ""
     var subdir = metadataMap?.get("subdirectory")?.toString()?.trim()
         ?: metadataMap?.get("subdirEdittext")?.toString()?.trim()
         ?: ""
+
+    val hasExplicitMetadata = metadataMap != null &&
+        (metadataMap.containsKey("directory") || metadataMap.containsKey("dirEdittext") ||
+         metadataMap.containsKey("subdirectory") || metadataMap.containsKey("subdirEdittext"))
 
     if (dir.isEmpty()) {
         val relativeParent = file.relativeToOrNull(root)?.parent
@@ -607,12 +611,21 @@ private fun extractDirAndSubdir(file: File, root: File, metadataMap: Map<String,
         }
     }
 
-    if (subdir.isEmpty()) {
+    if (!hasExplicitMetadata) {
         val filename = file.nameWithoutExtension
         val timestampIndex = filename.indexOf("-20")
         if (timestampIndex > 0) {
-            subdir = filename.substring(0, timestampIndex)
+            val prefix = filename.substring(0, timestampIndex)
+            if (dir.isEmpty()) {
+                dir = prefix
+            } else if (!generateInstanceName(prefix).equals(generateInstanceName(dir), ignoreCase = true)) {
+                subdir = prefix
+            }
         }
+    }
+
+    if (dir.isNotEmpty() && generateInstanceName(subdir).equals(generateInstanceName(dir), ignoreCase = true)) {
+        subdir = ""
     }
 
     return Pair(dir, subdir)

@@ -138,4 +138,84 @@ class FileUtilsUnitTest {
             tempDir.deleteRecursively()
         }
     }
+
+    @Test
+    fun generateInstancePath_withDirAndNoSubdir() {
+        val tempDir = Files.createTempDirectory("test_msdc").toFile()
+        try {
+            val result = generateInstancePath(tempDir, "2026-09-03-21-00-00", "route alpha", "")
+            assertEquals(
+                tempDir.resolve("RouteAlpha-2026-09-03-21-00-00").absolutePath,
+                result.absolutePath
+            )
+            assertTrue(result.exists())
+        } finally {
+            tempDir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun extractDirAndSubdir_withDirAndNoSubdir() {
+        val tempDir = Files.createTempDirectory("test_msdc").toFile()
+        try {
+            val datasetFile = tempDir.resolve("RouteAlpha-2026-09-03-21-00-00.zip")
+            val metadata = mapOf<String, Any>(
+                "directory" to "route alpha",
+                "subdirectory" to ""
+            )
+            val (dir, subdir) = extractDirAndSubdir(datasetFile, tempDir, metadata)
+            assertEquals("route alpha", dir)
+            assertEquals("", subdir)
+        } finally {
+            tempDir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun extractDirAndSubdir_withDirAndSubdir() {
+        val tempDir = Files.createTempDirectory("test_msdc").toFile()
+        try {
+            val subDir = tempDir.resolve("RouteAlpha")
+            val datasetFile = subDir.resolve("SegmentOne-2026-09-03-21-00-00.zip")
+            val metadata = mapOf<String, Any>(
+                "directory" to "route alpha",
+                "subdirectory" to "segment one"
+            )
+            val (dir, subdir) = extractDirAndSubdir(datasetFile, tempDir, metadata)
+            assertEquals("route alpha", dir)
+            assertEquals("segment one", subdir)
+        } finally {
+            tempDir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun extractDirAndSubdir_noDirAndNoSubdir() {
+        val tempDir = Files.createTempDirectory("test_msdc").toFile()
+        try {
+            val datasetFile = tempDir.resolve("2026-09-03-21-00-00.zip")
+            val metadata = mapOf<String, Any>(
+                "directory" to "",
+                "subdirectory" to ""
+            )
+            val (dir, subdir) = extractDirAndSubdir(datasetFile, tempDir, metadata)
+            assertEquals("", dir)
+            assertEquals("", subdir)
+        } finally {
+            tempDir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun extractDirAndSubdir_legacyFileWithoutMetadata_rootLevel() {
+        val tempDir = Files.createTempDirectory("test_msdc").toFile()
+        try {
+            val datasetFile = tempDir.resolve("RouteAlpha-2026-09-03-21-00-00.zip")
+            val (dir, subdir) = extractDirAndSubdir(datasetFile, tempDir, null)
+            assertEquals("RouteAlpha", dir)
+            assertEquals("", subdir)
+        } finally {
+            tempDir.deleteRecursively()
+        }
+    }
 }
