@@ -1,7 +1,10 @@
 package org.rjpd.msdc
 
+import java.io.File
+import java.nio.file.Files
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.junit.Assert.*
 
 
 class FileUtilsUnitTest {
@@ -69,5 +72,70 @@ class FileUtilsUnitTest {
     fun extractSensorPostfixFilename_unknown() {
         val postfix = extractSensorPostfixFilename("1,2,3,4")
         assertEquals("unknown", postfix)
+    }
+
+    @Test
+    fun getExportFilename_zipDataset() {
+        val dataset = DatasetSummary(
+            name = "SegmentOne-2026-09-03-20-00-00.zip",
+            path = File("/mock/RouteAlpha/SegmentOne-2026-09-03-20-00-00.zip"),
+            directory = "route alpha",
+            subdirectory = "segment one",
+            sizeBytes = 1024L,
+            formattedSize = "1 KB",
+            lastModifiedMillis = 0L,
+            fileCount = 5,
+            isZip = true,
+            fileList = emptyList(),
+            metadataMap = null
+        )
+        val exportFilename = getExportFilename(dataset)
+        assertEquals("SegmentOne-2026-09-03-20-00-00.zip", exportFilename)
+    }
+
+    @Test
+    fun getExportFilename_folderDataset() {
+        val dataset = DatasetSummary(
+            name = "SegmentOne-2026-09-03-20-00-00",
+            path = File("/mock/RouteAlpha/SegmentOne-2026-09-03-20-00-00"),
+            directory = "route alpha",
+            subdirectory = "segment one",
+            sizeBytes = 1024L,
+            formattedSize = "1 KB",
+            lastModifiedMillis = 0L,
+            fileCount = 5,
+            isZip = false,
+            fileList = emptyList(),
+            metadataMap = null
+        )
+        val exportFilename = getExportFilename(dataset)
+        assertEquals("SegmentOne-2026-09-03-20-00-00.zip", exportFilename)
+    }
+
+    @Test
+    fun generateInstancePath_emptyDirAndSubdir() {
+        val tempDir = Files.createTempDirectory("test_msdc").toFile()
+        try {
+            val result = generateInstancePath(tempDir, "2026-09-03-21-00-00", "", "")
+            assertEquals(tempDir.resolve("2026-09-03-21-00-00").absolutePath, result.absolutePath)
+            assertTrue(result.exists())
+        } finally {
+            tempDir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun generateInstancePath_withDirAndSubdir() {
+        val tempDir = Files.createTempDirectory("test_msdc").toFile()
+        try {
+            val result = generateInstancePath(tempDir, "2026-09-03-21-00-00", "route alpha", "segment one")
+            assertEquals(
+                tempDir.resolve("RouteAlpha").resolve("SegmentOne-2026-09-03-21-00-00").absolutePath,
+                result.absolutePath
+            )
+            assertTrue(result.exists())
+        } finally {
+            tempDir.deleteRecursively()
+        }
     }
 }
