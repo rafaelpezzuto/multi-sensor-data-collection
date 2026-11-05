@@ -7,9 +7,11 @@ import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
+import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceDataStore
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
+import androidx.preference.SwitchPreferenceCompat
 import java.text.DateFormat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -17,16 +19,20 @@ import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 private const val ARG_DESTINATION_ID = "destination_id"
+private const val STATE_ADVANCED_EXPANDED = "advanced_expanded"
 
 /** Lists saved S3 destinations; each opens [S3DestinationFragment]. */
 class S3DestinationsFragment : PreferenceFragmentCompat() {
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        preferenceScreen = preferenceManager.createPreferenceScreen(requireContext())
+        preferenceScreen = preferenceManager.createPreferenceScreen(requireContext()).apply {
+            title = getString(R.string.s3_destinations_title)
+        }
     }
 
     override fun onResume() {
         super.onResume()
+        (activity as? SettingsActivity)?.title = getString(R.string.s3_destinations_title)
 
         val context = requireContext()
         preferenceScreen.removeAll()
@@ -62,6 +68,7 @@ class S3DestinationsFragment : PreferenceFragmentCompat() {
 class S3DestinationFragment : PreferenceFragmentCompat() {
 
     private lateinit var destination: S3Destination
+    private var advancedExpanded = false
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         val context = requireContext()
@@ -69,14 +76,40 @@ class S3DestinationFragment : PreferenceFragmentCompat() {
             parentFragmentManager.popBackStack()
             return
         }
+
         preferenceManager.preferenceDataStore = DestinationStore()
         setPreferencesFromResource(R.xml.s3_destination_preferences, rootKey)
+        advancedExpanded = savedInstanceState?.getBoolean(STATE_ADVANCED_EXPANDED) ?: false
+
+        findPreference<PreferenceCategory>("s3_advanced")?.isVisible = advancedExpanded
+        findPreference<Preference>("s3_advanced_toggle")?.apply {
+            setSummary(if (advancedExpanded) R.string.s3_advanced_hide else R.string.s3_advanced_show)
+            setOnPreferenceClickListener {
+                advancedExpanded = !advancedExpanded
+                findPreference<PreferenceCategory>("s3_advanced")?.isVisible = advancedExpanded
+                setSummary(if (advancedExpanded) R.string.s3_advanced_hide else R.string.s3_advanced_show)
+                true
+            }
+        }
+
+        for ((key, help) in listOf(
+            "name" to R.string.s3_name_help,
+            "endpoint" to R.string.s3_endpoint_help,
+            "bucket" to R.string.s3_bucket_help
+        )) {
+            findPreference<EditTextPreference>(key)?.summaryProvider = Preference.SummaryProvider<EditTextPreference> {
+                val value = it.text.orEmpty()
+                if (value.isBlank()) getString(help) else value
+            }
+        }
 
         findPreference<EditTextPreference>("endpoint")?.apply {
             setOnBindEditTextListener { it.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI }
             setOnPreferenceChangeListener { _, value ->
                 val endpoint = (value as String).trim()
-                val valid = endpoint.startsWith("https://") && endpoint.toHttpUrlOrNull() != null
+                val url = endpoint.toHttpUrlOrNull()
+                val valid = url?.isHttps == true && url.username.isEmpty() && url.password.isEmpty() &&
+                        url.encodedPath == "/" && url.query == null && url.fragment == null
                 if (!valid) Toast.makeText(context, R.string.s3_endpoint_invalid, Toast.LENGTH_LONG).show()
                 valid
             }
@@ -101,14 +134,30 @@ class S3DestinationFragment : PreferenceFragmentCompat() {
         setupSecret("access_key", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS) { S3Destinations.hasAccessKey(context, destination.id) }
         setupSecret("secret_key", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD) { S3Destinations.hasSecretKey(context, destination.id) }
 
+        findPreference<SwitchPreferenceCompat>("overwrite")?.setOnPreferenceChangeListener { preference, value ->
+            if (value == false) return@setOnPreferenceChangeListener true
+
+            AlertDialog.Builder(context)
+                .setTitle(R.string.s3_overwrite_confirm_title)
+                .setMessage(R.string.s3_overwrite_confirm_message)
+                .setPositiveButton(R.string.s3_overwrite_confirm_action) { _, _ ->
+                    (preference as SwitchPreferenceCompat).isChecked = true
+                }
+                .setNegativeButton(R.string.cancel, null)
+                .show()
+            false
+        }
+
         findPreference<Preference>("trust_certificate")?.setOnPreferenceClickListener {
             onTrustCertificateClicked()
             true
         }
+
         findPreference<Preference>("test_connection")?.setOnPreferenceClickListener {
             runConnectionTest(it)
             true
         }
+
         findPreference<Preference>("delete_destination")?.setOnPreferenceClickListener {
             AlertDialog.Builder(context)
                 .setTitle(R.string.s3_delete_destination_title)
@@ -130,7 +179,19 @@ class S3DestinationFragment : PreferenceFragmentCompat() {
                 .show()
             true
         }
+
         updateTrustSummary()
+        updateKeyPreview()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        (activity as? SettingsActivity)?.title = getString(R.string.s3_editor_title)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean(STATE_ADVANCED_EXPANDED, advancedExpanded)
+        super.onSaveInstanceState(outState)
     }
 
     private fun setupSecret(key: String, inputType: Int, isSet: () -> Boolean) {
@@ -148,6 +209,7 @@ class S3DestinationFragment : PreferenceFragmentCompat() {
                         S3Destinations.setSecretKey(requireContext(), destination.id, secret)
                     }
                 }
+
                 (preference as EditTextPreference).text = null
                 false
             }
@@ -226,10 +288,19 @@ class S3DestinationFragment : PreferenceFragmentCompat() {
         }
     }
 
+    private fun updateKeyPreview() {
+        val base = renderKeyBase(destination.keyTemplate, "City", "Route", "Route-2026-01-01-12-00-00-000")
+        val key = if (destination.zipMode) "$base.zip" else "$base/video.mp4"
+        findPreference<Preference>("key_preview")?.summary = getString(
+            R.string.s3_key_preview, destination.bucket.ifBlank { "bucket" }, key
+        )
+    }
+
     private fun update(updated: S3Destination) {
         destination = updated
         S3Destinations.save(requireContext(), updated)
         updateTrustSummary()
+        updateKeyPreview()
     }
 
     private inner class DestinationStore : PreferenceDataStore() {

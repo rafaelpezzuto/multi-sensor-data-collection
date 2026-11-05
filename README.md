@@ -69,9 +69,10 @@ MultiSensorDC/<dataset_name>/
 
 Collections can be uploaded directly from the phone to any S3-compatible object store.
 
-1. **Settings → S3 Destinations → Add destination.** Enter the endpoint (`https://` only), region, bucket and the access key and secret. Credentials are encrypted with a key held in the Android Keystore, are never shown again, and are excluded from backups and from `metadata.json`.
-2. **Test connection** writes, lists and deletes a small test object and checks multipart uploads, which resuming needs.
-3. **Settings → Active S3 destination** selects where *Sync* uploads. "Off" keeps using the server URL or storage folder.
+1. Open **Settings → Collection upload** and set **Send collections to → S3-compatible storage**. Other options are an HTTP upload server or an Android device/cloud folder; only the selected method is used.
+2. Open **Add or edit S3 destinations → Add destination**. Enter the HTTPS service address, an existing bucket and the access key and secret. The name is optional. Credentials are encrypted with a key held in the Android Keystore, are never shown again, and are excluded from backups and from `metadata.json`.
+3. **Test connection** creates and removes temporary data in the bucket to check upload permissions, including multipart uploads and listing parts for resume. **Advanced settings** contains the region, addressing style, storage path template, part size, custom server certificates and overwrite policy. An example path shows where files will be stored.
+4. Return to **Collection upload** and choose the saved **Destination**. An incomplete or removed destination blocks uploading; it never falls back to another saved method. **No destination** disables uploads without deleting saved connections. Existing installations migrate once to the destination they were effectively using.
 
 Each collection becomes one object per file under the **object key template**, with `metadata.json` uploaded last so its presence marks a complete capture. Placeholders are `{directory}`, `{subdirectory}`, `{dataset}` (folder name) and `{timestamp}` (capture time); for example `sao-paulo/bras/raw/{subdirectory}/{timestamp}`. With **Upload as zip**, or for collections already stored as `.zip`, each collection is one `.zip` object.
 
@@ -85,7 +86,7 @@ Each collection becomes one object per file under the **object key template**, w
 
 Self-hosted servers with a self-signed or private certificate can pin it under **Server certificate** after checking its SHA-256 fingerprint.
 
-**Reliability.** Files larger than the part size (16 MiB by default) are sent as multipart uploads; each part is retried on its own with backoff, and the upload state is saved after every part, so an upload interrupted by a lost connection, a killed app or a reboot resumes instead of starting over. Interrupted syncs finish in background under the network and charging conditions set in Settings; **Upload automatically in background** (off by default) also uploads every new collection after recording.
+**Reliability.** Files larger than the part size (16 MiB by default) are sent as multipart uploads; each part is retried on its own with backoff, and the upload state is saved after every part, so an upload interrupted by a lost connection, a killed app or a reboot resumes instead of starting over. Interrupted syncs finish in background under the network and charging conditions in **Settings → Collection upload**. **Automatically send new collections** (off by default) also uploads every new collection after recording. The network and charging conditions apply to automatic uploads and background retries even when automatic upload is off; manual uploads start when requested.
 
 **Integrity and idempotency.** Every request carries `Content-MD5` and a signed SHA-256 of its body, so the server rejects corrupted parts. Each object stores its whole-file MD5 as `x-amz-meta-md5chksum` (the same metadata rclone writes) and is verified with `HEAD` after upload. An object that already exists with the same size and checksum is skipped, including ones uploaded with rclone; a different one is never replaced unless **Overwrite existing objects** is on.
 

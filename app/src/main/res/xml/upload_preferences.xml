@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:title="@string/upload_settings_title">
+
+    <PreferenceCategory app:title="@string/upload_destination_category">
+        <Preference app:summary="@string/upload_destination_help" app:selectable="false" />
+        <ListPreference
+            app:key="upload_destination_type"
+            app:title="@string/upload_destination_type_title"
+            app:entries="@array/upload_destination_types"
+            app:entryValues="@array/upload_destination_type_values"
+            app:useSimpleSummaryProvider="true" />
+        <Preference app:key="upload_status" app:title="@string/upload_status_title" app:selectable="false" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:key="upload_http_settings" app:title="@string/upload_destination_http">
+        <Preference app:summary="@string/upload_http_help" app:selectable="false" />
+        <EditTextPreference
+            app:key="custom_upload_url"
+            app:title="@string/upload_http_url_title"
+            app:dialogMessage="@string/upload_http_url_hint" />
+        <EditTextPreference
+            app:key="custom_upload_token"
+            app:title="@string/upload_token_title"
+            app:summary="@string/upload_token_help" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:key="upload_folder_settings" app:title="@string/upload_destination_folder">
+        <Preference app:summary="@string/upload_folder_help" app:selectable="false" />
+        <Preference app:key="cloud_storage_folder" app:title="@string/upload_folder_title" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:key="upload_s3_settings" app:title="@string/upload_destination_s3">
+        <Preference app:summary="@string/upload_s3_help" app:selectable="false" />
+        <ListPreference app:key="active_s3_destination" app:title="@string/upload_s3_profile_title" />
+        <Preference
+            app:key="s3_destinations"
+            app:title="@string/upload_manage_s3"
+            app:summary="@string/upload_manage_s3_summary"
+            app:fragment="org.rjpd.msdc.S3DestinationsFragment" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:key="upload_background" app:title="@string/upload_background_category">
+        <Preference app:summary="@string/upload_background_help" app:selectable="false" />
+        <SwitchPreferenceCompat
+            app:key="auto_upload"
+            app:title="@string/upload_auto_title"
+            app:defaultValue="false"
+            app:singleLineTitle="false"
+            app:summaryOn="@string/upload_auto_on"
+            app:summaryOff="@string/upload_auto_off" />
+        <SwitchPreferenceCompat
+            app:key="upload_wifi_only"
+            app:title="@string/upload_unmetered_title"
+            app:defaultValue="true"
+            app:singleLineTitle="false"
+            app:summaryOn="@string/upload_unmetered_on"
+            app:summaryOff="@string/upload_unmetered_off" />
+        <SwitchPreferenceCompat
+            app:key="upload_charging_only"
+            app:title="@string/upload_charging_title"
+            app:defaultValue="false"
+            app:singleLineTitle="false"
+            app:summaryOn="@string/upload_charging_on"
+            app:summaryOff="@string/upload_charging_off" />
+    </PreferenceCategory>
+</PreferenceScreen>

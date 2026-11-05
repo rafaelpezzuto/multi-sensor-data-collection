@@ -20,64 +20,12 @@
             app:summaryOff="@string/compact_off" />
     </PreferenceCategory>
 
-    <PreferenceCategory
-        app:title="@string/cloud_upload_category"
-        app:icon="@drawable/ic_cloud_upload">
-
-        <EditTextPreference
-            app:key="custom_upload_url"
-            app:title="@string/custom_upload_url_title"
-            app:summary="@string/custom_upload_url_summary"
-            app:dialogTitle="@string/custom_upload_url_title" />
-
-        <EditTextPreference
-            app:key="custom_upload_token"
-            app:title="@string/custom_upload_token_title"
-            app:summary="@string/custom_upload_token_summary"
-            app:dialogTitle="@string/custom_upload_token_title" />
-
-        <Preference
-            app:key="cloud_storage_folder"
-            app:title="@string/cloud_storage_folder_title"
-            app:summary="@string/cloud_storage_folder_not_set" />
-
-        <Preference
-            app:key="s3_destinations"
-            app:title="@string/s3_destinations_title"
-            app:summary="@string/s3_destinations_summary"
-            app:fragment="org.rjpd.msdc.S3DestinationsFragment" />
-
-        <ListPreference
-            app:key="active_s3_destination"
-            app:title="@string/s3_active_destination_title"
-            app:defaultValue=""
-            app:summary="%s"
-            app:isPreferenceVisible="false" />
-
-        <SwitchPreferenceCompat
-            app:key="auto_upload"
-            app:title="@string/auto_upload_title"
-            app:defaultValue="false"
-            app:singleLineTitle="false"
-            app:summaryOn="@string/auto_upload_on"
-            app:summaryOff="@string/auto_upload_off" />
-
-        <SwitchPreferenceCompat
-            app:key="upload_wifi_only"
-            app:title="@string/upload_wifi_only_title"
-            app:defaultValue="true"
-            app:singleLineTitle="false"
-            app:summaryOn="@string/upload_wifi_only_on"
-            app:summaryOff="@string/upload_wifi_only_off" />
-
-        <SwitchPreferenceCompat
-            app:key="upload_charging_only"
-            app:title="@string/upload_charging_only_title"
-            app:defaultValue="false"
-            app:singleLineTitle="false"
-            app:summaryOn="@string/upload_charging_only_on"
-            app:summaryOff="@string/upload_charging_only_off" />
-    </PreferenceCategory>
+    <Preference
+        app:key="upload_settings"
+        app:title="@string/upload_settings_title"
+        app:icon="@drawable/ic_cloud_upload"
+        app:fragment="org.rjpd.msdc.UploadSettingsFragment"
+        app:singleLineTitle="false" />
 
     <PreferenceCategory
         app:title="@string/camera_settings"

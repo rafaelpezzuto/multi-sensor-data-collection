@@ -41,7 +41,6 @@ class HistoryActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityHistoryBinding
     private var historyAdapter: HistoryAdapter? = null
-    private var pendingSyncDataset: DatasetSummary? = null
 
     private val deleteLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
@@ -49,31 +48,6 @@ class HistoryActivity : AppCompatActivity() {
             refreshDatasetsList()
         } else {
             Toast.makeText(this, R.string.collection_delete_failed_toast, Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private val folderPickerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            val treeUri = result.data?.data
-            if (treeUri != null) {
-                try {
-                    contentResolver.takePersistableUriPermission(
-                        treeUri,
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                    )
-                } catch (_: Exception) {}
-
-                CloudSyncManager.setSafStorageUri(this, treeUri)
-
-                val target = pendingSyncDataset
-                pendingSyncDataset = null
-
-                if (target != null) {
-                    syncSingleDataset(target)
-                } else {
-                    syncAllPendingDatasets()
-                }
-            }
         }
     }
 
@@ -138,20 +112,14 @@ class HistoryActivity : AppCompatActivity() {
         saveExpandedGroupKeys(activeKeys)
     }
 
-    private fun showConfigureCloudSyncDialog(forDataset: DatasetSummary? = null) {
-        pendingSyncDataset = forDataset
-
+    private fun showConfigureCloudSyncDialog() {
         AlertDialog.Builder(this)
             .setTitle(R.string.cloud_sync_not_configured_title)
-            .setMessage(R.string.cloud_sync_not_configured_msg)
-            .setPositiveButton(R.string.cloud_sync_option_folder) { _, _ ->
-                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
-                }
-                folderPickerLauncher.launch(intent)
-            }
-            .setNeutralButton(R.string.cloud_sync_option_server) { _, _ ->
-                startActivity(Intent(this, SettingsActivity::class.java))
+            .setMessage(R.string.upload_destination_incomplete)
+            .setPositiveButton(R.string.upload_configure_action) { _, _ ->
+                startActivity(Intent(this, SettingsActivity::class.java).apply {
+                    putExtra(EXTRA_OPEN_UPLOAD_SETTINGS, true)
+                })
             }
             .setNegativeButton(R.string.cancel, null)
             .show()
@@ -387,7 +355,7 @@ class HistoryActivity : AppCompatActivity() {
 
                     val startSync = {
                         when (CloudSyncManager.getCloudSyncMode(this@HistoryActivity)) {
-                            CloudSyncMode.NOT_CONFIGURED -> showConfigureCloudSyncDialog(dataset)
+                            CloudSyncMode.NOT_CONFIGURED -> showConfigureCloudSyncDialog()
                             else -> syncSingleDataset(dataset)
                         }
                     }

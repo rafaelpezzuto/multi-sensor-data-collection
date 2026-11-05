@@ -1,66 +1,60 @@
-<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:title="@string/s3_editor_title">
 
     <PreferenceCategory app:title="@string/s3_category_connection">
-
-        <EditTextPreference
-            app:key="name"
-            app:title="@string/s3_name_title"
-            app:useSimpleSummaryProvider="true" />
-
+        <Preference app:summary="@string/s3_setup_help" app:selectable="false" />
+        <EditTextPreference app:key="name" app:title="@string/s3_name_title" />
         <EditTextPreference
             app:key="endpoint"
             app:title="@string/s3_endpoint_title"
-            app:useSimpleSummaryProvider="true" />
-
-        <EditTextPreference
-            app:key="region"
-            app:title="@string/s3_region_title"
-            app:useSimpleSummaryProvider="true" />
-
+            app:dialogMessage="@string/s3_endpoint_help" />
         <EditTextPreference
             app:key="bucket"
             app:title="@string/s3_bucket_title"
-            app:useSimpleSummaryProvider="true" />
-
-        <SwitchPreferenceCompat
-            app:key="path_style"
-            app:title="@string/s3_path_style_title"
-            app:singleLineTitle="false"
-            app:summaryOn="@string/s3_path_style_on"
-            app:summaryOff="@string/s3_path_style_off" />
-
-        <EditTextPreference
-            app:key="access_key"
-            app:title="@string/s3_access_key_title" />
-
-        <EditTextPreference
-            app:key="secret_key"
-            app:title="@string/s3_secret_key_title" />
-
+            app:dialogMessage="@string/s3_bucket_help" />
+        <EditTextPreference app:key="access_key" app:title="@string/s3_access_key_title" />
+        <EditTextPreference app:key="secret_key" app:title="@string/s3_secret_key_title" />
         <Preference
-            app:key="trust_certificate"
-            app:title="@string/s3_trust_certificate_title" />
+            app:key="test_connection"
+            app:title="@string/s3_test_connection_title"
+            app:summary="@string/s3_test_connection_summary" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/s3_category_upload">
-
-        <EditTextPreference
-            app:key="key_template"
-            app:title="@string/s3_key_template_title"
-            app:dialogMessage="@string/s3_key_template_help"
-            app:useSimpleSummaryProvider="true" />
-
         <SwitchPreferenceCompat
             app:key="zip_mode"
             app:title="@string/s3_zip_mode_title"
             app:singleLineTitle="false"
             app:summaryOn="@string/s3_zip_mode_on"
             app:summaryOff="@string/s3_zip_mode_off" />
+        <Preference app:key="key_preview" app:title="@string/s3_key_preview_title" app:selectable="false" />
+    </PreferenceCategory>
 
+    <Preference
+        app:key="s3_advanced_toggle"
+        app:title="@string/s3_advanced_title"
+        app:summary="@string/s3_advanced_show" />
+
+    <PreferenceCategory app:key="s3_advanced" app:title="@string/s3_advanced_title" app:isPreferenceVisible="false">
         <EditTextPreference
-            app:key="part_size_mib"
-            app:title="@string/s3_part_size_title" />
-
+            app:key="region"
+            app:title="@string/s3_region_title"
+            app:dialogMessage="@string/s3_region_help"
+            app:useSimpleSummaryProvider="true" />
+        <SwitchPreferenceCompat
+            app:key="path_style"
+            app:title="@string/s3_path_style_title"
+            app:singleLineTitle="false"
+            app:summaryOn="@string/s3_path_style_on"
+            app:summaryOff="@string/s3_path_style_off" />
+        <EditTextPreference
+            app:key="key_template"
+            app:title="@string/s3_key_template_title"
+            app:dialogMessage="@string/s3_key_template_help"
+            app:useSimpleSummaryProvider="true" />
+        <EditTextPreference app:key="part_size_mib" app:title="@string/s3_part_size_title" />
+        <Preference app:key="trust_certificate" app:title="@string/s3_trust_certificate_title" />
         <SwitchPreferenceCompat
             app:key="overwrite"
             app:title="@string/s3_overwrite_title"
@@ -69,13 +63,10 @@
             app:summaryOff="@string/s3_overwrite_off" />
     </PreferenceCategory>
 
-    <Preference
-        app:key="test_connection"
-        app:title="@string/s3_test_connection_title"
-        app:summary="@string/s3_test_connection_summary" />
-
-    <Preference
-        app:key="delete_destination"
-        app:title="@string/s3_delete_destination_title" />
-
+    <PreferenceCategory app:title="@string/s3_delete_category">
+        <Preference
+            app:key="delete_destination"
+            app:title="@string/s3_delete_destination_title"
+            app:summary="@string/s3_delete_help" />
+    </PreferenceCategory>
 </PreferenceScreen>

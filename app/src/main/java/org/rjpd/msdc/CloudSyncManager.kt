@@ -41,7 +41,7 @@ private const val ZIP_MIME_TYPE = "application/zip"
 // Secrets and sync bookkeeping never go into a dataset's metadata.json.
 private val PREFS_EXCLUDED_FROM_METADATA = setOf(
     PREF_CUSTOM_UPLOAD_TOKEN, PREF_SYNCED_DATASET_NAMES, PREF_ACTIVE_S3_DESTINATION,
-    PREF_AUTO_UPLOAD, PREF_UPLOAD_WIFI_ONLY, PREF_UPLOAD_CHARGING_ONLY
+    PREF_AUTO_UPLOAD, PREF_UPLOAD_WIFI_ONLY, PREF_UPLOAD_CHARGING_ONLY, PREF_UPLOAD_DESTINATION_TYPE
 )
 
 fun preferencesForMetadata(all: Map<String, *>): MutableMap<String, Any?> =
@@ -141,25 +141,38 @@ object CloudSyncManager {
         _syncProgress.value = SyncProgressState()
     }
 
-    fun getCloudSyncMode(context: Context): CloudSyncMode {
-        if (getActiveS3Destination(context) != null) {
-            return CloudSyncMode.S3
-        }
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        val customUrl = sharedPreferences.getString(PREF_CUSTOM_UPLOAD_URL, null)?.trim()
-        if (!customUrl.isNullOrEmpty()) {
-            return CloudSyncMode.HTTP_SERVER
+    /** Migrate the old priority order without discarding saved connections or switching them later. */
+    fun selectedUploadMode(context: Context): CloudSyncMode {
+        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        val savedType = prefs.getString(PREF_UPLOAD_DESTINATION_TYPE, null)
+        if (savedType != null) {
+            return resolveUploadSelection(savedType, false, false, false)
         }
 
-        val treeUriStr = sharedPreferences.getString(PREF_CLOUD_STORAGE_TREE_URI, null)?.trim()
-        if (!treeUriStr.isNullOrEmpty()) {
-            return CloudSyncMode.SAF_STORAGE
-        }
-
-        return CloudSyncMode.NOT_CONFIGURED
+        val selected = resolveUploadSelection(
+            savedType = null,
+            hasCompleteS3 = getActiveS3Destination(context) != null,
+            hasHttpServer = getCustomUploadUrl(context).isNotBlank(),
+            hasStorageFolder = getSafStorageUri(context) != null
+        )
+        prefs.edit().putString(PREF_UPLOAD_DESTINATION_TYPE, selected.name).commit()
+        return selected
     }
 
-    /** The S3 destination chosen in Settings, if it is complete; otherwise the server URL or folder applies. */
+    /** An incomplete or removed destination blocks uploading; it never activates another method. */
+    fun getCloudSyncMode(context: Context): CloudSyncMode {
+        val selected = selectedUploadMode(context)
+        val configured = when (selected) {
+            CloudSyncMode.S3 -> getActiveS3Destination(context) != null
+            CloudSyncMode.HTTP_SERVER -> getCustomUploadUrl(context).isNotBlank()
+            CloudSyncMode.SAF_STORAGE -> getSafStorageUri(context) != null
+            CloudSyncMode.NOT_CONFIGURED -> false
+        }
+
+        return if (configured) selected else CloudSyncMode.NOT_CONFIGURED
+    }
+
+    /** The saved S3 profile, if complete. Its absence does not select a different upload method. */
     fun getActiveS3Destination(context: Context): S3Destination? {
         val id = PreferenceManager.getDefaultSharedPreferences(context).getString(PREF_ACTIVE_S3_DESTINATION, null)
         return S3Destinations.get(context, id)?.takeIf { S3Destinations.isComplete(context, it) }
@@ -177,7 +190,7 @@ object CloudSyncManager {
 
     fun getSafStorageUri(context: Context): Uri? {
         val uriStr = PreferenceManager.getDefaultSharedPreferences(context)
-            .getString(PREF_CLOUD_STORAGE_TREE_URI, null)?.trim() ?: return null
+            .getString(PREF_CLOUD_STORAGE_TREE_URI, null)?.trim()?.takeIf { it.isNotEmpty() } ?: return null
         return try {
             Uri.parse(uriStr)
         } catch (_: Exception) {
@@ -297,7 +310,8 @@ object CloudSyncManager {
             CloudSyncMode.HTTP_SERVER -> syncViaHttp(context, dataset)
             CloudSyncMode.SAF_STORAGE -> syncViaSaf(context, dataset)
             CloudSyncMode.S3 -> {
-                val destination = getActiveS3Destination(context)!!
+                val destination = getActiveS3Destination(context)
+                    ?: return SyncResult(false, context.getString(R.string.upload_destination_incomplete), stopRun = true)
                 S3Sync.syncDataset(context, destination, dataset, onProgress).also {
                     if (it.success) {
                         // Settings can change while the request is in flight. Mark the destination
@@ -310,7 +324,8 @@ object CloudSyncManager {
             }
             CloudSyncMode.NOT_CONFIGURED -> SyncResult(
                 success = false,
-                message = "No cloud destination configured. Set a server URL or choose a folder."
+                message = context.getString(R.string.upload_destination_incomplete),
+                stopRun = true
             )
         }
         recordDatasetError(context, destinationId, dataset.name, if (result.success) null else result.message)
