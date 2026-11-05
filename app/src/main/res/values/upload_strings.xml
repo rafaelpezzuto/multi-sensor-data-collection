@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="upload_settings_title">Collection upload</string>
+    <string name="upload_destination_category">Where to send collections</string>
+    <string name="upload_destination_help">Only the selected destination receives collections. Other saved connections are kept.</string>
+    <string name="upload_destination_type_title">Send collections to</string>
+    <string name="upload_destination_none">No destination</string>
+    <string name="upload_destination_http">Upload server</string>
+    <string name="upload_destination_folder">Device or cloud folder</string>
+    <string name="upload_destination_s3">S3-compatible storage</string>
+    <string-array name="upload_destination_types">
+        <item>@string/upload_destination_none</item>
+        <item>@string/upload_destination_http</item>
+        <item>@string/upload_destination_folder</item>
+        <item>@string/upload_destination_s3</item>
+    </string-array>
+    <string-array name="upload_destination_type_values">
+        <item>NOT_CONFIGURED</item>
+        <item>HTTP_SERVER</item>
+        <item>SAF_STORAGE</item>
+        <item>S3</item>
+    </string-array>
+    <string name="upload_configure_action">Configure upload</string>
+    <string name="upload_status_title">Destination status</string>
+    <string name="upload_destination_ready">Ready for manual upload. Collections are kept on this device.</string>
+    <string name="upload_destination_setup_help">Complete the setup below before uploading. Other destinations will not be used.</string>
+    <string name="upload_destination_incomplete">Configure the selected destination in Settings → Collection upload. No other destination will be used.</string>
+    <string name="upload_destination_disabled">Uploads are off. Choose a destination to enable them.</string>
+    <string name="upload_home_summary">%1$s · %2$s</string>
+    <string name="upload_home_incomplete">%1$s · Setup required</string>
+    <string name="upload_auto_enabled">Automatic upload on</string>
+    <string name="upload_auto_disabled">Manual upload</string>
+    <string name="upload_settings_busy">Wait for the current upload to finish before changing its destination.</string>
+    <string name="upload_http_help">A server that accepts collection ZIP files by HTTP POST. This is not an S3 address.</string>
+    <string name="upload_http_url_title">Server address</string>
+    <string name="upload_http_url_hint">For example: https://example.org/upload</string>
+    <string name="upload_http_url_invalid">Enter an HTTP or HTTPS address without embedded credentials.</string>
+    <string name="upload_token_title">API token (optional)</string>
+    <string name="upload_token_help">Only needed if your upload server requires a bearer token. Leave blank otherwise.</string>
+    <string name="upload_folder_help">Choose a folder through Android. Cloud providers appear here only if their app supports the Android file picker.</string>
+    <string name="upload_folder_title">Choose folder</string>
+    <string name="upload_folder_selected">%1$s\nTap to change or remove</string>
+    <string name="upload_folder_permission_failed">The folder permission could not be saved. Please choose the folder again.</string>
+    <string name="upload_s3_help">Send directly to a bucket in Amazon S3 or a compatible service. Choose a saved destination or add one below.</string>
+    <string name="upload_s3_profile_title">Destination</string>
+    <string name="upload_s3_choose_profile">Choose a destination</string>
+    <string name="upload_s3_no_profiles">No destinations saved. Add one below.</string>
+    <string name="upload_s3_profile_incomplete">%1$s (finish setup)</string>
+    <string name="upload_s3_profile_missing">Previously selected destination is unavailable</string>
+    <string name="upload_manage_s3">Add or edit S3 destinations</string>
+    <string name="upload_manage_s3_summary">Manage saved connections and test bucket permissions</string>
+    <string name="upload_background_category">When to upload in background</string>
+    <string name="upload_background_help">These conditions apply to automatic uploads and retries of interrupted uploads. Manual uploads start when you request them.</string>
+    <string name="upload_auto_title">Automatically send new collections</string>
+    <string name="upload_auto_on">New collections wait for the conditions below</string>
+    <string name="upload_auto_off">Upload manually from History. Interrupted uploads can still resume in background.</string>
+    <string name="upload_unmetered_title">Unmetered networks only</string>
+    <string name="upload_unmetered_on">Usually Wi-Fi. Uploads wait on metered Wi-Fi and mobile data.</string>
+    <string name="upload_unmetered_off">May use mobile data and metered Wi-Fi</string>
+    <string name="upload_charging_title">Only while charging</string>
+    <string name="upload_charging_on">Background uploads wait until the phone is charging</string>
+    <string name="upload_charging_off">Can upload on battery, unless the battery is low</string>
+    <string name="s3_editor_title">S3 destination</string>
+    <string name="s3_setup_help">Enter the service address, an existing bucket and the access keys supplied by your administrator or storage provider.</string>
+    <string name="s3_name_help">Optional label to help you recognize this connection</string>
+    <string name="s3_endpoint_help">For example: https://s3.example.org — not the bucket website or console</string>
+    <string name="s3_bucket_help">The existing bucket where collections will be stored. The app does not create buckets.</string>
+    <string name="s3_advanced_title">Advanced settings</string>
+    <string name="s3_advanced_show">Region, file paths, server certificates and compatibility options</string>
+    <string name="s3_advanced_hide">Tap to hide advanced settings</string>
+    <string name="s3_region_help">Use the region provided by your service. The default works with many self-hosted servers.</string>
+    <string name="s3_key_preview_title">Example storage path</string>
+    <string name="s3_key_preview">%1$s/%2$s</string>
+    <string name="s3_delete_category">Manage destination</string>
+    <string name="s3_delete_help">Removes this saved connection, not collections or completed uploads</string>
+    <string name="s3_overwrite_confirm_title">Allow replacing different files?</string>
+    <string name="s3_overwrite_confirm_message">A later upload may replace a different object at the same storage path. Keep this off unless you intend to replace remote data.</string>
+    <string name="s3_overwrite_confirm_action">Allow replacement</string>
+</resources>

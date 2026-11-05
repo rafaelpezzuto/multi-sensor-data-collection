@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.MSDC.Settings" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.MSDC</item>
+    </style>
+
+    <style name="PreferenceThemeOverlay.MSDC" parent="PreferenceThemeOverlay">
+        <item name="preferenceCategoryStyle">@style/PreferenceCategory.MSDC</item>
+    </style>
+
+    <style name="PreferenceCategory.MSDC" parent="Preference.Category.Material">
+        <item name="layout">@layout/preference_category_description</item>
+    </style>
+</resources>

@@ -5,24 +5,23 @@ import android.hardware.camera2.CameraCharacteristics
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.documentfile.provider.DocumentFile
+import androidx.fragment.app.Fragment
 import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 
-private const val PREF_CLOUD_STORAGE_FOLDER = "cloud_storage_folder"
+internal const val EXTRA_OPEN_UPLOAD_SETTINGS = "open_upload_settings"
 
-class SettingsActivity : AppCompatActivity() {
+class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
+        setSupportActionBar(findViewById(R.id.settings_toolbar))
 
         val rootView = findViewById<View>(android.R.id.content)
         ViewCompat.setOnApplyWindowInsetsListener(rootView) { view, windowInsets ->
@@ -36,27 +35,28 @@ class SettingsActivity : AppCompatActivity() {
                 .beginTransaction()
                 .replace(R.id.settings, SettingsFragment())
                 .commit()
+            if (intent.getBooleanExtra(EXTRA_OPEN_UPLOAD_SETTINGS, false)) {
+                openFragment(UploadSettingsFragment(), Bundle())
+            }
         }
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
 
-    class SettingsFragment : PreferenceFragmentCompat() {
+    override fun onPreferenceStartFragment(caller: PreferenceFragmentCompat, pref: Preference): Boolean {
+        val fragmentClass = pref.fragment ?: return false
+        openFragment(supportFragmentManager.fragmentFactory.instantiate(classLoader, fragmentClass), pref.extras)
+        return true
+    }
 
-        private val folderPickerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                val treeUri = result.data?.data
-                if (treeUri != null) {
-                    try {
-                        requireContext().contentResolver.takePersistableUriPermission(
-                            treeUri,
-                            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                        )
-                    } catch (_: Exception) {}
-                    CloudSyncManager.setSafStorageUri(requireContext(), treeUri)
-                    updateCloudFolderSummary()
-                }
-            }
-        }
+    fun openFragment(fragment: Fragment, args: Bundle) {
+        fragment.arguments = args
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.settings, fragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    class SettingsFragment : PreferenceFragmentCompat() {
 
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             setPreferencesFromResource(R.xml.user_preferences, rootKey)
@@ -80,65 +80,12 @@ class SettingsActivity : AppCompatActivity() {
                 restartActivity()
                 true
             }
-
-            findPreference<Preference>(PREF_CUSTOM_UPLOAD_URL)?.setOnPreferenceChangeListener { _, newValue ->
-                val newUrl = (newValue as? String)?.trim() ?: ""
-                val oldUrl = CloudSyncManager.getCustomUploadUrl(requireContext())
-                if (newUrl != oldUrl) {
-                    CloudSyncManager.clearSyncedDatasetNames(requireContext())
-                }
-                true
-            }
-
-            setupCloudStorageFolderPreference()
         }
 
         override fun onResume() {
             super.onResume()
-            updateCloudFolderSummary()
-        }
-
-        private fun setupCloudStorageFolderPreference() {
-            val folderPref = findPreference<Preference>(PREF_CLOUD_STORAGE_FOLDER)
-            folderPref?.onPreferenceClickListener = Preference.OnPreferenceClickListener {
-                val treeUri = CloudSyncManager.getSafStorageUri(requireContext())
-                if (treeUri != null) {
-                    AlertDialog.Builder(requireContext())
-                        .setTitle(R.string.cloud_storage_folder_title)
-                        .setItems(arrayOf(getString(R.string.dialog_change_folder), getString(R.string.dialog_clear_folder))) { _, which ->
-                            if (which == 0) {
-                                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
-                                }
-                                folderPickerLauncher.launch(intent)
-                            } else {
-                                CloudSyncManager.setSafStorageUri(requireContext(), null)
-                                updateCloudFolderSummary()
-                            }
-                        }
-                        .setNegativeButton(R.string.cancel, null)
-                        .show()
-                } else {
-                    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
-                    }
-                    folderPickerLauncher.launch(intent)
-                }
-                true
-            }
-            updateCloudFolderSummary()
-        }
-
-        private fun updateCloudFolderSummary() {
-            val folderPref = findPreference<Preference>(PREF_CLOUD_STORAGE_FOLDER) ?: return
-            val treeUri = CloudSyncManager.getSafStorageUri(requireContext())
-            if (treeUri != null) {
-                val folderDoc = DocumentFile.fromTreeUri(requireContext(), treeUri)
-                val name = folderDoc?.name ?: treeUri.lastPathSegment ?: treeUri.toString()
-                folderPref.summary = "Selected: $name\n(Tap to change or remove)"
-            } else {
-                folderPref.summary = getString(R.string.cloud_storage_folder_not_set)
-            }
+            (activity as? SettingsActivity)?.title = getString(R.string.title_activity_settings)
+            findPreference<Preference>("upload_settings")?.summary = uploadSettingsSummary(requireContext())
         }
 
         private fun restartActivity() {

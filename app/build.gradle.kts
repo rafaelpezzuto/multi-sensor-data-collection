@@ -16,8 +16,8 @@ android {
         applicationId = "org.rjpd.msdc"
         minSdk = 26
         targetSdk = 36
-        versionCode = 39
-        versionName = "2.1.0"
+        versionCode = 40
+        versionName = "2.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -79,6 +79,7 @@ dependencies {
     implementation(libs.usb.serial)
     implementation(libs.osmdroid.android)
     implementation(libs.okhttp)
+    implementation(libs.androidx.work.runtime.ktx)
 
     testImplementation(libs.junit)
     testImplementation(libs.okhttp.mockwebserver)

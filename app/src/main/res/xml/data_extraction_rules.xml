@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- S3 secrets are encrypted with a Keystore key that never leaves the device, so a backup of them is useless. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="s3_secrets.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="s3_secrets.xml" />
+    </device-transfer>
+</data-extraction-rules>

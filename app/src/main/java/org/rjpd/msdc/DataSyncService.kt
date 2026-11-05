@@ -10,6 +10,8 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import android.os.SystemClock
+import android.text.format.Formatter
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -18,14 +20,39 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 
 private const val TAG = "DataSyncService"
 private const val CHANNEL_ID = "DataSyncChannel"
 private const val NOTIFICATION_ID = 4001
 private const val COMPLETION_NOTIFICATION_ID = 4002
+private const val PROGRESS_INTERVAL_MS = 500L
 
 class DataSyncService : Service() {
+
+    companion object {
+        const val ACTION_SYNC_ALL = "org.rjpd.msdc.action.SYNC_ALL"
+        const val ACTION_SYNC_SINGLE = "org.rjpd.msdc.action.SYNC_SINGLE"
+        const val EXTRA_DATASET_NAME = "org.rjpd.msdc.extra.DATASET_NAME"
+
+        fun startSyncAll(context: Context) {
+            val intent = Intent(context, DataSyncService::class.java).apply {
+                action = ACTION_SYNC_ALL
+            }
+
+            ContextCompat.startForegroundService(context, intent)
+        }
+
+        fun startSyncSingle(context: Context, datasetName: String) {
+            val intent = Intent(context, DataSyncService::class.java).apply {
+                action = ACTION_SYNC_SINGLE
+                putExtra(EXTRA_DATASET_NAME, datasetName)
+            }
+
+            ContextCompat.startForegroundService(context, intent)
+        }
+    }
 
     private val serviceJob = SupervisorJob()
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
@@ -71,6 +98,7 @@ class DataSyncService : Service() {
     // Android 15+ limits dataSync foreground services to 6 hours a day; the service must stop within seconds.
     override fun onTimeout(startId: Int, fgsType: Int) {
         Timber.tag(TAG).w("Foreground service time limit reached, stopping sync")
+        SyncWorker.cancel(this)
         activeSyncJob?.cancel()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -121,18 +149,25 @@ class DataSyncService : Service() {
         return builder.build()
     }
 
-    private fun updateNotificationProgress(current: Int, total: Int, datasetName: String) {
-        val content = if (total > 1) {
+    private fun updateNotificationProgress(current: Int, total: Int, datasetName: String, bytesDone: Long = 0, bytesTotal: Long = 0) {
+        var content = if (total > 1) {
             getString(R.string.sync_all_in_progress_format, current, total, datasetName)
         } else {
             getString(R.string.sync_in_progress_msg, datasetName)
+        }
+        if (bytesTotal > 0) {
+            content += " " + getString(
+                R.string.sync_bytes_progress_format,
+                Formatter.formatShortFileSize(this, bytesDone),
+                Formatter.formatShortFileSize(this, bytesTotal)
+            )
         }
 
         val notification = buildNotification(
             title = getString(R.string.data_sync_notification_title),
             content = content,
-            current = current,
-            total = total
+            current = if (bytesTotal > 0) (bytesDone * 1000 / bytesTotal).toInt() else current,
+            total = if (bytesTotal > 0) 1000 else total
         )
         val manager = getSystemService(NotificationManager::class.java)
         manager?.notify(NOTIFICATION_ID, notification)
@@ -175,38 +210,50 @@ class DataSyncService : Service() {
                     CloudSyncManager.finishSync(0, 0)
                     return@launch
                 }
+                CloudSyncManager.queueDatasets(this@DataSyncService, pendingDatasets.map { it.name })
+                SyncWorker.schedule(this@DataSyncService)
+                CloudSyncManager.syncMutex.withLock {
+                    val total = pendingDatasets.size
+                    CloudSyncManager.startProgress(total, pendingDatasets.first().name)
+                    updateNotificationProgress(1, total, pendingDatasets.first().name)
 
-                val total = pendingDatasets.size
-                CloudSyncManager.startProgress(total, pendingDatasets.first().name)
-                updateNotificationProgress(1, total, pendingDatasets.first().name)
+                    var successCount = 0
+                    var failureCount = 0
+                    var stopReason: String? = null
 
-                var successCount = 0
-                var failureCount = 0
+                    for ((index, dataset) in pendingDatasets.withIndex()) {
+                        ensureActive()
+                        val current = index + 1
+                        CloudSyncManager.updateProgress(current, total, dataset.name)
+                        updateNotificationProgress(current, total, dataset.name)
 
-                for ((index, dataset) in pendingDatasets.withIndex()) {
-                    ensureActive()
-                    val current = index + 1
-                    CloudSyncManager.updateProgress(current, total, dataset.name)
-                    updateNotificationProgress(current, total, dataset.name)
-
-                    val result = CloudSyncManager.syncDataset(this@DataSyncService, dataset)
-                    ensureActive()
-                    if (result.success) {
-                        successCount++
-                    } else {
-                        failureCount++
+                        val result = CloudSyncManager.syncDataset(this@DataSyncService, dataset, progressReporter(current, total, dataset.name))
+                        ensureActive()
+                        if (result.success) {
+                            successCount++
+                        } else {
+                            failureCount++
+                        }
+                        CloudSyncManager.recordDatasetCompleted(dataset.name, result)
+                        if (result.stopRun) {
+                            Timber.tag(TAG).w("Stopping sync run: ${result.message}")
+                            stopReason = result.message
+                            break
+                        }
+                        CloudSyncManager.dequeueDataset(this@DataSyncService, dataset.name)
                     }
-                    CloudSyncManager.recordDatasetCompleted(dataset.name, result)
-                }
 
-                ensureActive()
-                CloudSyncManager.finishSync(successCount, failureCount)
-                val completionMsg = if (failureCount == 0) {
-                    getString(R.string.sync_all_summary_format, total)
-                } else {
-                    getString(R.string.sync_all_partial_failure_format, successCount, failureCount)
+                    ensureActive()
+                    CloudSyncManager.finishSync(successCount, failureCount)
+                    val completionMsg = if (stopReason != null) {
+                        getString(R.string.sync_stopped_format, successCount, stopReason)
+                    } else if (failureCount == 0) {
+                        getString(R.string.sync_all_summary_format, total)
+                    } else {
+                        getString(R.string.sync_all_partial_failure_format, successCount, failureCount)
+                    }
+                    showCompletionNotification(completionMsg)
                 }
-                showCompletionNotification(completionMsg)
             } catch (e: CancellationException) {
                 CloudSyncManager.resetProgress()
                 throw e
@@ -238,11 +285,16 @@ class DataSyncService : Service() {
                     return@launch
                 }
 
+                CloudSyncManager.queueDatasets(this@DataSyncService, listOf(target.name))
+                SyncWorker.schedule(this@DataSyncService)
                 CloudSyncManager.startProgress(1, target.name)
                 updateNotificationProgress(1, 1, target.name)
 
-                val result = CloudSyncManager.syncDataset(this@DataSyncService, target)
+                val result = CloudSyncManager.syncMutex.withLock {
+                    CloudSyncManager.syncDataset(this@DataSyncService, target, progressReporter(1, 1, target.name))
+                }
                 ensureActive()
+                if (!result.stopRun) CloudSyncManager.dequeueDataset(this@DataSyncService, target.name)
                 val successCount = if (result.success) 1 else 0
                 val failureCount = if (result.success) 0 else 1
                 CloudSyncManager.recordDatasetCompleted(target.name, result)
@@ -270,24 +322,16 @@ class DataSyncService : Service() {
         }
     }
 
-    companion object {
-        const val ACTION_SYNC_ALL = "org.rjpd.msdc.action.SYNC_ALL"
-        const val ACTION_SYNC_SINGLE = "org.rjpd.msdc.action.SYNC_SINGLE"
-        const val EXTRA_DATASET_NAME = "org.rjpd.msdc.extra.DATASET_NAME"
-
-        fun startSyncAll(context: Context) {
-            val intent = Intent(context, DataSyncService::class.java).apply {
-                action = ACTION_SYNC_ALL
+    private fun progressReporter(current: Int, total: Int, datasetName: String): (Long, Long) -> Unit {
+        var lastUpdate = 0L
+        return { bytesDone, bytesTotal ->
+            val now = SystemClock.elapsedRealtime()
+            if (now - lastUpdate >= PROGRESS_INTERVAL_MS || bytesDone == bytesTotal) {
+                lastUpdate = now
+                CloudSyncManager.updateBytes(bytesDone, bytesTotal)
+                updateNotificationProgress(current, total, datasetName, bytesDone, bytesTotal)
             }
-            ContextCompat.startForegroundService(context, intent)
-        }
-
-        fun startSyncSingle(context: Context, datasetName: String) {
-            val intent = Intent(context, DataSyncService::class.java).apply {
-                action = ACTION_SYNC_SINGLE
-                putExtra(EXTRA_DATASET_NAME, datasetName)
-            }
-            ContextCompat.startForegroundService(context, intent)
         }
     }
+
 }

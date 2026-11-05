@@ -6,6 +6,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
+import android.text.format.Formatter
 import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
@@ -40,7 +41,6 @@ class HistoryActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityHistoryBinding
     private var historyAdapter: HistoryAdapter? = null
-    private var pendingSyncDataset: DatasetSummary? = null
 
     private val deleteLauncher = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
@@ -48,31 +48,6 @@ class HistoryActivity : AppCompatActivity() {
             refreshDatasetsList()
         } else {
             Toast.makeText(this, R.string.collection_delete_failed_toast, Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private val folderPickerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            val treeUri = result.data?.data
-            if (treeUri != null) {
-                try {
-                    contentResolver.takePersistableUriPermission(
-                        treeUri,
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                    )
-                } catch (_: Exception) {}
-
-                CloudSyncManager.setSafStorageUri(this, treeUri)
-
-                val target = pendingSyncDataset
-                pendingSyncDataset = null
-
-                if (target != null) {
-                    syncSingleDataset(target)
-                } else {
-                    syncAllPendingDatasets()
-                }
-            }
         }
     }
 
@@ -137,20 +112,14 @@ class HistoryActivity : AppCompatActivity() {
         saveExpandedGroupKeys(activeKeys)
     }
 
-    private fun showConfigureCloudSyncDialog(forDataset: DatasetSummary? = null) {
-        pendingSyncDataset = forDataset
-
+    private fun showConfigureCloudSyncDialog() {
         AlertDialog.Builder(this)
             .setTitle(R.string.cloud_sync_not_configured_title)
-            .setMessage(R.string.cloud_sync_not_configured_msg)
-            .setPositiveButton(R.string.cloud_sync_option_folder) { _, _ ->
-                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
-                }
-                folderPickerLauncher.launch(intent)
-            }
-            .setNeutralButton(R.string.cloud_sync_option_server) { _, _ ->
-                startActivity(Intent(this, SettingsActivity::class.java))
+            .setMessage(R.string.upload_destination_incomplete)
+            .setPositiveButton(R.string.upload_configure_action) { _, _ ->
+                startActivity(Intent(this, SettingsActivity::class.java).apply {
+                    putExtra(EXTRA_OPEN_UPLOAD_SETTINGS, true)
+                })
             }
             .setNegativeButton(R.string.cancel, null)
             .show()
@@ -161,7 +130,11 @@ class HistoryActivity : AppCompatActivity() {
             binding.syncProgressBar.visibility = View.VISIBLE
             binding.syncStatusBanner.visibility = View.VISIBLE
 
-            if (state.total > 0) {
+            if (state.bytesTotal > 0) {
+                binding.syncProgressBar.isIndeterminate = false
+                binding.syncProgressBar.max = 1000
+                binding.syncProgressBar.progress = (state.bytesDone * 1000 / state.bytesTotal).toInt()
+            } else if (state.total > 0) {
                 binding.syncProgressBar.isIndeterminate = false
                 binding.syncProgressBar.max = state.total
                 binding.syncProgressBar.progress = state.current
@@ -169,19 +142,28 @@ class HistoryActivity : AppCompatActivity() {
                 binding.syncProgressBar.isIndeterminate = true
             }
 
-            binding.syncStatusText.text = if (state.total > 1) {
+            var statusText = if (state.total > 1) {
                 getString(R.string.sync_all_in_progress_format, state.current, state.total, state.currentDatasetName)
             } else {
                 getString(R.string.sync_in_progress_msg, state.currentDatasetName)
             }
+            if (state.bytesTotal > 0) {
+                statusText += " " + getString(
+                    R.string.sync_bytes_progress_format,
+                    Formatter.formatShortFileSize(this, state.bytesDone),
+                    Formatter.formatShortFileSize(this, state.bytesTotal)
+                )
+            }
+            binding.syncStatusText.text = statusText
         } else {
             binding.syncProgressBar.visibility = View.GONE
             binding.syncStatusBanner.visibility = View.GONE
 
             if (state.isFinished) {
-                val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-                val syncedDatasetNames = sharedPreferences.getStringSet(PREF_SYNCED_DATASET_NAMES, emptySet()) ?: emptySet()
-                historyAdapter?.updateSyncedDatasetNames(syncedDatasetNames)
+                historyAdapter?.updateSyncedDatasetNames(
+                    CloudSyncManager.getSyncedDatasetNames(this),
+                    CloudSyncManager.getDatasetErrors(this).keys
+                )
                 invalidateOptionsMenu()
                 CloudSyncManager.resetProgress()
 
@@ -232,14 +214,13 @@ class HistoryActivity : AppCompatActivity() {
         val treeUri = CloudSyncManager.getSafStorageUri(this) ?: return
 
         lifecycleScope.launch(Dispatchers.IO) {
-            val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this@HistoryActivity)
-            val currentSynced = sharedPreferences.getStringSet(PREF_SYNCED_DATASET_NAMES, emptySet())?.toMutableSet() ?: mutableSetOf()
+            val currentSynced = CloudSyncManager.getSyncedDatasetNames(this@HistoryActivity).toMutableSet()
 
             val rootDoc = DocumentFile.fromTreeUri(this@HistoryActivity, treeUri)
             if (rootDoc == null || !rootDoc.exists()) {
                 if (currentSynced.isNotEmpty()) {
                     currentSynced.clear()
-                    sharedPreferences.edit().remove(PREF_SYNCED_DATASET_NAMES).apply()
+                    CloudSyncManager.clearSyncedDatasetNames(this@HistoryActivity, DESTINATION_SAF)
                     withContext(Dispatchers.Main) {
                         if (!isFinishing && !isDestroyed) {
                             historyAdapter?.updateSyncedDatasetNames(emptySet())
@@ -266,7 +247,7 @@ class HistoryActivity : AppCompatActivity() {
             }
 
             if (changed) {
-                sharedPreferences.edit().putStringSet(PREF_SYNCED_DATASET_NAMES, currentSynced).apply()
+                CloudSyncManager.setSyncedDatasetNames(this@HistoryActivity, currentSynced)
                 withContext(Dispatchers.Main) {
                     if (!isFinishing && !isDestroyed) {
                         historyAdapter?.updateSyncedDatasetNames(currentSynced)
@@ -295,7 +276,7 @@ class HistoryActivity : AppCompatActivity() {
 
             val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
             val viewedDatasetNames = sharedPreferences.getStringSet(PREF_VIEWED_DATASET_NAMES, emptySet()) ?: emptySet()
-            val syncedDatasetNames = sharedPreferences.getStringSet(PREF_SYNCED_DATASET_NAMES, emptySet()) ?: emptySet()
+            val syncedDatasetNames = CloudSyncManager.getSyncedDatasetNames(this)
 
             val savedExpandedKeys = getExpandedGroupKeys()
             val hasSavedState = savedExpandedKeys.isNotEmpty()
@@ -346,6 +327,7 @@ class HistoryActivity : AppCompatActivity() {
                 directoryGroups = directoryGroups,
                 viewedDatasetNames = viewedDatasetNames,
                 syncedDatasetNames = syncedDatasetNames,
+                failedDatasetNames = CloudSyncManager.getDatasetErrors(this).keys,
                 onItemClick = { dataset ->
                     markDatasetAsViewed(dataset.name)
                     val intent = Intent(this, CollectionDetailActivity::class.java).apply {
@@ -373,12 +355,21 @@ class HistoryActivity : AppCompatActivity() {
 
                     val startSync = {
                         when (CloudSyncManager.getCloudSyncMode(this@HistoryActivity)) {
-                            CloudSyncMode.NOT_CONFIGURED -> showConfigureCloudSyncDialog(dataset)
+                            CloudSyncMode.NOT_CONFIGURED -> showConfigureCloudSyncDialog()
                             else -> syncSingleDataset(dataset)
                         }
                     }
 
-                    if (isAlreadySynced) {
+                    val lastError = CloudSyncManager.getDatasetErrors(this@HistoryActivity)[dataset.name]
+
+                    if (!isAlreadySynced && lastError != null) {
+                        AlertDialog.Builder(this)
+                            .setTitle(R.string.sync_last_error_title)
+                            .setMessage(getString(R.string.sync_last_error_msg, dataset.name, lastError))
+                            .setPositiveButton(R.string.retry_action) { _, _ -> startSync() }
+                            .setNegativeButton(R.string.cancel, null)
+                            .show()
+                    } else if (isAlreadySynced) {
                         AlertDialog.Builder(this)
                             .setTitle(R.string.collection_already_synced_title)
                             .setMessage(getString(R.string.collection_already_synced_msg, dataset.name))

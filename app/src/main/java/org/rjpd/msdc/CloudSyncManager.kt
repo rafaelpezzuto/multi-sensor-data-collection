@@ -1,6 +1,7 @@
 package org.rjpd.msdc
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import androidx.preference.PreferenceManager
@@ -14,19 +15,29 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.sync.Mutex
 import timber.log.Timber
 
 internal const val PREF_CUSTOM_UPLOAD_URL = "custom_upload_url"
 internal const val PREF_CUSTOM_UPLOAD_TOKEN = "custom_upload_token"
 internal const val PREF_CLOUD_STORAGE_TREE_URI = "cloud_storage_tree_uri"
 internal const val PREF_SYNCED_DATASET_NAMES = "synced_dataset_names"
+internal const val PREF_ACTIVE_S3_DESTINATION = "active_s3_destination"
+internal const val DESTINATION_HTTP = "http"
+internal const val DESTINATION_SAF = "saf"
+private const val KEY_SYNCED = "synced"
+private const val ERROR_PREFIX = "error:"
+private const val KEY_QUEUED = "queued"
 
 private const val TAG = "CloudSyncManager"
 private const val UPLOAD_CACHE_DIR = "upload_cache"
 private const val ZIP_MIME_TYPE = "application/zip"
 
 // Secrets and sync bookkeeping never go into a dataset's metadata.json.
-private val PREFS_EXCLUDED_FROM_METADATA = setOf(PREF_CUSTOM_UPLOAD_TOKEN, PREF_SYNCED_DATASET_NAMES)
+private val PREFS_EXCLUDED_FROM_METADATA = setOf(
+    PREF_CUSTOM_UPLOAD_TOKEN, PREF_SYNCED_DATASET_NAMES, PREF_ACTIVE_S3_DESTINATION,
+    PREF_AUTO_UPLOAD, PREF_UPLOAD_WIFI_ONLY, PREF_UPLOAD_CHARGING_ONLY, PREF_UPLOAD_DESTINATION_TYPE
+)
 
 fun preferencesForMetadata(all: Map<String, *>): MutableMap<String, Any?> =
     all.filterKeys { it !in PREFS_EXCLUDED_FROM_METADATA }.toMutableMap()
@@ -34,13 +45,16 @@ fun preferencesForMetadata(all: Map<String, *>): MutableMap<String, Any?> =
 enum class CloudSyncMode {
     HTTP_SERVER,
     SAF_STORAGE,
+    S3,
     NOT_CONFIGURED
 }
 
 data class SyncResult(
     val success: Boolean,
     val message: String,
-    val statusCode: Int? = null
+    val statusCode: Int? = null,
+    // Every remaining dataset would fail the same way (credentials, quota, no network): stop the run.
+    val stopRun: Boolean = false
 )
 
 data class SyncProgressState(
@@ -52,13 +66,22 @@ data class SyncProgressState(
     val lastResult: SyncResult? = null,
     val isFinished: Boolean = false,
     val successCount: Int = 0,
-    val failureCount: Int = 0
+    val failureCount: Int = 0,
+    val bytesDone: Long = 0,
+    val bytesTotal: Long = 0
 )
 
 object CloudSyncManager {
 
     private val _syncProgress = MutableStateFlow(SyncProgressState())
     val syncProgress: StateFlow<SyncProgressState> = _syncProgress.asStateFlow()
+
+    /** One sync at a time: the foreground service and the background worker share it. */
+    val syncMutex = Mutex()
+
+    /** True from the start of a recording until its files are moved and zipped; background uploads wait. */
+    @Volatile
+    var recordingInProgress = false
 
     fun startProgress(total: Int, initialDatasetName: String = "") {
         _syncProgress.value = SyncProgressState(
@@ -75,8 +98,14 @@ object CloudSyncManager {
             isSyncing = true,
             current = current,
             total = total,
-            currentDatasetName = datasetName
+            currentDatasetName = datasetName,
+            bytesDone = 0,
+            bytesTotal = 0
         )
+    }
+
+    fun updateBytes(bytesDone: Long, bytesTotal: Long) {
+        _syncProgress.value = _syncProgress.value.copy(bytesDone = bytesDone, bytesTotal = bytesTotal)
     }
 
     fun recordDatasetCompleted(datasetName: String, result: SyncResult) {
@@ -107,19 +136,41 @@ object CloudSyncManager {
         _syncProgress.value = SyncProgressState()
     }
 
+    /** Migrate the old priority order without discarding saved connections or switching them later. */
+    fun selectedUploadMode(context: Context): CloudSyncMode {
+        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        val savedType = prefs.getString(PREF_UPLOAD_DESTINATION_TYPE, null)
+        if (savedType != null) {
+            return resolveUploadSelection(savedType, false, false, false)
+        }
+
+        val selected = resolveUploadSelection(
+            savedType = null,
+            hasCompleteS3 = getActiveS3Destination(context) != null,
+            hasHttpServer = getCustomUploadUrl(context).isNotBlank(),
+            hasStorageFolder = getSafStorageUri(context) != null
+        )
+        prefs.edit().putString(PREF_UPLOAD_DESTINATION_TYPE, selected.name).commit()
+        return selected
+    }
+
+    /** An incomplete or removed destination blocks uploading; it never activates another method. */
     fun getCloudSyncMode(context: Context): CloudSyncMode {
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        val customUrl = sharedPreferences.getString(PREF_CUSTOM_UPLOAD_URL, null)?.trim()
-        if (!customUrl.isNullOrEmpty()) {
-            return CloudSyncMode.HTTP_SERVER
+        val selected = selectedUploadMode(context)
+        val configured = when (selected) {
+            CloudSyncMode.S3 -> getActiveS3Destination(context) != null
+            CloudSyncMode.HTTP_SERVER -> getCustomUploadUrl(context).isNotBlank()
+            CloudSyncMode.SAF_STORAGE -> getSafStorageUri(context) != null
+            CloudSyncMode.NOT_CONFIGURED -> false
         }
 
-        val treeUriStr = sharedPreferences.getString(PREF_CLOUD_STORAGE_TREE_URI, null)?.trim()
-        if (!treeUriStr.isNullOrEmpty()) {
-            return CloudSyncMode.SAF_STORAGE
-        }
+        return if (configured) selected else CloudSyncMode.NOT_CONFIGURED
+    }
 
-        return CloudSyncMode.NOT_CONFIGURED
+    /** The saved S3 profile, if complete. Its absence does not select a different upload method. */
+    fun getActiveS3Destination(context: Context): S3Destination? {
+        val id = PreferenceManager.getDefaultSharedPreferences(context).getString(PREF_ACTIVE_S3_DESTINATION, null)
+        return S3Destinations.get(context, id)?.takeIf { S3Destinations.isComplete(context, it) }
     }
 
     fun getCustomUploadUrl(context: Context): String {
@@ -134,7 +185,7 @@ object CloudSyncManager {
 
     fun getSafStorageUri(context: Context): Uri? {
         val uriStr = PreferenceManager.getDefaultSharedPreferences(context)
-            .getString(PREF_CLOUD_STORAGE_TREE_URI, null)?.trim() ?: return null
+            .getString(PREF_CLOUD_STORAGE_TREE_URI, null)?.trim()?.takeIf { it.isNotEmpty() } ?: return null
         return try {
             Uri.parse(uriStr)
         } catch (_: Exception) {
@@ -151,45 +202,131 @@ object CloudSyncManager {
         } else {
             editor.remove(PREF_CLOUD_STORAGE_TREE_URI)
         }
+        editor.apply()
         if (oldUri != uri?.toString()) {
-            editor.remove(PREF_SYNCED_DATASET_NAMES)
+            clearSyncedDatasetNames(context, DESTINATION_SAF)
         }
+    }
+
+    fun activeDestinationId(context: Context): String? = when (getCloudSyncMode(context)) {
+        CloudSyncMode.HTTP_SERVER -> DESTINATION_HTTP
+        CloudSyncMode.SAF_STORAGE -> DESTINATION_SAF
+        CloudSyncMode.S3 -> getActiveS3Destination(context)?.syncStateId
+        CloudSyncMode.NOT_CONFIGURED -> null
+    }
+
+    // One prefs file per destination, so switching destinations keeps each one's sync state.
+    internal fun syncState(context: Context, destinationId: String): SharedPreferences {
+        migrateLegacySyncedNames(context)
+        return context.getSharedPreferences("sync_state_$destinationId", Context.MODE_PRIVATE)
+    }
+
+    // Before per-destination state, one set in the default prefs belonged to whichever of HTTP/SAF was configured.
+    private fun migrateLegacySyncedNames(context: Context) {
+        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        val legacy = prefs.getStringSet(PREF_SYNCED_DATASET_NAMES, null) ?: return
+        val legacyDestination = when {
+            getCustomUploadUrl(context).isNotEmpty() -> DESTINATION_HTTP
+            getSafStorageUri(context) != null -> DESTINATION_SAF
+            else -> null
+        }
+        if (legacyDestination != null) {
+            context.getSharedPreferences("sync_state_$legacyDestination", Context.MODE_PRIVATE).edit()
+                .putStringSet(KEY_SYNCED, legacy.toSet())
+                .commit()
+        }
+        prefs.edit().remove(PREF_SYNCED_DATASET_NAMES).commit()
+    }
+
+    fun getSyncedDatasetNames(context: Context): Set<String> {
+        val destinationId = activeDestinationId(context) ?: return emptySet()
+        return syncState(context, destinationId).getStringSet(KEY_SYNCED, emptySet())?.toSet() ?: emptySet()
+    }
+
+    fun setSyncedDatasetNames(context: Context, names: Set<String>) {
+        val destinationId = activeDestinationId(context) ?: return
+        syncState(context, destinationId).edit().putStringSet(KEY_SYNCED, names).apply()
+    }
+
+    fun clearSyncedDatasetNames(context: Context, destinationId: String) {
+        syncState(context, destinationId).edit().remove(KEY_SYNCED).apply()
+    }
+
+    fun isDatasetSynced(context: Context, datasetName: String): Boolean =
+        datasetName in getSyncedDatasetNames(context)
+
+    fun markDatasetAsSynced(context: Context, datasetName: String) {
+        setSyncedDatasetNames(context, getSyncedDatasetNames(context) + datasetName)
+    }
+
+    // Collections the user asked to sync, kept until handled so a sync killed midway finishes in the background.
+    fun queueDatasets(context: Context, names: Collection<String>) {
+        val destinationId = activeDestinationId(context) ?: return
+        val state = syncState(context, destinationId)
+        val queued = state.getStringSet(KEY_QUEUED, emptySet()).orEmpty() + names
+        state.edit().putStringSet(KEY_QUEUED, queued).commit()
+    }
+
+    fun dequeueDataset(context: Context, name: String) {
+        val destinationId = activeDestinationId(context) ?: return
+        val state = syncState(context, destinationId)
+        val queued = state.getStringSet(KEY_QUEUED, emptySet()).orEmpty() - name
+        state.edit().putStringSet(KEY_QUEUED, queued).commit()
+    }
+
+    fun isDatasetQueued(context: Context, name: String): Boolean {
+        val destinationId = activeDestinationId(context) ?: return false
+        return name in syncState(context, destinationId).getStringSet(KEY_QUEUED, emptySet()).orEmpty()
+    }
+
+    /** Last sync error per dataset for the active destination. */
+    fun getDatasetErrors(context: Context): Map<String, String> {
+        val destinationId = activeDestinationId(context) ?: return emptyMap()
+        return syncState(context, destinationId).all
+            .filterKeys { it.startsWith(ERROR_PREFIX) }
+            .map { (key, value) -> key.removePrefix(ERROR_PREFIX) to value.toString() }
+            .toMap()
+    }
+
+    private fun recordDatasetError(context: Context, destinationId: String?, datasetName: String, error: String?) {
+        if (destinationId == null) return
+        val editor = syncState(context, destinationId).edit()
+        if (error == null) editor.remove(ERROR_PREFIX + datasetName) else editor.putString(ERROR_PREFIX + datasetName, error)
         editor.apply()
     }
 
-    fun clearSyncedDatasetNames(context: Context) {
-        PreferenceManager.getDefaultSharedPreferences(context).edit()
-            .remove(PREF_SYNCED_DATASET_NAMES)
-            .apply()
-    }
-
-    fun isDatasetSynced(context: Context, datasetName: String): Boolean {
-        if (getCloudSyncMode(context) == CloudSyncMode.NOT_CONFIGURED) {
-            return false
-        }
-        val syncedSet = PreferenceManager.getDefaultSharedPreferences(context)
-            .getStringSet(PREF_SYNCED_DATASET_NAMES, emptySet()) ?: emptySet()
-        return syncedSet.contains(datasetName)
-    }
-
-    fun markDatasetAsSynced(context: Context, datasetName: String) {
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        val currentSynced = sharedPreferences.getStringSet(PREF_SYNCED_DATASET_NAMES, emptySet())?.toMutableSet() ?: mutableSetOf()
-        currentSynced.add(datasetName)
-        sharedPreferences.edit().putStringSet(PREF_SYNCED_DATASET_NAMES, currentSynced).apply()
-    }
-
-    suspend fun syncDataset(context: Context, dataset: DatasetSummary): SyncResult = withContext(Dispatchers.IO) {
+    suspend fun syncDataset(
+        context: Context,
+        dataset: DatasetSummary,
+        onProgress: (bytesDone: Long, bytesTotal: Long) -> Unit = { _, _ -> }
+    ): SyncResult = withContext(Dispatchers.IO) {
         ensureActive()
+        val destinationId = activeDestinationId(context)
         val result = when (getCloudSyncMode(context)) {
             CloudSyncMode.HTTP_SERVER -> syncViaHttp(context, dataset)
             CloudSyncMode.SAF_STORAGE -> syncViaSaf(context, dataset)
+            CloudSyncMode.S3 -> {
+                val destination = getActiveS3Destination(context)
+                    ?: return@withContext SyncResult(false, context.getString(R.string.upload_destination_incomplete), stopRun = true)
+                S3Sync.syncDataset(context, destination, dataset, onProgress).also {
+                    ensureActive()
+                    if (it.success) {
+                        // Settings can change while the request is in flight. Mark the destination
+                        // actually uploaded to, not whichever profile happens to be active now.
+                        val state = syncState(context, destination.syncStateId)
+                        val synced = state.getStringSet(KEY_SYNCED, emptySet()).orEmpty() + dataset.name
+                        state.edit().putStringSet(KEY_SYNCED, synced).apply()
+                    }
+                }
+            }
             CloudSyncMode.NOT_CONFIGURED -> SyncResult(
                 success = false,
-                message = "No cloud destination configured. Set a server URL or choose a folder."
+                message = context.getString(R.string.upload_destination_incomplete),
+                stopRun = true
             )
         }
         ensureActive()
+        recordDatasetError(context, destinationId, dataset.name, if (result.success) null else result.message)
         result
     }
 

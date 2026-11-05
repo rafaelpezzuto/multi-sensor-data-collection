@@ -20,27 +20,12 @@
             app:summaryOff="@string/compact_off" />
     </PreferenceCategory>
 
-    <PreferenceCategory
-        app:title="@string/cloud_upload_category"
-        app:icon="@drawable/ic_cloud_upload">
-
-        <EditTextPreference
-            app:key="custom_upload_url"
-            app:title="@string/custom_upload_url_title"
-            app:summary="@string/custom_upload_url_summary"
-            app:dialogTitle="@string/custom_upload_url_title" />
-
-        <EditTextPreference
-            app:key="custom_upload_token"
-            app:title="@string/custom_upload_token_title"
-            app:summary="@string/custom_upload_token_summary"
-            app:dialogTitle="@string/custom_upload_token_title" />
-
-        <Preference
-            app:key="cloud_storage_folder"
-            app:title="@string/cloud_storage_folder_title"
-            app:summary="@string/cloud_storage_folder_not_set" />
-    </PreferenceCategory>
+    <Preference
+        app:key="upload_settings"
+        app:title="@string/upload_settings_title"
+        app:icon="@drawable/ic_cloud_upload"
+        app:fragment="org.rjpd.msdc.UploadSettingsFragment"
+        app:singleLineTitle="false" />
 
     <PreferenceCategory
         app:title="@string/camera_settings"

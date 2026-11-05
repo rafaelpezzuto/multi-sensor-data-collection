@@ -480,6 +480,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startDataCollecting() {
+        CloudSyncManager.recordingInProgress = true
+        SyncWorker.cancel(this)
         lockScreenOrientation()
         disableInterfaceElements()
 
@@ -699,6 +701,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun enableInterfaceElements() {
+        CloudSyncManager.recordingInProgress = false
+        SyncWorker.schedule(this)
         viewBinding.importantInformationLinearLayout.visibility = android.view.View.VISIBLE
         deviceAngleDetectorService.start(viewBinding.angleTextview)
 
