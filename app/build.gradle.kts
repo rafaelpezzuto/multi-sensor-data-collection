@@ -78,8 +78,10 @@ dependencies {
     implementation(libs.timber)
     implementation(libs.usb.serial)
     implementation(libs.osmdroid.android)
+    implementation(libs.okhttp)
 
     testImplementation(libs.junit)
+    testImplementation(libs.okhttp.mockwebserver)
 
     androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.test.rules)

@@ -729,7 +729,7 @@ class MainActivity : AppCompatActivity() {
         val medStop = if (::mediaStopDateTime.isInitialized) mediaStopDateTime else btnStop
 
         writeMetadataFile(
-            sharedPreferences.all,
+            preferencesForMetadata(sharedPreferences.all),
             resources.displayMetrics,
             infoUtils.getAvailableSensors(),
             viewBinding.angleTextview.text as String,
