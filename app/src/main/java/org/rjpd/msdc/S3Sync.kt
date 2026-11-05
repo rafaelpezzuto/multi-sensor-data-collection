@@ -32,8 +32,6 @@ class S3SyncException(message: String, val stopRun: Boolean = false) : Exception
 internal class FileDigests(val md5Base64: String, val partMd5Base64: List<String>, val partSha256: List<String>) {
     val md5Hex: String get() = Base64.getDecoder().decode(md5Base64).toHex()
 
-    fun partMd5Hex(index: Int): String = Base64.getDecoder().decode(partMd5Base64[index]).toHex()
-
     /** S3 multipart ETag: MD5 of the concatenated binary part MD5s, then "-<part count>". */
     val multipartEtag: String
         get() {
@@ -287,6 +285,7 @@ object S3Sync {
         val digests = record?.digests ?: hashFile(file, partSize)
 
         val remote = client.headObject(planned.key)
+
         if (remote != null) {
             if (digests.matches(remote, size) || !destination.overwrite) {
                 record?.uploadId?.let { client.abortMultipartUpload(planned.key, it) }
@@ -316,6 +315,7 @@ object S3Sync {
                 // Opaque ETag (e.g. server-side encryption): size matched and the server checked every part's Content-MD5.
                 (uploaded.size == size && !MD5_ETAG.matches(uploaded.etag)))
         if (!verified) throw S3SyncException(context.getString(R.string.s3_verify_failed, planned.key))
+
         return true
     }
 
@@ -329,18 +329,24 @@ object S3Sync {
         ifNoneMatch: Boolean,
         onSent: (Long) -> Unit
     ) {
-        suspend fun put(conditional: Boolean) = client.putObject(
-            planned.key, FileRangeBody(planned.file, 0, size, size, lastModified, onSent),
-            digests.partMd5Base64[0], digests.partSha256[0], contentTypeFor(planned.file.name),
-            mapOf(MD5_METADATA to digests.md5Base64), ifNoneMatch = conditional
-        )
+        val body = FileRangeBody(planned.file, 0, size, size, lastModified, onSent)
+
         try {
-            put(ifNoneMatch)
+            client.putObject(
+                key = planned.key,
+                body = body,
+                md5Base64 = digests.partMd5Base64[0],
+                sha256Hex = digests.partSha256[0],
+                contentType = contentTypeFor(planned.file.name),
+                metadata = mapOf(MD5_METADATA to digests.md5Base64),
+                ifNoneMatch = ifNoneMatch
+            )
         } catch (e: S3Exception) {
-            when (e.status) {
-                412 -> throw S3SyncException(context.getString(R.string.s3_conflict, planned.key))
-                else -> throw e
+            if (e.status == 412) {
+                throw S3SyncException(context.getString(R.string.s3_conflict, planned.key))
             }
+
+            throw e
         }
     }
 
@@ -355,14 +361,14 @@ object S3Sync {
         restarted: Boolean = false
     ) {
         var record = start
-        fun save() = state.edit().putString(recordName, record.toJson()).commit()
 
         val uploadId = record.uploadId ?: client.createMultipartUpload(
             record.key, contentTypeFor(file.name), mapOf(MD5_METADATA to record.digests.md5Base64)
         ).also {
             record = record.copy(uploadId = it, completed = emptyMap())
-            save()
+            state.edit().putString(recordName, record.toJson()).commit()
         }
+
         val known: Map<Int, String> = try {
             client.listParts(record.key, uploadId)
         } catch (e: S3Exception) {
@@ -380,11 +386,13 @@ object S3Sync {
 
         val etags = sortedMapOf<Int, String>()
         val digests = record.digests
+
         for (index in digests.partMd5Base64.indices) {
             val number = index + 1
             val offset = index * record.partSize
             val length = minOf(record.partSize, record.size - offset)
-            val expected = digests.partMd5Hex(index)
+            val expected = Base64.getDecoder().decode(digests.partMd5Base64[index]).toHex()
+
             if (known[number]?.trim('"') == expected) {
                 etags[number] = expected
             } else {
@@ -392,18 +400,23 @@ object S3Sync {
                 val etag = client.uploadPart(record.key, uploadId, number, body, digests.partMd5Base64[index], digests.partSha256[index])
                 etags[number] = etag
                 record = record.copy(completed = record.completed + (number to etag))
-                save()
+                state.edit().putString(recordName, record.toJson()).commit()
             }
+
             onSent(offset + length)
         }
 
-        if (file.length() != record.size || file.lastModified() != record.lastModified) throw FileChangedException(file)
+        if (file.length() != record.size || file.lastModified() != record.lastModified) {
+            throw FileChangedException(file)
+        }
+
         try {
             client.completeMultipartUpload(record.key, uploadId, etags, ifNoneMatch = ifNoneMatch)
         } catch (e: S3Exception) {
             // NoSuchUpload after a retried Complete usually means the first one succeeded; the HEAD check decides.
             if (e.status != 404) throw e
         }
+
         state.edit().remove(recordName).commit()
     }
 }

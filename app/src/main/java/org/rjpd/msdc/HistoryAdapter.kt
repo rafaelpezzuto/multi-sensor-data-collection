@@ -7,10 +7,14 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+import java.util.Date
 import org.rjpd.msdc.databinding.ItemDatasetBinding
 import org.rjpd.msdc.databinding.ItemDatasetGroupHeaderBinding
 import org.rjpd.msdc.databinding.ItemDatasetSubgroupHeaderBinding
-import java.util.Date
+
+private const val TYPE_DIR_HEADER = 0
+private const val TYPE_SUBDIR_HEADER = 1
+private const val TYPE_ITEM = 2
 
 data class SubdirectoryGroup(
     val subdirectoryName: String,
@@ -249,11 +253,5 @@ class HistoryAdapter(
                 onItemClick(dataset)
             }
         }
-    }
-
-    companion object {
-        private const val TYPE_DIR_HEADER = 0
-        private const val TYPE_SUBDIR_HEADER = 1
-        private const val TYPE_ITEM = 2
     }
 }

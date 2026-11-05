@@ -42,6 +42,8 @@ import org.w3c.dom.Element
 import org.xml.sax.InputSource
 import timber.log.Timber
 
+internal const val DEFAULT_S3_MAX_ATTEMPTS = 10
+
 private const val TAG = "S3Client"
 private const val MAX_BACKOFF_MS = 60_000L
 private const val MAX_CLOCK_SKEW_MS = 15 * 60_000L
@@ -107,7 +109,7 @@ class S3Client(
     private val accessKey: String,
     private val secretKey: String,
     trustedCertificate: X509Certificate? = null,
-    private val maxAttempts: Int = DEFAULT_MAX_ATTEMPTS,
+    private val maxAttempts: Int = DEFAULT_S3_MAX_ATTEMPTS,
     private val retryBaseDelayMs: Long = 1000L
 ) {
     private val endpointUrl: HttpUrl = endpoint.toHttpUrl()
@@ -154,14 +156,16 @@ class S3Client(
         metadata: Map<String, String> = emptyMap(),
         ifNoneMatch: Boolean = false
     ): String = retrying {
-        val headers = mapOf("Content-MD5" to md5Base64) + metadataHeaders(metadata) +
+        val headers = mapOf("Content-MD5" to md5Base64) + metadata.mapKeys { "x-amz-meta-${it.key}" } +
                 (if (ifNoneMatch) mapOf("If-None-Match" to "*") else emptyMap())
         send("PUT", key, body = body, payloadSha256 = sha256Hex, headers = headers, contentType = contentType).etag
     }
 
     suspend fun createMultipartUpload(key: String, contentType: String? = null, metadata: Map<String, String> = emptyMap()): String =
         retrying {
-            val response = send("POST", key, mapOf("uploads" to ""), headers = metadataHeaders(metadata), contentType = contentType)
+            val headers = metadata.mapKeys { "x-amz-meta-${it.key}" }
+            val response = send("POST", key, mapOf("uploads" to ""), headers = headers, contentType = contentType)
+
             parseXml(response.body).text("UploadId") ?: throw S3Exception(response.code, "InvalidResponse", "No UploadId in response")
         }
 
@@ -187,13 +191,27 @@ class S3Client(
         }
     }
 
-    suspend fun completeMultipartUpload(key: String, uploadId: String, parts: Map<Int, String>, ifNoneMatch: Boolean = false): String {
+    suspend fun completeMultipartUpload(
+        key: String,
+        uploadId: String,
+        parts: Map<Int, String>,
+        ifNoneMatch: Boolean = false
+    ): String {
         val xml = parts.toSortedMap().entries.joinToString("", "<CompleteMultipartUpload>", "</CompleteMultipartUpload>") {
             "<Part><PartNumber>${it.key}</PartNumber><ETag>\"${it.value}\"</ETag></Part>"
         }.toByteArray()
         return retrying {
             val headers = if (ifNoneMatch) mapOf("If-None-Match" to "*") else emptyMap()
-            val response = send("POST", key, mapOf("uploadId" to uploadId), xml.toRequestBody(XML), SigV4.sha256Hex(xml), headers, slow = true)
+            val response = send(
+                method = "POST",
+                key = key,
+                query = mapOf("uploadId" to uploadId),
+                body = xml.toRequestBody(XML),
+                payloadSha256 = SigV4.sha256Hex(xml),
+                headers = headers,
+                slow = true
+            )
+
             parseXml(response.body).text("ETag")?.trim('"')?.takeIf { it.isNotBlank() }
                 ?: throw S3Exception(response.code, "InvalidResponse", "No ETag in completion response")
         }
@@ -255,12 +273,14 @@ class S3Client(
 
         (if (slow) completeClient else client).newCall(request).await().use { response ->
             val text = if (method == "HEAD") "" else response.body.string()
+
             // CompleteMultipartUpload can answer 200 and still carry an error document.
             val embeddedError = response.isSuccessful && text.isNotBlank() &&
                     parseXml(text).localName == "Error"
             if (response.isSuccessful && !embeddedError) {
                 return S3Response(response.code, response.headers, text)
             }
+
             var code = xmlText(text, "Code") ?: "HTTP${response.code}"
             val message = xmlText(text, "Message") ?: response.message
             val serverDate = response.headers.getDate("Date")?.time
@@ -271,6 +291,7 @@ class S3Client(
                 clockOffsetMs = serverDate - System.currentTimeMillis()
                 code = "RequestTimeTooSkewed"
             }
+
             throw S3Exception(response.code, code, message)
         }
     }
@@ -300,21 +321,19 @@ class S3Client(
                 val untrusted = e is SSLPeerUnverifiedException || generateSequence(e as Throwable) { it.cause }.any { it is CertificateException }
                 val retryable = (e is S3Exception && e.retryable) || (e is IOException && e !is FileChangedException && !untrusted)
                 if (!retryable || attempt >= maxAttempts) throw e
+
                 Timber.tag(TAG).w("Attempt $attempt failed, retrying: ${e.javaClass.simpleName}: ${e.message}")
                 if (!(e is S3Exception && e.code == "RequestTimeTooSkewed")) {
-                    delay(backoffMs(attempt))
+                    val cappedDelayMs = minOf(MAX_BACKOFF_MS, retryBaseDelayMs shl minOf(attempt - 1, 16))
+                    delay((cappedDelayMs * Random.nextDouble(0.5, 1.0)).toLong())
                 }
+
                 attempt++
             }
         }
     }
 
-    private fun backoffMs(attempt: Int): Long =
-        (minOf(MAX_BACKOFF_MS, retryBaseDelayMs shl minOf(attempt - 1, 16)) * Random.nextDouble(0.5, 1.0)).toLong()
-
     companion object {
-        const val DEFAULT_MAX_ATTEMPTS = 10
-
         // HTTP/1.1 only: against RustFS behind Caddy, HTTP/2 dropped more uploads than HTTP/1.1,
         // and one dropped HTTP/2 connection fails every request multiplexed on it.
         private val baseClient: OkHttpClient = OkHttpClient.Builder()
@@ -361,8 +380,6 @@ class S3Client(
         }
     }
 }
-
-private fun metadataHeaders(metadata: Map<String, String>) = metadata.mapKeys { "x-amz-meta-${it.key}" }
 
 private suspend fun Call.await(): Response = suspendCancellableCoroutine { continuation ->
     continuation.invokeOnCancellation { cancel() }

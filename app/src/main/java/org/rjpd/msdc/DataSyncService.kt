@@ -29,6 +29,29 @@ private const val PROGRESS_INTERVAL_MS = 500L
 
 class DataSyncService : Service() {
 
+    companion object {
+        const val ACTION_SYNC_ALL = "org.rjpd.msdc.action.SYNC_ALL"
+        const val ACTION_SYNC_SINGLE = "org.rjpd.msdc.action.SYNC_SINGLE"
+        const val EXTRA_DATASET_NAME = "org.rjpd.msdc.extra.DATASET_NAME"
+
+        fun startSyncAll(context: Context) {
+            val intent = Intent(context, DataSyncService::class.java).apply {
+                action = ACTION_SYNC_ALL
+            }
+
+            ContextCompat.startForegroundService(context, intent)
+        }
+
+        fun startSyncSingle(context: Context, datasetName: String) {
+            val intent = Intent(context, DataSyncService::class.java).apply {
+                action = ACTION_SYNC_SINGLE
+                putExtra(EXTRA_DATASET_NAME, datasetName)
+            }
+
+            ContextCompat.startForegroundService(context, intent)
+        }
+    }
+
     private val serviceJob = SupervisorJob()
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
     private var activeSyncJob: Job? = null
@@ -294,24 +317,4 @@ class DataSyncService : Service() {
         }
     }
 
-    companion object {
-        const val ACTION_SYNC_ALL = "org.rjpd.msdc.action.SYNC_ALL"
-        const val ACTION_SYNC_SINGLE = "org.rjpd.msdc.action.SYNC_SINGLE"
-        const val EXTRA_DATASET_NAME = "org.rjpd.msdc.extra.DATASET_NAME"
-
-        fun startSyncAll(context: Context) {
-            val intent = Intent(context, DataSyncService::class.java).apply {
-                action = ACTION_SYNC_ALL
-            }
-            ContextCompat.startForegroundService(context, intent)
-        }
-
-        fun startSyncSingle(context: Context, datasetName: String) {
-            val intent = Intent(context, DataSyncService::class.java).apply {
-                action = ACTION_SYNC_SINGLE
-                putExtra(EXTRA_DATASET_NAME, datasetName)
-            }
-            ContextCompat.startForegroundService(context, intent)
-        }
-    }
 }

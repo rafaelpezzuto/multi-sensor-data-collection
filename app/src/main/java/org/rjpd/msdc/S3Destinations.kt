@@ -23,6 +23,9 @@ import timber.log.Timber
 private const val TAG = "S3Destinations"
 private const val DESTINATIONS_PREFS = "s3_destinations"
 private const val KEY_DESTINATIONS = "destinations"
+private const val SECRETS_PREFS = "s3_secrets"
+private const val SECRET_KEY_ALIAS = "msdc_secrets"
+private const val SECRET_IV_LENGTH = 12
 
 data class S3Destination(
     val id: String = UUID.randomUUID().toString(),
@@ -110,7 +113,7 @@ object S3Destinations {
                 hasAccessKey(context, destination.id) && hasSecretKey(context, destination.id)
 
     /** Null when the destination is incomplete or its credentials can no longer be decrypted. */
-    fun client(context: Context, destination: S3Destination, maxAttempts: Int = S3Client.DEFAULT_MAX_ATTEMPTS): S3Client? {
+    fun client(context: Context, destination: S3Destination, maxAttempts: Int = DEFAULT_S3_MAX_ATTEMPTS): S3Client? {
         if (destination.endpoint.isBlank() || destination.bucket.isBlank()) return null
         val accessKey = SecretStore.get(context, "${destination.id}.access_key") ?: return null
         val secretKey = SecretStore.get(context, "${destination.id}.secret_key") ?: return null
@@ -138,6 +141,7 @@ object S3Destinations {
         val client = client(context, destination, maxAttempts = 2)
             ?: return listOf(context.getString(R.string.s3_test_incomplete))
         val results = mutableListOf<String>()
+
         suspend fun step(label: Int, block: suspend () -> Unit): Boolean = try {
             block()
             results += "✓ " + context.getString(label)
@@ -149,9 +153,12 @@ object S3Destinations {
             false
         }
 
-        val key = staticKeyPrefix(destination.keyTemplate) + ".msdc-test/" + UUID.randomUUID()
+        val literalPrefix = destination.keyTemplate.substringBefore('{')
+        val keyPrefix = literalPrefix.substring(0, literalPrefix.lastIndexOf('/') + 1).trimStart('/')
+        val key = keyPrefix + ".msdc-test/" + UUID.randomUUID()
         val data = "MultiSensor connection test\n".toByteArray()
         val md5 = Base64.getEncoder().encodeToString(MessageDigest.getInstance("MD5").digest(data))
+
         if (!step(R.string.s3_test_write) { client.putObject(key, data.toRequestBody(), md5, SigV4.sha256Hex(data), "text/plain") }) {
             return results
         }
@@ -172,19 +179,10 @@ object S3Destinations {
         return results
     }
 
-    /** The literal part of a key template before its first placeholder, up to the last '/'. */
-    fun staticKeyPrefix(template: String): String {
-        val literal = template.substringBefore('{')
-        return literal.substring(0, literal.lastIndexOf('/') + 1).trimStart('/')
-    }
 }
 
 /** Secrets encrypted with a non-exportable AES-GCM key in the Android Keystore; only ciphertext is stored. */
 internal object SecretStore {
-    private const val PREFS = "s3_secrets"
-    private const val KEY_ALIAS = "msdc_secrets"
-    private const val IV_LENGTH = 12
-
     fun put(context: Context, name: String, value: String) {
         val cipher = Cipher.getInstance("AES/GCM/NoPadding").apply { init(Cipher.ENCRYPT_MODE, key()) }
         val encrypted = cipher.iv + cipher.doFinal(value.toByteArray())
@@ -196,9 +194,9 @@ internal object SecretStore {
         return try {
             val bytes = Base64.getDecoder().decode(stored)
             val cipher = Cipher.getInstance("AES/GCM/NoPadding").apply {
-                init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, bytes, 0, IV_LENGTH))
+                init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, bytes, 0, SECRET_IV_LENGTH))
             }
-            String(cipher.doFinal(bytes, IV_LENGTH, bytes.size - IV_LENGTH))
+            String(cipher.doFinal(bytes, SECRET_IV_LENGTH, bytes.size - SECRET_IV_LENGTH))
         } catch (e: Exception) {
             // Keystore key lost or invalidated (data restored on another device, OEM keystore reset): ask again.
             Timber.tag(TAG).w("Stored secret %s can no longer be decrypted: %s", name, e.javaClass.simpleName)
@@ -212,14 +210,14 @@ internal object SecretStore {
         prefs(context).edit().remove(name).commit()
     }
 
-    private fun prefs(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+    private fun prefs(context: Context) = context.getSharedPreferences(SECRETS_PREFS, Context.MODE_PRIVATE)
 
     private fun key(): SecretKey {
         val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
-        (keyStore.getKey(KEY_ALIAS, null) as? SecretKey)?.let { return it }
+        (keyStore.getKey(SECRET_KEY_ALIAS, null) as? SecretKey)?.let { return it }
         return KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore").apply {
             init(
-                KeyGenParameterSpec.Builder(KEY_ALIAS, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
+                KeyGenParameterSpec.Builder(SECRET_KEY_ALIAS, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
                     .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
                     .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
                     .setKeySize(256)

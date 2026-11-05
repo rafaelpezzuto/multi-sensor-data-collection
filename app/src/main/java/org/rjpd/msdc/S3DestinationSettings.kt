@@ -27,8 +27,10 @@ class S3DestinationsFragment : PreferenceFragmentCompat() {
 
     override fun onResume() {
         super.onResume()
+
         val context = requireContext()
         preferenceScreen.removeAll()
+
         for (destination in S3Destinations.list(context)) {
             preferenceScreen.addPreference(Preference(context).apply {
                 title = destination.displayName.ifBlank { getString(R.string.s3_unnamed_destination) }
@@ -41,6 +43,7 @@ class S3DestinationsFragment : PreferenceFragmentCompat() {
                 extras.putString(ARG_DESTINATION_ID, destination.id)
             })
         }
+
         preferenceScreen.addPreference(Preference(context).apply {
             title = getString(R.string.s3_add_destination)
             setOnPreferenceClickListener {
@@ -78,11 +81,13 @@ class S3DestinationFragment : PreferenceFragmentCompat() {
                 valid
             }
         }
+
         findPreference<EditTextPreference>("key_template")?.setOnPreferenceChangeListener { _, value ->
             val valid = "{dataset}" in value as String || "{timestamp}" in value
             if (!valid) Toast.makeText(context, R.string.s3_key_template_invalid, Toast.LENGTH_LONG).show()
             valid
         }
+
         findPreference<EditTextPreference>("part_size_mib")?.apply {
             setOnBindEditTextListener { it.inputType = InputType.TYPE_CLASS_NUMBER }
             summaryProvider = Preference.SummaryProvider<EditTextPreference> { getString(R.string.s3_part_size_summary, it.text) }
@@ -92,6 +97,7 @@ class S3DestinationFragment : PreferenceFragmentCompat() {
                 valid
             }
         }
+
         setupSecret("access_key", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS) { S3Destinations.hasAccessKey(context, destination.id) }
         setupSecret("secret_key", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD) { S3Destinations.hasSecretKey(context, destination.id) }
 
@@ -160,10 +166,12 @@ class S3DestinationFragment : PreferenceFragmentCompat() {
                 .show()
             return
         }
+
         if (destination.endpoint.isBlank()) {
             Toast.makeText(context, R.string.s3_endpoint_invalid, Toast.LENGTH_LONG).show()
             return
         }
+
         lifecycleScope.launch {
             val certificate = try {
                 withContext(Dispatchers.IO) { S3Client.fetchServerCertificate(destination.endpoint) }
@@ -171,6 +179,7 @@ class S3DestinationFragment : PreferenceFragmentCompat() {
                 Toast.makeText(context, getString(R.string.s3_trust_fetch_failed, e.message ?: e.javaClass.simpleName), Toast.LENGTH_LONG).show()
                 return@launch
             }
+
             AlertDialog.Builder(context)
                 .setTitle(R.string.s3_trust_confirm_title)
                 .setMessage(getString(R.string.s3_trust_warning) + "\n\n" + describe(certificate))
@@ -203,10 +212,12 @@ class S3DestinationFragment : PreferenceFragmentCompat() {
         val context = requireContext()
         preference.isEnabled = false
         preference.summary = getString(R.string.s3_test_running)
+
         lifecycleScope.launch {
             val lines = withContext(Dispatchers.IO) { S3Destinations.testConnection(context, destination) }
             preference.isEnabled = true
             preference.summary = getString(R.string.s3_test_connection_summary)
+
             AlertDialog.Builder(context)
                 .setTitle(R.string.s3_test_connection_title)
                 .setMessage(lines.joinToString("\n"))

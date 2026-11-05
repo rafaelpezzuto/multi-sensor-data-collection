@@ -39,9 +39,11 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         var started = false
         var successCount = 0
         var failureCount = 0
+
         try {
             val autoUpload = PreferenceManager.getDefaultSharedPreferences(context).getBoolean(PREF_AUTO_UPLOAD, false)
             val attempted = mutableSetOf<String>()
+
             while (true) {
                 // Rescanned after each pass so collections recorded meanwhile are picked up. A queued
                 // collection may already be synced: the user asked to sync it again.
@@ -50,14 +52,18 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                             autoUpload && !CloudSyncManager.isDatasetSynced(context, it.name))
                 }
                 if (pending.isEmpty()) return Result.success()
+
                 if (!started) {
                     started = true
                     CloudSyncManager.startProgress(pending.size, pending.first().name)
                 }
+
                 for ((index, dataset) in pending.withIndex()) {
                     if (CloudSyncManager.recordingInProgress) return Result.retry()
+
                     attempted += dataset.name
                     CloudSyncManager.updateProgress(index + 1, pending.size, dataset.name)
+
                     var lastUpdate = 0L
                     val result = CloudSyncManager.syncDataset(context, dataset) { done, total ->
                         val now = SystemClock.elapsedRealtime()
@@ -66,12 +72,14 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                             CloudSyncManager.updateBytes(done, total)
                         }
                     }
+
                     CloudSyncManager.recordDatasetCompleted(dataset.name, result)
                     if (result.success) successCount++ else failureCount++
                     if (result.stopRun) {
                         Timber.tag(TAG).w("Stopping background sync: ${result.message}")
                         return Result.retry()
                     }
+
                     CloudSyncManager.dequeueDataset(context, dataset.name)
                 }
             }
@@ -90,10 +98,12 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                 .setRequiresCharging(prefs.getBoolean(PREF_UPLOAD_CHARGING_ONLY, false))
                 .setRequiresBatteryNotLow(true)
                 .build()
+
             val request = OneTimeWorkRequestBuilder<SyncWorker>()
                 .setConstraints(constraints)
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 1, TimeUnit.MINUTES)
                 .build()
+
             WorkManager.getInstance(context)
                 .enqueueUniqueWork(WORK_NAME, if (replace) ExistingWorkPolicy.REPLACE else ExistingWorkPolicy.KEEP, request)
         }
