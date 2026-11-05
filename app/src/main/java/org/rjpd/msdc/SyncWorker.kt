@@ -12,6 +12,9 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.isActive
 import timber.log.Timber
 
 internal const val PREF_AUTO_UPLOAD = "auto_upload"
@@ -29,6 +32,7 @@ private const val WORK_NAME = "msdc-sync"
 class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
+        val cancellationContext = currentCoroutineContext()
         val context = applicationContext
         if (CloudSyncManager.getCloudSyncMode(context) == CloudSyncMode.NOT_CONFIGURED) {
             return Result.success()
@@ -45,12 +49,14 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             val attempted = mutableSetOf<String>()
 
             while (true) {
+                cancellationContext.ensureActive()
                 // Rescanned after each pass so collections recorded meanwhile are picked up. A queued
                 // collection may already be synced: the user asked to sync it again.
                 val pending = scanCollectedDatasets(context).filter {
                     it.name !in attempted && (CloudSyncManager.isDatasetQueued(context, it.name) ||
                             autoUpload && !CloudSyncManager.isDatasetSynced(context, it.name))
                 }
+                cancellationContext.ensureActive()
                 if (pending.isEmpty()) return Result.success()
 
                 if (!started) {
@@ -59,6 +65,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                 }
 
                 for ((index, dataset) in pending.withIndex()) {
+                    cancellationContext.ensureActive()
                     if (CloudSyncManager.recordingInProgress) return Result.retry()
 
                     attempted += dataset.name
@@ -73,6 +80,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                         }
                     }
 
+                    cancellationContext.ensureActive()
                     CloudSyncManager.recordDatasetCompleted(dataset.name, result)
                     if (result.success) successCount++ else failureCount++
                     if (result.stopRun) {
@@ -84,7 +92,10 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                 }
             }
         } finally {
-            if (started) CloudSyncManager.finishSync(successCount, failureCount)
+            if (started) {
+                if (cancellationContext.isActive) CloudSyncManager.finishSync(successCount, failureCount)
+                else CloudSyncManager.resetProgress()
+            }
             CloudSyncManager.syncMutex.unlock()
         }
     }

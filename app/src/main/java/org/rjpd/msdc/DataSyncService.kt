@@ -13,10 +13,12 @@ import android.os.IBinder
 import android.os.SystemClock
 import android.text.format.Formatter
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
@@ -96,6 +98,7 @@ class DataSyncService : Service() {
     // Android 15+ limits dataSync foreground services to 6 hours a day; the service must stop within seconds.
     override fun onTimeout(startId: Int, fgsType: Int) {
         Timber.tag(TAG).w("Foreground service time limit reached, stopping sync")
+        SyncWorker.cancel(this)
         activeSyncJob?.cancel()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -191,14 +194,16 @@ class DataSyncService : Service() {
     }
 
     private fun performSyncAll() {
-        if (activeSyncJob?.isActive == true) {
+        if (activeSyncJob?.isCompleted == false) {
             Timber.tag(TAG).d("Sync job is already running, skipping")
             return
         }
 
         activeSyncJob = serviceScope.launch {
             try {
+                ensureActive()
                 val datasets = scanCollectedDatasets(this@DataSyncService)
+                ensureActive()
                 val pendingDatasets = datasets.filter { !CloudSyncManager.isDatasetSynced(this@DataSyncService, it.name) }
 
                 if (pendingDatasets.isEmpty()) {
@@ -217,11 +222,13 @@ class DataSyncService : Service() {
                     var stopReason: String? = null
 
                     for ((index, dataset) in pendingDatasets.withIndex()) {
+                        ensureActive()
                         val current = index + 1
                         CloudSyncManager.updateProgress(current, total, dataset.name)
                         updateNotificationProgress(current, total, dataset.name)
 
                         val result = CloudSyncManager.syncDataset(this@DataSyncService, dataset, progressReporter(current, total, dataset.name))
+                        ensureActive()
                         if (result.success) {
                             successCount++
                         } else {
@@ -236,6 +243,7 @@ class DataSyncService : Service() {
                         CloudSyncManager.dequeueDataset(this@DataSyncService, dataset.name)
                     }
 
+                    ensureActive()
                     CloudSyncManager.finishSync(successCount, failureCount)
                     val completionMsg = if (stopReason != null) {
                         getString(R.string.sync_stopped_format, successCount, stopReason)
@@ -246,6 +254,9 @@ class DataSyncService : Service() {
                     }
                     showCompletionNotification(completionMsg)
                 }
+            } catch (e: CancellationException) {
+                CloudSyncManager.resetProgress()
+                throw e
             } catch (e: Exception) {
                 Timber.tag(TAG).e(e, "Error occurred during sync all")
                 CloudSyncManager.finishSync(0, 1)
@@ -257,14 +268,16 @@ class DataSyncService : Service() {
     }
 
     private fun performSyncSingle(datasetName: String) {
-        if (activeSyncJob?.isActive == true) {
+        if (activeSyncJob?.isCompleted == false) {
             Timber.tag(TAG).d("Sync job is already running, skipping")
             return
         }
 
         activeSyncJob = serviceScope.launch {
             try {
+                ensureActive()
                 val datasets = scanCollectedDatasets(this@DataSyncService)
+                ensureActive()
                 val target = datasets.firstOrNull { it.name == datasetName }
                 if (target == null) {
                     Timber.tag(TAG).w("Dataset $datasetName not found for single sync")
@@ -280,6 +293,7 @@ class DataSyncService : Service() {
                 val result = CloudSyncManager.syncMutex.withLock {
                     CloudSyncManager.syncDataset(this@DataSyncService, target, progressReporter(1, 1, target.name))
                 }
+                ensureActive()
                 if (!result.stopRun) CloudSyncManager.dequeueDataset(this@DataSyncService, target.name)
                 val successCount = if (result.success) 1 else 0
                 val failureCount = if (result.success) 0 else 1
@@ -295,6 +309,9 @@ class DataSyncService : Service() {
                         getString(R.string.sync_single_failed_format, target.name, result.message)
                     )
                 }
+            } catch (e: CancellationException) {
+                CloudSyncManager.resetProgress()
+                throw e
             } catch (e: Exception) {
                 Timber.tag(TAG).e(e, "Error occurred during single sync")
                 CloudSyncManager.finishSync(0, 1)

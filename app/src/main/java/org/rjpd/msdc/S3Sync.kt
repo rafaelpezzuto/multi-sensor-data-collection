@@ -179,6 +179,7 @@ object S3Sync {
         dataset: DatasetSummary,
         onProgress: (bytesDone: Long, bytesTotal: Long) -> Unit
     ): SyncResult {
+        currentCoroutineContext().ensureActive()
         val client = S3Destinations.client(context, destination)
             ?: return SyncResult(false, context.getString(R.string.s3_credentials_missing), stopRun = true)
         val keyBase = renderKeyBase(destination.keyTemplate, dataset.directory, dataset.subdirectory, dataset.name)
@@ -194,17 +195,20 @@ object S3Sync {
             var uploaded = 0
             onProgress(0, total)
             for (planned in objects) {
+                currentCoroutineContext().ensureActive()
                 if (uploadFile(context, client, destination, dataset.name, planned) { sent -> onProgress(done + sent, total) }) {
                     uploaded++
                 }
                 done += planned.file.length()
                 onProgress(done, total)
             }
+            currentCoroutineContext().ensureActive()
             if (zip != null && zip != dataset.path) zip.delete()
             SyncResult(true, context.getString(R.string.s3_sync_result, uploaded, objects.size - uploaded))
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            currentCoroutineContext().ensureActive()
             Timber.tag(TAG).e("Upload of %s failed: %s: %s", dataset.name, e.javaClass.simpleName, e.message)
             val stopRun = when (e) {
                 is S3SyncException -> e.stopRun
@@ -244,7 +248,9 @@ object S3Sync {
 
     // Zips a folder dataset into the cache, under a temporary name until complete, so an interrupted
     // upload can resume with the same bytes.
-    private fun uploadZip(context: Context, dataset: DatasetSummary): File {
+    private suspend fun uploadZip(context: Context, dataset: DatasetSummary): File {
+        val cancellationContext = currentCoroutineContext()
+        cancellationContext.ensureActive()
         val zip = File(context.cacheDir, "s3_upload/${dataset.name}.zip")
         if (zip.exists()) return zip
         if (context.cacheDir.usableSpace < dataset.sizeBytes + 64 * MIB) {
@@ -252,9 +258,13 @@ object S3Sync {
         }
         zip.parentFile?.mkdirs()
         val partial = File(zip.path + ".partial")
-        zipEverything(dataset.path, partial.path)
-        if (!partial.renameTo(zip)) throw IOException("Could not finish ${zip.name}")
-        return zip
+        try {
+            writeSyncZip(dataset.path, partial, cancellationContext)
+            if (!partial.renameTo(zip)) throw IOException("Could not finish ${zip.name}")
+            return zip
+        } finally {
+            partial.delete()
+        }
     }
 
     /** Returns true if the file was uploaded, false if an identical object was already there. */
