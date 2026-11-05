@@ -6,12 +6,11 @@ import androidx.documentfile.provider.DocumentFile
 import androidx.preference.PreferenceManager
 import java.io.File
 import java.io.FileOutputStream
-import java.io.InputStream
-import java.io.OutputStream
-import java.net.HttpURLConnection
-import java.net.URL
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,10 +21,6 @@ internal const val PREF_CUSTOM_UPLOAD_TOKEN = "custom_upload_token"
 internal const val PREF_CLOUD_STORAGE_TREE_URI = "cloud_storage_tree_uri"
 internal const val PREF_SYNCED_DATASET_NAMES = "synced_dataset_names"
 
-private const val CONNECT_TIMEOUT_MS = 30_000
-private const val READ_TIMEOUT_MS = 300_000
-private const val BUFFER_SIZE = 8192
-private const val LINE_FEED = "\r\n"
 private const val TAG = "CloudSyncManager"
 private const val UPLOAD_CACHE_DIR = "upload_cache"
 private const val ZIP_MIME_TYPE = "application/zip"
@@ -184,8 +179,9 @@ object CloudSyncManager {
         sharedPreferences.edit().putStringSet(PREF_SYNCED_DATASET_NAMES, currentSynced).apply()
     }
 
-    suspend fun syncDataset(context: Context, dataset: DatasetSummary): SyncResult {
-        return when (getCloudSyncMode(context)) {
+    suspend fun syncDataset(context: Context, dataset: DatasetSummary): SyncResult = withContext(Dispatchers.IO) {
+        ensureActive()
+        val result = when (getCloudSyncMode(context)) {
             CloudSyncMode.HTTP_SERVER -> syncViaHttp(context, dataset)
             CloudSyncMode.SAF_STORAGE -> syncViaSaf(context, dataset)
             CloudSyncMode.NOT_CONFIGURED -> SyncResult(
@@ -193,9 +189,11 @@ object CloudSyncManager {
                 message = "No cloud destination configured. Set a server URL or choose a folder."
             )
         }
+        ensureActive()
+        result
     }
 
-    private fun syncViaHttp(context: Context, dataset: DatasetSummary): SyncResult {
+    private suspend fun syncViaHttp(context: Context, dataset: DatasetSummary): SyncResult {
         val uploadUrlStr = getCustomUploadUrl(context)
         if (uploadUrlStr.isEmpty()) {
             return SyncResult(false, "Server upload URL is empty.")
@@ -205,76 +203,35 @@ object CloudSyncManager {
         val (zipFile, isTempZip) = obtainDatasetZip(context, dataset)
             ?: return SyncResult(false, "Failed to prepare dataset zip archive.")
 
-        var connection: HttpURLConnection? = null
         try {
-            val url = URL(uploadUrlStr)
-            connection = (url.openConnection() as HttpURLConnection).apply {
-                requestMethod = "POST"
-                doOutput = true
-                doInput = true
-                useCaches = false
-                connectTimeout = CONNECT_TIMEOUT_MS
-                readTimeout = READ_TIMEOUT_MS
-            }
-
-            if (uploadToken.isNotEmpty()) {
-                connection.setRequestProperty("Authorization", "Bearer $uploadToken")
-            }
-
-            val boundary = "===Boundary_${System.currentTimeMillis()}==="
-            connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=$boundary")
-
-            val prefix = buildMultipartPrefix(boundary, dataset, zipFile.name)
-            val suffix = ("$LINE_FEED--$boundary--$LINE_FEED").toByteArray(Charsets.UTF_8)
-            val totalContentLength = prefix.size + zipFile.length() + suffix.size
-
-            if (totalContentLength <= Int.MAX_VALUE) {
-                connection.setFixedLengthStreamingMode(totalContentLength)
-            } else {
-                connection.setChunkedStreamingMode(0)
-            }
-
-            connection.outputStream.use { output ->
-                output.write(prefix)
-                zipFile.inputStream().use { input ->
-                    copyStreamWithBuffer(input, output)
-                }
-                output.write(suffix)
-                output.flush()
-            }
-
-            val responseCode = connection.responseCode
-            return if (responseCode in 200..299) {
-                markDatasetAsSynced(context, dataset.name)
-                SyncResult(true, "Dataset uploaded successfully.", responseCode)
-            } else {
-                val errorBody = try {
-                    connection.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
-                } catch (_: Exception) {
-                    ""
-                }
-                val detail = if (errorBody.isNotEmpty()) ": $errorBody" else ""
-                SyncResult(false, "Server returned HTTP $responseCode$detail", responseCode)
-            }
+            val result = uploadDatasetArchive(uploadUrlStr, uploadToken, dataset, zipFile)
+            currentCoroutineContext().ensureActive()
+            if (result.success) markDatasetAsSynced(context, dataset.name)
+            return result
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
+            currentCoroutineContext().ensureActive()
             Timber.tag(TAG).e(e, "HTTP upload failed for: ${dataset.name}")
             return SyncResult(false, "Upload error: ${e.localizedMessage ?: e.javaClass.simpleName}")
         } finally {
-            connection?.disconnect()
             if (isTempZip) {
                 deleteTemporaryZip(zipFile)
             }
         }
     }
 
-    private fun syncViaSaf(context: Context, dataset: DatasetSummary): SyncResult {
+    private suspend fun syncViaSaf(context: Context, dataset: DatasetSummary): SyncResult {
         val treeUri = getSafStorageUri(context)
             ?: return SyncResult(false, "No destination folder configured.")
 
         val (zipFile, isTempZip) = obtainDatasetZip(context, dataset)
             ?: return SyncResult(false, "Failed to prepare dataset zip archive.")
 
+        val cancellationContext = currentCoroutineContext()
+        var incompleteFile: DocumentFile? = null
         try {
+            cancellationContext.ensureActive()
             val rootDoc = DocumentFile.fromTreeUri(context, treeUri)
                 ?: return SyncResult(false, "Cannot access selected folder.")
 
@@ -289,19 +246,32 @@ object CloudSyncManager {
             val destFileDoc = existingFile
                 ?: targetDirDoc.createFile(ZIP_MIME_TYPE, zipFile.name)
                 ?: return SyncResult(false, "Could not create file in destination folder.")
+            if (existingFile == null) incompleteFile = destFileDoc
 
+            cancellationContext.ensureActive()
             context.contentResolver.openOutputStream(destFileDoc.uri, "wt")?.use { output ->
+                incompleteFile = destFileDoc
                 zipFile.inputStream().use { input ->
-                    copyStreamWithBuffer(input, output)
+                    copySyncStream(input, output, cancellationContext)
                 }
             } ?: return SyncResult(false, "Could not open destination output stream.")
 
+            cancellationContext.ensureActive()
+            incompleteFile = null
             markDatasetAsSynced(context, dataset.name)
             return SyncResult(true, "Dataset exported to destination folder successfully.")
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
+            cancellationContext.ensureActive()
             Timber.tag(TAG).e(e, "SAF sync failed for: ${dataset.name}")
             return SyncResult(false, "Storage error: ${e.localizedMessage ?: e.javaClass.simpleName}")
         } finally {
+            try {
+                incompleteFile?.delete()
+            } catch (e: Exception) {
+                Timber.tag(TAG).w(e, "Could not remove incomplete destination archive")
+            }
             if (isTempZip) {
                 deleteTemporaryZip(zipFile)
             }
@@ -421,49 +391,40 @@ object CloudSyncManager {
         return currentDoc
     }
 
-    private fun obtainDatasetZip(context: Context, dataset: DatasetSummary): Pair<File, Boolean>? {
+    private suspend fun obtainDatasetZip(context: Context, dataset: DatasetSummary): Pair<File, Boolean>? {
+        val cancellationContext = currentCoroutineContext()
+        cancellationContext.ensureActive()
         val file = dataset.path
         if (!file.exists()) return null
 
         val exportFilename = getExportFilename(dataset)
+        val isArchive = file.isFile && file.extension.equals("zip", ignoreCase = true)
+        if (isArchive && exportFilename == file.name) return Pair(file, false)
+        if (!isArchive && !file.isDirectory) return null
 
-        if (file.isFile && file.extension.lowercase() == "zip") {
-            if (exportFilename != file.name) {
-                return try {
-                    val cacheZip = File(context.cacheDir, "$UPLOAD_CACHE_DIR/$exportFilename")
-                    cacheZip.parentFile?.mkdirs()
-                    file.copyTo(cacheZip, overwrite = true)
-                    Pair(cacheZip, true)
-                } catch (_: Exception) {
-                    Pair(file, false)
+        val cacheZip = File(context.cacheDir, "$UPLOAD_CACHE_DIR/$exportFilename")
+        var complete = false
+        try {
+            cacheZip.parentFile?.mkdirs()
+            if (isArchive) {
+                file.inputStream().use { input ->
+                    FileOutputStream(cacheZip).use { copySyncStream(input, it, cancellationContext) }
                 }
+            } else {
+                writeSyncZip(file, cacheZip, cancellationContext)
             }
-            return Pair(file, false)
+            cancellationContext.ensureActive()
+            complete = true
+            return Pair(cacheZip, true)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            cancellationContext.ensureActive()
+            Timber.tag(TAG).e(e, "Error preparing dataset archive: ${file.name}")
+            return if (isArchive) Pair(file, false) else null
+        } finally {
+            if (!complete) deleteTemporaryZip(cacheZip)
         }
-
-        if (file.isDirectory) {
-            return try {
-                val cacheZip = File(context.cacheDir, "$UPLOAD_CACHE_DIR/$exportFilename")
-                cacheZip.parentFile?.mkdirs()
-
-                ZipOutputStream(FileOutputStream(cacheZip)).use { zipOut ->
-                    file.walkTopDown().filter { it.isFile }.forEach { child ->
-                        val relativePath = child.relativeTo(file).path
-                        zipOut.putNextEntry(ZipEntry(relativePath))
-                        child.inputStream().use { input ->
-                            input.copyTo(zipOut)
-                        }
-                        zipOut.closeEntry()
-                    }
-                }
-                Pair(cacheZip, true)
-            } catch (e: Exception) {
-                Timber.tag(TAG).e(e, "Error zipping dataset directory: ${file.name}")
-                null
-            }
-        }
-
-        return null
     }
 
     private fun deleteTemporaryZip(tempFile: File) {
@@ -476,33 +437,4 @@ object CloudSyncManager {
         }
     }
 
-    private fun buildMultipartPrefix(boundary: String, dataset: DatasetSummary, filename: String): ByteArray {
-        val sb = StringBuilder()
-
-        fun addFormField(name: String, value: String) {
-            sb.append("--").append(boundary).append(LINE_FEED)
-            sb.append("Content-Disposition: form-data; name=\"").append(name).append("\"").append(LINE_FEED)
-            sb.append(LINE_FEED)
-            sb.append(value).append(LINE_FEED)
-        }
-
-        addFormField("dataset_name", dataset.name)
-        addFormField("directory", dataset.directory)
-        addFormField("subdirectory", dataset.subdirectory)
-
-        sb.append("--").append(boundary).append(LINE_FEED)
-        sb.append("Content-Disposition: form-data; name=\"file\"; filename=\"").append(filename).append("\"").append(LINE_FEED)
-        sb.append("Content-Type: $ZIP_MIME_TYPE").append(LINE_FEED)
-        sb.append(LINE_FEED)
-
-        return sb.toString().toByteArray(Charsets.UTF_8)
-    }
-
-    private fun copyStreamWithBuffer(input: InputStream, output: OutputStream) {
-        val buffer = ByteArray(BUFFER_SIZE)
-        var bytesRead: Int
-        while (input.read(buffer).also { bytesRead = it } != -1) {
-            output.write(buffer, 0, bytesRead)
-        }
-    }
 }
