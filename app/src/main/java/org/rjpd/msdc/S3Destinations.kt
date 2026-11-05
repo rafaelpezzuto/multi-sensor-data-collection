@@ -41,6 +41,14 @@ data class S3Destination(
 ) {
     val displayName: String get() = name.ifBlank { bucket.ifBlank { endpoint } }
 
+    // A profile can be edited to point elsewhere. Never reuse its sync markers or upload IDs
+    // for a different bucket/key layout; retain the old state if the user switches back.
+    internal val syncStateId: String
+        get() = "$id-" + SigV4.sha256Hex(
+            listOf(endpoint, region, bucket, pathStyle.toString(), keyTemplate, zipMode.toString())
+                .joinToString("\u0000").toByteArray(Charsets.UTF_8)
+        )
+
     fun toJson(): JSONObject = JSONObject()
         .put("id", id).put("name", name).put("endpoint", endpoint).put("region", region).put("bucket", bucket)
         .put("keyTemplate", keyTemplate).put("pathStyle", pathStyle).put("zipMode", zipMode)

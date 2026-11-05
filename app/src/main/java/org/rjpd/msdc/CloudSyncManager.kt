@@ -203,7 +203,7 @@ object CloudSyncManager {
     fun activeDestinationId(context: Context): String? = when (getCloudSyncMode(context)) {
         CloudSyncMode.HTTP_SERVER -> DESTINATION_HTTP
         CloudSyncMode.SAF_STORAGE -> DESTINATION_SAF
-        CloudSyncMode.S3 -> getActiveS3Destination(context)?.id
+        CloudSyncMode.S3 -> getActiveS3Destination(context)?.syncStateId
         CloudSyncMode.NOT_CONFIGURED -> null
     }
 
@@ -280,8 +280,8 @@ object CloudSyncManager {
             .toMap()
     }
 
-    private fun recordDatasetError(context: Context, datasetName: String, error: String?) {
-        val destinationId = activeDestinationId(context) ?: return
+    private fun recordDatasetError(context: Context, destinationId: String?, datasetName: String, error: String?) {
+        if (destinationId == null) return
         val editor = syncState(context, destinationId).edit()
         if (error == null) editor.remove(ERROR_PREFIX + datasetName) else editor.putString(ERROR_PREFIX + datasetName, error)
         editor.apply()
@@ -292,13 +292,20 @@ object CloudSyncManager {
         dataset: DatasetSummary,
         onProgress: (bytesDone: Long, bytesTotal: Long) -> Unit = { _, _ -> }
     ): SyncResult {
+        val destinationId = activeDestinationId(context)
         val result = when (getCloudSyncMode(context)) {
             CloudSyncMode.HTTP_SERVER -> syncViaHttp(context, dataset)
             CloudSyncMode.SAF_STORAGE -> syncViaSaf(context, dataset)
             CloudSyncMode.S3 -> {
                 val destination = getActiveS3Destination(context)!!
                 S3Sync.syncDataset(context, destination, dataset, onProgress).also {
-                    if (it.success) markDatasetAsSynced(context, dataset.name)
+                    if (it.success) {
+                        // Settings can change while the request is in flight. Mark the destination
+                        // actually uploaded to, not whichever profile happens to be active now.
+                        val state = syncState(context, destination.syncStateId)
+                        val synced = state.getStringSet(KEY_SYNCED, emptySet()).orEmpty() + dataset.name
+                        state.edit().putStringSet(KEY_SYNCED, synced).apply()
+                    }
                 }
             }
             CloudSyncMode.NOT_CONFIGURED -> SyncResult(
@@ -306,7 +313,7 @@ object CloudSyncManager {
                 message = "No cloud destination configured. Set a server URL or choose a folder."
             )
         }
-        recordDatasetError(context, dataset.name, if (result.success) null else result.message)
+        recordDatasetError(context, destinationId, dataset.name, if (result.success) null else result.message)
         return result
     }
 

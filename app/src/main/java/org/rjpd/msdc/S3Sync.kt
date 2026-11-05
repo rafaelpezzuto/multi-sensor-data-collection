@@ -228,7 +228,7 @@ object S3Sync {
 
     /** Aborts every unfinished multipart upload of a destination (best effort) and forgets them. */
     suspend fun abortUnfinishedUploads(context: Context, destination: S3Destination) {
-        val state = CloudSyncManager.syncState(context, destination.id)
+        val state = CloudSyncManager.syncState(context, destination.syncStateId)
         val client = S3Destinations.client(context, destination, maxAttempts = 2)
         for ((name, value) in state.all) {
             if (!name.startsWith(UPLOAD_RECORD_PREFIX)) continue
@@ -272,7 +272,7 @@ object S3Sync {
         val size = file.length()
         val lastModified = file.lastModified()
         val partSize = partSizeFor(size, destination.partSizeMib)
-        val state = CloudSyncManager.syncState(context, destination.id)
+        val state = CloudSyncManager.syncState(context, destination.syncStateId)
         val recordName = "$UPLOAD_RECORD_PREFIX$datasetName/${planned.relativePath}"
 
         val saved = state.getString(recordName, null)?.let { UploadRecord.fromJson(it) }
