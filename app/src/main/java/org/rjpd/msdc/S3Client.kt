@@ -187,13 +187,15 @@ class S3Client(
         }
     }
 
-    suspend fun completeMultipartUpload(key: String, uploadId: String, parts: Map<Int, String>): String {
+    suspend fun completeMultipartUpload(key: String, uploadId: String, parts: Map<Int, String>, ifNoneMatch: Boolean = false): String {
         val xml = parts.toSortedMap().entries.joinToString("", "<CompleteMultipartUpload>", "</CompleteMultipartUpload>") {
             "<Part><PartNumber>${it.key}</PartNumber><ETag>\"${it.value}\"</ETag></Part>"
         }.toByteArray()
         return retrying {
-            val response = send("POST", key, mapOf("uploadId" to uploadId), xml.toRequestBody(XML), SigV4.sha256Hex(xml), slow = true)
-            parseXml(response.body).text("ETag")?.trim('"') ?: ""
+            val headers = if (ifNoneMatch) mapOf("If-None-Match" to "*") else emptyMap()
+            val response = send("POST", key, mapOf("uploadId" to uploadId), xml.toRequestBody(XML), SigV4.sha256Hex(xml), headers, slow = true)
+            parseXml(response.body).text("ETag")?.trim('"')?.takeIf { it.isNotBlank() }
+                ?: throw S3Exception(response.code, "InvalidResponse", "No ETag in completion response")
         }
     }
 
@@ -254,7 +256,9 @@ class S3Client(
         (if (slow) completeClient else client).newCall(request).await().use { response ->
             val text = if (method == "HEAD") "" else response.body.string()
             // CompleteMultipartUpload can answer 200 and still carry an error document.
-            if (response.isSuccessful && !text.contains("<Error>")) {
+            val embeddedError = response.isSuccessful && text.isNotBlank() &&
+                    parseXml(text).localName == "Error"
+            if (response.isSuccessful && !embeddedError) {
                 return S3Response(response.code, response.headers, text)
             }
             var code = xmlText(text, "Code") ?: "HTTP${response.code}"
@@ -375,7 +379,8 @@ private suspend fun Call.await(): Response = suspendCancellableCoroutine { conti
 
 private fun parseXml(text: String): Element {
     if (text.contains("<!DOCTYPE", ignoreCase = true)) throw IOException("Unexpected DOCTYPE in S3 response")
-    return DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(InputSource(StringReader(text))).documentElement
+    return DocumentBuilderFactory.newInstance().apply { isNamespaceAware = true }
+        .newDocumentBuilder().parse(InputSource(StringReader(text))).documentElement
 }
 
 private fun xmlText(text: String, tag: String): String? =
@@ -386,7 +391,7 @@ private fun xmlText(text: String, tag: String): String? =
     }
 
 // Element-order independent on purpose: RustFS lists <ETag> before <PartNumber>, AWS the other way round.
-private fun Element.text(tag: String): String? = getElementsByTagName(tag).item(0)?.textContent
+private fun Element.text(tag: String): String? = getElementsByTagNameNS("*", tag).item(0)?.textContent
 
 private fun Element.elements(tag: String): List<Element> =
-    getElementsByTagName(tag).let { nodes -> (0 until nodes.length).map { nodes.item(it) as Element } }
+    getElementsByTagNameNS("*", tag).let { nodes -> (0 until nodes.length).map { nodes.item(it) as Element } }

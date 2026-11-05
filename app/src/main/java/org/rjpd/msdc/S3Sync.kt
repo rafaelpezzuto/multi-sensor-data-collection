@@ -298,12 +298,12 @@ object S3Sync {
 
         try {
             if (digests.partMd5Base64.size == 1) {
-                putSingle(context, client, planned, digests, size, lastModified, ifNoneMatch = remote == null, onSent)
+                putSingle(context, client, planned, digests, size, lastModified, ifNoneMatch = !destination.overwrite, onSent)
             } else {
                 if (record == null) {
                     record = UploadRecord(planned.key, size, lastModified, partSize, System.currentTimeMillis(), digests)
                 }
-                uploadParts(client, state, recordName, record, file, onSent)
+                uploadParts(client, state, recordName, record, file, onSent, ifNoneMatch = !destination.overwrite)
             }
         } catch (e: FileChangedException) {
             state.getString(recordName, null)?.let { UploadRecord.fromJson(it).uploadId }?.let { client.abortMultipartUpload(planned.key, it) }
@@ -339,7 +339,6 @@ object S3Sync {
         } catch (e: S3Exception) {
             when (e.status) {
                 412 -> throw S3SyncException(context.getString(R.string.s3_conflict, planned.key))
-                501 -> put(false) // No conditional writes on this server; the HEAD above already checked.
                 else -> throw e
             }
         }
@@ -352,6 +351,7 @@ object S3Sync {
         start: UploadRecord,
         file: File,
         onSent: (Long) -> Unit,
+        ifNoneMatch: Boolean,
         restarted: Boolean = false
     ) {
         var record = start
@@ -370,7 +370,7 @@ object S3Sync {
                 // The upload expired or was aborted elsewhere: start a new one, once.
                 e.status == 404 && !restarted -> {
                     record = record.copy(uploadId = null, completed = emptyMap())
-                    return uploadParts(client, state, recordName, record, file, onSent, restarted = true)
+                    return uploadParts(client, state, recordName, record, file, onSent, ifNoneMatch, restarted = true)
                 }
                 // No ListParts permission: trust the parts this device saw complete.
                 e.status == 403 -> record.completed
@@ -399,7 +399,7 @@ object S3Sync {
 
         if (file.length() != record.size || file.lastModified() != record.lastModified) throw FileChangedException(file)
         try {
-            client.completeMultipartUpload(record.key, uploadId, etags)
+            client.completeMultipartUpload(record.key, uploadId, etags, ifNoneMatch = ifNoneMatch)
         } catch (e: S3Exception) {
             // NoSuchUpload after a retried Complete usually means the first one succeeded; the HEAD check decides.
             if (e.status != 404) throw e

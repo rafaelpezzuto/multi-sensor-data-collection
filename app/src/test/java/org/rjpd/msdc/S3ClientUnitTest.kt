@@ -115,6 +115,47 @@ class S3ClientUnitTest {
     }
 
     @Test
+    fun complete_namespacedErrorDocument_isRetried() = runBlocking {
+        server.enqueue(ok(body = "<Error xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><Code>InternalError</Code><Message>try again</Message></Error>"))
+        server.enqueue(ok(body = "<CompleteMultipartUploadResult><ETag>\"abc-2\"</ETag></CompleteMultipartUploadResult>"))
+        assertEquals("abc-2", client.completeMultipartUpload("k", "u", mapOf(1 to "a")))
+        assertEquals(2, server.requestCount)
+    }
+
+    @Test
+    fun complete_missingEtag_isRejected() = runBlocking {
+        server.enqueue(ok(body = "<CompleteMultipartUploadResult/>"))
+        try {
+            client.completeMultipartUpload("k", "u", mapOf(1 to "a"))
+            fail("Expected invalid response")
+        } catch (e: S3Exception) {
+            assertEquals("InvalidResponse", e.code)
+        }
+    }
+
+    @Test
+    fun complete_conditionalWrite_preservesConflictAndSignsCondition() = runBlocking {
+        server.enqueue(error(412, "PreconditionFailed"))
+        try {
+            client.completeMultipartUpload("k", "u", mapOf(1 to "a"), ifNoneMatch = true)
+            fail("Expected conflict")
+        } catch (e: S3Exception) {
+            assertEquals(412, e.status)
+        }
+        assertEquals(1, server.requestCount)
+        val request = server.takeRequest()
+        assertEquals("*", request.headers["If-None-Match"])
+        assertTrue(request.headers["Authorization"]!!.contains("if-none-match"))
+    }
+
+    @Test
+    fun complete_overwriteEnabled_omitsCondition() = runBlocking {
+        server.enqueue(ok(body = "<CompleteMultipartUploadResult><ETag>\"abc-2\"</ETag></CompleteMultipartUploadResult>"))
+        client.completeMultipartUpload("k", "u", mapOf(1 to "a"), ifNoneMatch = false)
+        assertNull(server.takeRequest().headers["If-None-Match"])
+    }
+
+    @Test
     fun clockSkew_usesServerDateAndRetries() = runBlocking {
         val format = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.US).apply { timeZone = TimeZone.getTimeZone("GMT") }
         val serverTime = System.currentTimeMillis() + 3_600_000
