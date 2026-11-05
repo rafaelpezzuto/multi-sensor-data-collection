@@ -2,8 +2,7 @@
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
     app:title="@string/s3_editor_title">
 
-    <PreferenceCategory app:title="@string/s3_category_connection">
-        <Preference app:summary="@string/s3_setup_help" app:selectable="false" />
+    <PreferenceCategory app:title="@string/s3_category_connection" app:summary="@string/s3_setup_help">
         <EditTextPreference app:key="name" app:title="@string/s3_name_title" />
         <EditTextPreference
             app:key="endpoint"
